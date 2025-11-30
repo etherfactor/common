@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Configuration/">
+    <Project Path="src/Configuration/EtherGizmos.Common.Configuration/EtherGizmos.Common.Configuration.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/Configuration/">
+    <Project Path="tests/Configuration/EtherGizmos.Common.Configuration.UnitTests/EtherGizmos.Common.Configuration.UnitTests.csproj" Id="642d9662-4a8c-45bb-b7a3-caa2d027974b" />
+  </Folder>
+</Solution>
