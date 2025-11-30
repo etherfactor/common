@@ -1,6 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using EtherGizmos.Common;
+using Microsoft.Extensions.Configuration;
 
-namespace EtherGizmos.Common.Configuration.UnitTests.Providers;
+namespace Configuration.UnitTests.Providers;
 
 internal class ExpandedConnectionsVariablesConfigurationProviderTests
 {

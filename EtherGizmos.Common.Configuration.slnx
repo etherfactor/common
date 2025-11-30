@@ -6,10 +6,13 @@
   </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/Configuration/">
-    <Project Path="src/Configuration/EtherGizmos.Common.Configuration/EtherGizmos.Common.Configuration.csproj" />
+    <Project Path="src/Configuration/Configuration.Data.PostgreSql/Configuration.Data.PostgreSql.csproj" Id="e6060924-caf0-4991-b501-02506a2f3654" />
+    <Project Path="src/Configuration/Configuration.Data/Configuration.Data.csproj" Id="4cdf6656-9223-46f7-bb99-aeda593c4d86" />
+    <Project Path="src/Configuration/Configuration/Configuration.csproj" />
   </Folder>
   <Folder Name="/tests/" />
   <Folder Name="/tests/Configuration/">
-    <Project Path="tests/Configuration/EtherGizmos.Common.Configuration.UnitTests/EtherGizmos.Common.Configuration.UnitTests.csproj" Id="642d9662-4a8c-45bb-b7a3-caa2d027974b" />
+    <Project Path="tests/Configuration/Configuration.Data.PostgreSql.UnitTests/Configuration.Data.PostgreSql.UnitTests.csproj" Id="fd3caeeb-de48-41c5-9b44-85147c2313ab" />
+    <Project Path="tests/Configuration/Configuration.UnitTests/Configuration.UnitTests.csproj" Id="642d9662-4a8c-45bb-b7a3-caa2d027974b" />
   </Folder>
 </Solution>
