@@ -13,4 +13,9 @@
     <ProjectReference Include="..\Configuration\Configuration.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="EtherGizmos.Common.$(MSBuildProjectName).UnitTests" />
+    <InternalsVisibleTo Include="EtherGizmos.Common.$(MSBuildProjectName).IntegrationTests" />
+  </ItemGroup>
+
 </Project>

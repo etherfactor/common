@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Configuration\Configuration.Data.PostgreSql\Configuration.Data.PostgreSql.csproj" />
+    <ProjectReference Include="..\..\..\src\Data\Data.PostgreSql\Data.PostgreSql.csproj" />
   </ItemGroup>
 
   <ItemGroup>

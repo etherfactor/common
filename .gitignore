@@ -33,6 +33,8 @@ bld/
 [Ll]og/
 [Ll]ogs/
 [Dd]ata/
+!src/[Dd]ata/
+!tests/[Dd]ata/
 [Cc]ontainers/[Dd]eploy/
 
 # Visual Studio 2015/2017 cache/options directory

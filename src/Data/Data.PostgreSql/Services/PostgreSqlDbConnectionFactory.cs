@@ -5,9 +5,12 @@ using System.Data.Common;
 
 namespace EtherGizmos.Common.Services;
 
-internal class PostgreSqlDbConnectionFactory : IConnectionDbConnectionFactory<PostgreSqlOptions>
+internal class PostgreSqlDbConnectionFactory : IDbConnectionFactory<PostgreSqlOptions>
 {
     public DbConnection Create(
         PostgreSqlOptions options)
-        => new NpgsqlConnection(options.ConnectionString);
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        return new NpgsqlConnection(options.ConnectionString);
+    }
 }

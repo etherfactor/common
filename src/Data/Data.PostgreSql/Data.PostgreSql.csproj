@@ -14,7 +14,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Configuration.Data\Configuration.Data.csproj" />
+    <ProjectReference Include="..\..\Configuration\Configuration.Data\Configuration.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="EtherGizmos.Common.$(MSBuildProjectName).UnitTests" />
+    <InternalsVisibleTo Include="EtherGizmos.Common.$(MSBuildProjectName).IntegrationTests" />
   </ItemGroup>
 
 </Project>

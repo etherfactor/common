@@ -13,7 +13,7 @@ public static class DatabaseConnectionResolverExtensions
         public DatabaseConnectionOptions GetDatabaseConnection(
             string connectionId)
         {
-            var connection = @this.GetConnection<DatabaseConnectionOptions>(connectionId, ConnectionType.Database);
+            var connection = @this.GetOptions<ConnectionOptions, DatabaseConnectionOptions>(connectionId, ConnectionType.Database);
             return connection;
         }
 
@@ -36,7 +36,7 @@ public static class DatabaseConnectionResolverExtensions
             TOptions options)
             where TOptions : DatabaseConnectionOptions, new()
         {
-            var factory = @this.ServiceProvider.GetService<IConnectionDbConnectionFactory<TOptions>>()
+            var factory = @this.ServiceProvider.GetService<IDbConnectionFactory<TOptions>>()
                 ?? throw new InvalidOperationException($"No factory exists for creating a DbConnection for type {typeof(TOptions)}");
 
             return factory.Create(options);

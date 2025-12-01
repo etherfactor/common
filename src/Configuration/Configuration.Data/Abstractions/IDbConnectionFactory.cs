@@ -3,7 +3,7 @@ using System.Data.Common;
 
 namespace EtherGizmos.Common.Abstractions;
 
-public interface IConnectionDbConnectionFactory<TOptions>
+public interface IDbConnectionFactory<TOptions>
     where TOptions : DatabaseConnectionOptions, new()
 {
     DbConnection Create(

@@ -1,9 +1,3 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿namespace EtherGizmos.Common.Configuration;
 
-namespace EtherGizmos.Common.Configuration;
-
-public class ConnectionOptions
-{
-    [Required]
-    public virtual string Type { get; set; } = null!;
-}
+public class ConnectionOptions : AbstractOptions;

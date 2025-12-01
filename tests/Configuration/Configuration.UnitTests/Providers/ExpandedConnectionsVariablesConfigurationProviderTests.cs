@@ -1,7 +1,7 @@
 ﻿using EtherGizmos.Common;
 using Microsoft.Extensions.Configuration;
 
-namespace Configuration.UnitTests.Providers;
+namespace EtherGizmos.Common.Providers;
 
 internal class ExpandedConnectionsVariablesConfigurationProviderTests
 {
