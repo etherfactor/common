@@ -7,10 +7,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EtherGizmos.Common;
 
-public static class CommonAbstractResolverExtensions
+public static class CommonModularConfigurationResolverExtensions
 {
-    extension<TRoot>(IAbstractResolver<TRoot> @this)
-        where TRoot : AbstractOptions, new()
+    extension<TRoot>(IModularConfigurationResolver<TRoot> @this)
+        where TRoot : ModularConfigurationOptions, new()
     {
         public TBase GetOptions<TBase>(
             string optionsId,
@@ -18,8 +18,8 @@ public static class CommonAbstractResolverExtensions
             where TBase : class
         {
             var options = @this.Options;
-            var logger = @this.ServiceProvider.GetService<ILogger<IAbstractResolver<TRoot>>>()
-                ?? NullLogger<IAbstractResolver<TRoot>>.Instance;
+            var logger = @this.ServiceProvider.GetService<ILogger<IModularConfigurationResolver<TRoot>>>()
+                ?? NullLogger<IModularConfigurationResolver<TRoot>>.Instance;
 
             if (!options.TryGetValue(optionsId, out var entry))
             {
@@ -36,7 +36,7 @@ public static class CommonAbstractResolverExtensions
             var configuration = @this.ServiceProvider
                 .GetRequiredService<IConfiguration>();
 
-            var registrations = AbstractTypeRegistry.Registrations
+            var registrations = ModularConfigurationTypeRegistry.Registrations
                 .Where(r =>
                     r.RootType.IsAssignableTo(typeof(TRoot)) &&
                     r.BaseType.IsAssignableFrom(typeof(TBase)))

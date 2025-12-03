@@ -36,7 +36,7 @@ internal class ExpandedConnectionsVariablesConfigurationProvider : Configuration
             .AsEnumerable()
             .ToList();
 
-        var groups = AbstractTypeRegistry.Registrations
+        var groups = ModularConfigurationTypeRegistry.Registrations
             .GroupBy(e => new { e.BaseType, e.SectionName, e.ItemIdName, e.TypeName });
 
         foreach (var group in groups)

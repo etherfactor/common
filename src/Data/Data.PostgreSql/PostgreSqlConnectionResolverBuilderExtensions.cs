@@ -13,7 +13,7 @@ public static class PostgreSqlConnectionResolverBuilderExtensions
         public IConnectionResolverBuilder WithPostgreSql()
         {
             @this.Services.TryAddSingleton<IDbConnectionFactory<PostgreSqlOptions>, PostgreSqlDbConnectionFactory>();
-            AbstractTypeRegistry.Register<RootPostgreSqlOptions, DatabaseConnectionOptions>(
+            ModularConfigurationTypeRegistry.Register<RootPostgreSqlOptions, DatabaseConnectionOptions>(
                 sectionName: "Connections",
                 itemIdName: "ConnectionId",
                 typeName: ConnectionType.Database);

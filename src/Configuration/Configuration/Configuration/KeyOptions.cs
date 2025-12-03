@@ -1,3 +1,3 @@
 ﻿namespace EtherGizmos.Common.Configuration;
 
-public class KeyOptions : AbstractOptions;
+public class KeyOptions : ModularConfigurationOptions;

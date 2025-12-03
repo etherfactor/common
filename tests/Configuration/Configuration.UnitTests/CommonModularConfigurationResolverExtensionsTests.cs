@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace EtherGizmos.Common;
 
-internal class CommonAbstractResolverExtensionsTests
+internal class CommonModularConfigurationResolverExtensionsTests
 {
     [Test]
     public void GetOptions_WhenNotExists_ShouldThrowInvalidOperationException()
@@ -70,7 +70,7 @@ internal class CommonAbstractResolverExtensionsTests
             ["Connections:ValidId:Type"] = "Database",
         });
 
-        AbstractTypeRegistry.Register<RootFakeOptions, DatabaseConnectionOptions>("Connections", "ConnectionId", ConnectionType.Database);
+        ModularConfigurationTypeRegistry.Register<RootFakeOptions, DatabaseConnectionOptions>("Connections", "ConnectionId", ConnectionType.Database);
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(config);
         services.AddConnectionResolver()
@@ -101,7 +101,7 @@ internal class CommonAbstractResolverExtensionsTests
             ["Connections:ValidId:Fake2:ConnectionString"] = "hello",
         });
 
-        AbstractTypeRegistry.Register<RootFakeOptions, DatabaseConnectionOptions>("Connections", "ConnectionId", ConnectionType.Database);
+        ModularConfigurationTypeRegistry.Register<RootFakeOptions, DatabaseConnectionOptions>("Connections", "ConnectionId", ConnectionType.Database);
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(config);
         services.AddConnectionResolver()

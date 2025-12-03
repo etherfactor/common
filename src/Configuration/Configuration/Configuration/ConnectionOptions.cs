@@ -1,3 +1,3 @@
 ﻿namespace EtherGizmos.Common.Configuration;
 
-public class ConnectionOptions : AbstractOptions;
+public class ConnectionOptions : ModularConfigurationOptions;

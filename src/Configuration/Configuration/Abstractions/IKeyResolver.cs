@@ -2,4 +2,4 @@
 
 namespace EtherGizmos.Common.Abstractions;
 
-public interface IKeyResolver : IAbstractResolver<KeyOptions>;
+public interface IKeyResolver : IModularConfigurationResolver<KeyOptions>;

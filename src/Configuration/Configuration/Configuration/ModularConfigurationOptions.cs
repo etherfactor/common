@@ -2,7 +2,7 @@
 
 namespace EtherGizmos.Common.Configuration;
 
-public abstract class AbstractOptions
+public abstract class ModularConfigurationOptions
 {
     [Required]
     public virtual string Type { get; set; } = null!;

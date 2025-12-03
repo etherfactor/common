@@ -1,6 +1,6 @@
 ﻿namespace EtherGizmos.Common.Abstractions;
 
-public interface IAbstractResolver<TOptions>
+public interface IModularConfigurationResolver<TOptions>
     where TOptions : class, new()
 {
     IServiceProvider ServiceProvider { get; }

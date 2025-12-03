@@ -20,14 +20,14 @@ internal class PostgreSqlConnectionResolverBuilderExtensionsTests
 
         //Assert
         var factory = provider.GetService<IDbConnectionFactory<PostgreSqlOptions>>();
-        var matches = AbstractTypeRegistry.Registrations
+        var matches = ModularConfigurationTypeRegistry.Registrations
             .Where(e => e.BaseType == typeof(DatabaseConnectionOptions))
             .ToList();
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(factory, Is.Not.Null);
-            Assert.That(matches, Has.One.Matches<AbstractTypeRegistration>(reg =>
+            Assert.That(matches, Has.One.Matches<ModularConfigurationTypeRegistration>(reg =>
                 reg.Properties.Contains(typeof(RootPostgreSqlOptions)
                     .GetProperty(nameof(RootPostgreSqlOptions.PostgreSql))!)));
         }
