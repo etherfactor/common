@@ -7,11 +7,11 @@ namespace EtherGizmos.Common.Providers;
 /// <summary>
 /// Expands abbreviated connections in a fairly opinionated manner.
 /// </summary>
-internal class ExpandedConnectionsVariablesConfigurationProvider : ConfigurationProvider
+internal class ModularConfigurationConfigurationProvider : ConfigurationProvider
 {
     private readonly IConfigurationRoot _configuration;
 
-    public ExpandedConnectionsVariablesConfigurationProvider(
+    public ModularConfigurationConfigurationProvider(
         IConfigurationRoot configuration)
     {
         _configuration = new ConfigurationRoot([.. configuration.Providers]);

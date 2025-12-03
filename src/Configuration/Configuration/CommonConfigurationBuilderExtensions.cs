@@ -37,10 +37,10 @@ public static class CommonConfigurationBuilderExtensions
         /// <param name="this">Itself.</param>
         /// <param name="configuration">The current configuration state.</param>
         /// <returns>Itself.</returns>
-        public IConfigurationBuilder AddExpandedConnections(
+        public IConfigurationBuilder AddModularConfigurations(
             IConfigurationRoot configuration)
         {
-            @this.Add(new ExpandedConnectionsVariablesConfigurationSource()
+            @this.Add(new ModularConfigurationConfigurationSource()
             {
                 Configuration = configuration,
             });

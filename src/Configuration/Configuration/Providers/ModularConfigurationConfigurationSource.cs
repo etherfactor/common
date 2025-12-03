@@ -5,7 +5,7 @@ namespace EtherGizmos.Common.Providers;
 /// <summary>
 /// Expands abbreviated connections in a fairly opinionated manner.
 /// </summary>
-internal class ExpandedConnectionsVariablesConfigurationSource : IConfigurationSource
+internal class ModularConfigurationConfigurationSource : IConfigurationSource
 {
     /// <inheritdoc/>
     public IConfigurationRoot Configuration { get; set; } = null!;
@@ -14,6 +14,6 @@ internal class ExpandedConnectionsVariablesConfigurationSource : IConfigurationS
     public IConfigurationProvider Build(
         IConfigurationBuilder builder)
     {
-        return new ExpandedConnectionsVariablesConfigurationProvider(Configuration);
+        return new ModularConfigurationConfigurationProvider(Configuration);
     }
 }

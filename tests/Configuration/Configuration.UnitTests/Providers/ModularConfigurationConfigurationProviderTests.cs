@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EtherGizmos.Common.Providers;
 
-internal class ExpandedConnectionsVariablesConfigurationProviderTests
+internal class ModularConfigurationConfigurationProviderTests
 {
     private ConfigurationManager _config;
 
@@ -12,71 +12,6 @@ internal class ExpandedConnectionsVariablesConfigurationProviderTests
     public void SetUp()
     {
         _config = new();
-    }
-
-    [Test]
-    public void AddRemappedEnvironmentVariables_WithPeriod_ShouldRemap()
-    {
-        //Arrange
-        Environment.SetEnvironmentVariable("With_Period", "period");
-
-        //Act
-        _config.AddRemappedEnvironmentVariables(
-            new Remap(
-                From: new(@"(?<=[^:_])_(?=[^_])"),
-                To: ".")!);
-
-        //Assert
-        Assert.That(_config.GetValue<string>("With.Period"), Is.EqualTo("period"));
-    }
-
-    [Test]
-    public void AddRemappedEnvironmentVariables_WithSpace_ShouldRemap()
-    {
-        //Arrange
-        Environment.SetEnvironmentVariable("With___Space", "space");
-
-        //Act
-        _config.AddRemappedEnvironmentVariables(
-            new Remap(
-                From: new(@"(?<=[^_]):_(?=[^_])"),
-                To: " ")!);
-
-        //Assert
-        Assert.That(_config.GetValue<string>("With Space"), Is.EqualTo("space"));
-    }
-
-    [Test]
-    public void AddRemappedEnvironmentVariables_WhenExists_ShouldNotRemap()
-    {
-        //Arrange
-        Environment.SetEnvironmentVariable("I___Exist", "false");
-        Environment.SetEnvironmentVariable("I Exist", "true");
-
-        //Act
-        _config.AddRemappedEnvironmentVariables(
-            new Remap(
-                From: new(@"(?<=[^_]):_(?=[^_])"),
-                To: " ")!);
-
-        //Assert
-        Assert.That(_config.GetValue<string>("I Exist"), Is.EqualTo("true"));
-    }
-
-    [Test]
-    public void AddRemappedEnvironmentVariables_WithPrefix_ShouldRemap()
-    {
-        //Arrange
-        Environment.SetEnvironmentVariable("ConnectionStrings:Hello:Url", "https://hello");
-
-        //Act
-        _config.AddRemappedEnvironmentVariables(
-            new Remap(
-                From: new(@"^ConnectionStrings:(?=[^_:])"),
-                To: "")!);
-
-        //Assert
-        Assert.That(_config.GetValue<string>("Hello:Url"), Is.EqualTo("https://hello"));
     }
 
     [Test]
@@ -93,7 +28,7 @@ internal class ExpandedConnectionsVariablesConfigurationProviderTests
             ["Artifacts:PostgreSql:ConnectionString"] = cstr,
         });
 
-        _config.AddExpandedConnections(_config);
+        _config.AddModularConfigurations(_config);
 
         //Assert
         var connectionId = _config.GetValue<string>("Artifacts:ConnectionId");
@@ -120,7 +55,7 @@ internal class ExpandedConnectionsVariablesConfigurationProviderTests
             ["Security:OAuth2:PostgreSql:ConnectionString"] = cstr2,
         });
 
-        _config.AddExpandedConnections(_config);
+        _config.AddModularConfigurations(_config);
 
         //Assert
         var artifactsConnectionId = _config.GetValue<string>("Artifacts:ConnectionId");
