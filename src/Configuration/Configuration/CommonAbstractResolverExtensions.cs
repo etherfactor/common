@@ -4,67 +4,85 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 
 namespace EtherGizmos.Common;
 
 public static class CommonAbstractResolverExtensions
 {
-    extension<TOptions>(IAbstractResolver<TOptions> @this)
-        where TOptions : AbstractOptions, new()
+    extension<TRoot>(IAbstractResolver<TRoot> @this)
+        where TRoot : AbstractOptions, new()
     {
-        public TSubOptions GetOptions<TSubOptions>(
+        public TBase GetOptions<TBase>(
             string optionsId,
             string expectedType)
-            where TSubOptions : class, new()
+            where TBase : class
         {
             var options = @this.Options;
-            var logger = @this.ServiceProvider.GetService<ILogger<IAbstractResolver<TOptions>>>()
-                ?? NullLogger<IAbstractResolver<TOptions>>.Instance;
+            var logger = @this.ServiceProvider.GetService<ILogger<IAbstractResolver<TRoot>>>()
+                ?? NullLogger<IAbstractResolver<TRoot>>.Instance;
 
-            if (options.TryGetValue(optionsId, out var connection))
+            if (!options.TryGetValue(optionsId, out var entry))
             {
-                if (connection.Type == expectedType)
+                throw new InvalidOperationException(
+                    $"No entry is configured with id '{optionsId}' in section '{@this.SectionName}'.");
+            }
+
+            if (!string.Equals(entry.Type, expectedType, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"Entry '{optionsId}' is of type '{entry.Type}', expected '{expectedType}'.");
+            }
+
+            var configuration = @this.ServiceProvider
+                .GetRequiredService<IConfiguration>();
+
+            var registrations = AbstractTypeRegistry.Registrations
+                .Where(r =>
+                    r.RootType.IsAssignableTo(typeof(TRoot)) &&
+                    r.BaseType.IsAssignableFrom(typeof(TBase)))
+                .ToList();
+
+            var found = new List<TBase>();
+
+            foreach (var registration in registrations)
+            {
+                var section = configuration.GetSection($"{registration.SectionName}:{optionsId}");
+
+                var sectionAsType = section.Get(registration.RootType);
+                if (sectionAsType is null)
+                    continue;
+
+                foreach (var property in registration.Properties)
                 {
-                    var configuration = @this.ServiceProvider
-                        .GetRequiredService<IConfiguration>();
+                    if (!typeof(TBase).IsAssignableFrom(property.PropertyType))
+                        continue;
 
-                    var section = configuration.GetSection($"{@this.SectionName}:{optionsId}");
-
-                    var configuredTypes = @this.ServiceProvider
-                        .GetRequiredService<IOptionsMonitor<AbstractTypeOptions>>()
-                        .CurrentValue;
-
-                    var found = new List<TSubOptions>();
-                    if (configuredTypes.ConnectionMap.TryGetValue(typeof(TOptions), out var set))
+                    var value = property.GetValue(sectionAsType);
+                    if (value is TBase typed)
                     {
-                        foreach (var type in set)
-                        {
-                            var sectionAsType = section.Get(type)!;
-
-                            var properties = sectionAsType.GetType().GetProperties()
-                                .Where(e => e.PropertyType.IsAssignableTo(typeof(TSubOptions)))
-                                .Select(e => (TSubOptions)e.GetValue(sectionAsType)!)
-                                .Where(e => e is not null)
-                                .ToList();
-
-                            found.AddRange(properties);
-                        }
-                    }
-
-                    if (found.Count == 1)
-                    {
-                        return found.Single();
-                    }
-                    else
-                    {
-                        logger.LogWarning("Expected exactly one connection type, but found multiple: {ConnectionTypes}",
-                            string.Join(", ", found.Select(e => e.GetType().FullName)));
+                        found.Add(typed);
                     }
                 }
             }
 
-            return new TSubOptions();
+            if (found.Count == 1)
+            {
+                return found[0];
+            }
+
+            if (found.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    $"Entry '{optionsId}' did not have any nested configuration matching '{typeof(TBase).FullName}'.");
+            }
+
+            logger.LogWarning(
+                "Expected exactly one nested options object for '{OptionsId}', but found multiple: {Types}",
+                optionsId,
+                string.Join(", ", found.Select(e => e.GetType().FullName)));
+
+            throw new InvalidOperationException(
+                $"Entry '{optionsId}' has ambiguous nested configuration for '{typeof(TBase).FullName}'.");
         }
     }
 }

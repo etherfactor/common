@@ -20,6 +20,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="EtherGizmos.Common.$(MSBuildProjectName).UnitTests" />
     <InternalsVisibleTo Include="EtherGizmos.Common.$(MSBuildProjectName).IntegrationTests" />
+    <InternalsVisibleTo Include="EtherGizmos.Common.Configuration.UnitTests" />
   </ItemGroup>
 
 </Project>

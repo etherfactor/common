@@ -19,11 +19,11 @@ public static class CommonConfigurationBuilderExtensions
         /// <param name="remaps">The remaps to apply.</param>
         /// <returns></returns>
         public IConfigurationBuilder AddRemappedEnvironmentVariables(
-            params (Regex Remap, string Replacement)[] remaps)
+            params Remap[] remaps)
         {
             @this.Add(new RemappedEnvironmentVariablesConfigurationSource()
             {
-                Remaps = remaps,
+                Remaps = remaps.Select(e => (e.From, e.To)),
             });
 
             return @this;
@@ -49,3 +49,8 @@ public static class CommonConfigurationBuilderExtensions
         }
     }
 }
+
+public record Remap(
+    Regex From,
+    string To
+);

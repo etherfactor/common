@@ -1,7 +1,6 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using EtherGizmos.Common.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace EtherGizmos.Common;
 
@@ -21,16 +20,16 @@ internal class PostgreSqlConnectionResolverBuilderExtensionsTests
 
         //Assert
         var factory = provider.GetService<IDbConnectionFactory<PostgreSqlOptions>>();
-        var options = provider.GetRequiredService<IOptionsMonitor<AbstractTypeOptions>>();
+        var matches = AbstractTypeRegistry.Registrations
+            .Where(e => e.BaseType == typeof(DatabaseConnectionOptions))
+            .ToList();
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(factory, Is.Not.Null);
-            Assert.That(options.CurrentValue.ConnectionMap, Does.ContainKey(typeof(ConnectionOptions)));
+            Assert.That(matches, Has.One.Matches<AbstractTypeRegistration>(reg =>
+                reg.Properties.Contains(typeof(RootPostgreSqlOptions)
+                    .GetProperty(nameof(RootPostgreSqlOptions.PostgreSql))!)));
         }
-
-        var set = options.CurrentValue.ConnectionMap[typeof(ConnectionOptions)];
-
-        Assert.That(set, Does.Contain(typeof(RootPostgreSqlOptions)));
     }
 }

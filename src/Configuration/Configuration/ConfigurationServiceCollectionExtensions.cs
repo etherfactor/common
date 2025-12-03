@@ -1,5 +1,6 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using EtherGizmos.Common.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -12,12 +13,14 @@ public static class ConfigurationServiceCollectionExtensions
         public IConnectionResolverBuilder AddConnectionResolver()
         {
             @this.TryAddSingleton<IConnectionResolver, ConnectionResolver>();
+            @this.TryAddSingleton<IConfiguration>(new ConfigurationManager());
             return new ConnectionResolverBuilder(@this);
         }
 
         public IKeyResolverBuilder AddKeyResolver()
         {
             @this.TryAddSingleton<IKeyResolver, KeyResolver>();
+            @this.TryAddSingleton<IConfiguration>(new ConfigurationManager());
             return new KeyResolverBuilder(@this);
         }
     }

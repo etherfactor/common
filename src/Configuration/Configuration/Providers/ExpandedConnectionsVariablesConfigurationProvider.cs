@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using EtherGizmos.Common.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 
 namespace EtherGizmos.Common.Providers;
@@ -9,23 +10,6 @@ namespace EtherGizmos.Common.Providers;
 internal class ExpandedConnectionsVariablesConfigurationProvider : ConfigurationProvider
 {
     private readonly IConfigurationRoot _configuration;
-
-    /// <summary>
-    /// The markers that represent a database connection.
-    /// </summary>
-    private static readonly IEnumerable<string> _databases =
-    [
-        "PostgreSql",
-    ];
-
-    /// <summary>
-    /// The markers that represent a certificate.
-    /// </summary>
-    private static readonly IEnumerable<string> _certificates =
-    [
-        "File",
-        "Text",
-    ];
 
     public ExpandedConnectionsVariablesConfigurationProvider(
         IConfigurationRoot configuration)
@@ -52,54 +36,39 @@ internal class ExpandedConnectionsVariablesConfigurationProvider : Configuration
             .AsEnumerable()
             .ToList();
 
-        foreach (var database in _databases)
+        var groups = AbstractTypeRegistry.Registrations
+            .GroupBy(e => new { e.BaseType, e.SectionName, e.ItemIdName, e.TypeName });
+
+        foreach (var group in groups)
         {
-            var marker = $":{database}:";
+            var section = group.Key.SectionName;
+            var idname = group.Key.ItemIdName;
+            var typename = group.Key.TypeName;
+            var properties = group.SelectMany(e => e.Properties);
 
-            var matches = values
-                .Where(e => e.Key.Contains(marker, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            var prefixes = matches
-                .Select(e => e.Key.Substring(0, e.Key.IndexOf(marker, StringComparison.OrdinalIgnoreCase)))
-                .Distinct();
-
-            foreach (var prefix in prefixes)
+            foreach (var property in properties)
             {
-                var connectionId = Guid.NewGuid().ToString();
-                Data[$"{prefix}:ConnectionId"] = connectionId;
-                Data[$"Connections:{connectionId}:Type"] = "Database";
+                var marker = $":{property.Name}:";
 
-                foreach (var match in matches.Where(e => e.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+                var matches = values
+                    .Where(e => e.Key.Contains(marker, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                var prefixes = matches
+                    .Select(e => e.Key.Substring(0, e.Key.IndexOf(marker, StringComparison.OrdinalIgnoreCase)))
+                    .Distinct();
+
+                foreach (var prefix in prefixes)
                 {
-                    var newKey = match.Key.Substring(prefix.Length);
-                    Data[$"Connections:{connectionId}{newKey}"] = match.Value;
-                }
-            }
-        }
+                    var id = Guid.NewGuid().ToString();
+                    Data[$"{prefix}:{idname}"] = id;
+                    Data[$"{section}:{id}:Type"] = typename;
 
-        foreach (var certificate in _certificates)
-        {
-            var marker = $":{certificate}:";
-
-            var matches = values
-                .Where(e => e.Key.Contains(marker, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            var prefixes = matches
-                .Select(e => e.Key.Substring(0, e.Key.IndexOf(marker, StringComparison.OrdinalIgnoreCase)))
-                .Distinct();
-
-            foreach (var prefix in prefixes)
-            {
-                var certificateId = Guid.NewGuid().ToString();
-                Data[$"{prefix}:CertificateId"] = certificateId;
-                Data[$"Security:Certificates:{certificateId}:Type"] = "Certificate";
-
-                foreach (var match in matches.Where(e => e.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
-                {
-                    var newKey = match.Key.Substring(prefix.Length);
-                    Data[$"Security:Certificates:{certificateId}{newKey}"] = match.Value;
+                    foreach (var match in matches.Where(e => e.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        var newKey = match.Key.Substring(prefix.Length);
+                        Data[$"{section}:{id}{newKey}"] = match.Value;
+                    }
                 }
             }
         }
