@@ -7,7 +7,11 @@
   <Folder Name="/src/" />
   <Folder Name="/src/Configuration/">
     <Project Path="src/Configuration/Configuration.Data/Configuration.Data.csproj" Id="4cdf6656-9223-46f7-bb99-aeda593c4d86" />
+    <Project Path="src/Configuration/Configuration.Keys/Configuration.Keys.csproj" Id="ff09a148-5229-41a3-996a-bf2e420b1c9a" />
     <Project Path="src/Configuration/Configuration/Configuration.csproj" />
+  </Folder>
+  <Folder Name="/src/Cryptography/">
+    <Project Path="src/Cryptography/Cryptography.Certificates/Cryptography.Certificates.csproj" Id="5b3c17c9-8c70-494d-9cdf-72b48825219d" />
   </Folder>
   <Folder Name="/src/Data/">
     <Project Path="src/Data/Data.PostgreSql/Data.PostgreSql.csproj" Id="ddd1b9ce-b1ef-4c20-b91f-df01b6d5cf63" />
@@ -15,6 +19,9 @@
   <Folder Name="/tests/" />
   <Folder Name="/tests/Configuration/">
     <Project Path="tests/Configuration/Configuration.UnitTests/Configuration.UnitTests.csproj" Id="642d9662-4a8c-45bb-b7a3-caa2d027974b" />
+  </Folder>
+  <Folder Name="/tests/Cryptography/">
+    <Project Path="src/Cryptography/Cryptography.Certificates.UnitTests/Cryptography.Certificates.UnitTests.csproj" Id="7ac53612-8dbf-42c8-9de6-695df3397f1c" />
   </Folder>
   <Folder Name="/tests/Data/">
     <Project Path="tests/Data/Data.PostgreSql.UnitTests/Data.PostgreSql.UnitTests.csproj" Id="211c005f-d822-4851-a7fa-efdf3408bcdd" />
