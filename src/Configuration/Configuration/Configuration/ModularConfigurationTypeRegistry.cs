@@ -21,7 +21,7 @@ public static class ModularConfigurationTypeRegistry
             .Where(p => typeof(TBase).IsAssignableFrom(p.PropertyType))
             .ToArray();
 
-        var key = new ModularConfigurationTypeKey(typeof(TRoot));
+        var key = new ModularConfigurationTypeKey(typeof(TRoot), typeof(TBase));
         var value = new ModularConfigurationTypeRegistration(
             RootType: typeof(TRoot),
             BaseType: typeof(TBase),
@@ -34,7 +34,8 @@ public static class ModularConfigurationTypeRegistry
     }
 
     private record ModularConfigurationTypeKey(
-        Type RootType
+        Type RootType,
+        Type BaseType
     );
 }
 

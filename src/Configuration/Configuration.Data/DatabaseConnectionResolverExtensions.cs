@@ -26,13 +26,12 @@ public static class DatabaseConnectionResolverExtensions
             var result = (DbConnection)typeof(DatabaseConnectionResolverExtensions)
                 .GetMethod(nameof(InnerCreateDbConnection), BindingFlags.NonPublic | BindingFlags.Static)!
                 .MakeGenericMethod([type])
-                .Invoke(null, [@this, connectionId, connection])!;
+                .Invoke(null, [@this, connection])!;
 
             return result;
         }
 
         internal DbConnection InnerCreateDbConnection<TOptions>(
-            string connectionId,
             TOptions options)
             where TOptions : DatabaseConnectionOptions, new()
         {
