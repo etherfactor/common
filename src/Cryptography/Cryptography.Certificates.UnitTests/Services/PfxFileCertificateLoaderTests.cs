@@ -1,6 +1,4 @@
-﻿using EtherGizmos.Common.Services;
-
-namespace Cryptography.Certificates.UnitTests.Services;
+﻿namespace EtherGizmos.Common.Services;
 
 internal class PfxFileCertificateLoaderTests
 {
