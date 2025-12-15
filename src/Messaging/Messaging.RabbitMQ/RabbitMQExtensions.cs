@@ -1,10 +1,10 @@
 using EtherGizmos.Common.Abstractions;
 using EtherGizmos.Common.Configuration;
 using EtherGizmos.Common.Services;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using RabbitMQ.Client;
+using System.Diagnostics.CodeAnalysis;
 
 namespace EtherGizmos.Common;
 
@@ -15,15 +15,42 @@ public static class RabbitMQExtensions
         public static string RabbitMQMessagingKey => "messaging-rabbitmq";
     }
 
+    extension(MessagingConnectionOptions @this)
+    {
+        public bool IsPostgreSql(
+            [NotNullWhen(true)] out RabbitMQOptions? options)
+        {
+            if (@this is RabbitMQOptions typed)
+            {
+                options = typed;
+                return true;
+            }
+
+            options = null;
+            return false;
+        }
+    }
+
+    extension(IConnectionResolverBuilder @this)
+    {
+        public IConnectionResolverBuilder WithRabbitMQ()
+        {
+            @this.Services.TryAddSingleton<IDbConnectionFactory<PostgreSqlOptions>, PostgreSqlDbConnectionFactory>();
+
+            ModularConfigurationTypeRegistry.Register<RootPostgreSqlOptions, DatabaseConnectionOptions>(
+                sectionName: "Connections",
+                itemIdName: "ConnectionId",
+                typeName: ConnectionType.Database);
+
+            return @this;
+        }
+    }
+
     extension(IMessagingBuilder @this)
     {
         public IMessagingBuilder UseRabbitMQ(
-            Action<RabbitMQMessagingOptions, IConfiguration> configureOptions)
+            string connectionId)
         {
-            @this.Services
-                .AddOptions<RabbitMQMessagingOptions>()
-                .Configure(configureOptions);
-
             @this.Services
                 .AddSingleton<RabbitMQTransport>()
                 .AddSingleton<IMessagePublisherFactory>(e => e.GetRequiredService<RabbitMQTransport>())
@@ -32,9 +59,9 @@ public static class RabbitMQExtensions
             @this.Services
                 .AddKeyedSingleton(MessagingConstants.RabbitMQMessagingKey, (provider, _) =>
                 {
-                    var options = provider
-                        .GetRequiredService<IOptions<RabbitMQMessagingOptions>>()
-                        .Value;
+                    var resolver= provider.GetRequiredService<IConnectionResolver>();
+
+                    var connection=resolver.GetMessagingConnection(connectionId);
 
                     var factory = new ConnectionFactory();
                     if (options.ConnectionString is not null)

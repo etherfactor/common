@@ -1,6 +1,6 @@
 namespace EtherGizmos.Common.Configuration;
 
-public class RabbitMQMessagingOptions
+public class RabbitMQOptions : MessagingConnectionOptions
 {
     public string? ConnectionString { get; set; }
 
