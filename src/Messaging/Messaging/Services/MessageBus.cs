@@ -1,4 +1,5 @@
 using EtherGizmos.Common.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
@@ -8,7 +9,9 @@ namespace EtherGizmos.Common.Services;
 
 internal class MessageBus : IMessageBus
 {
+    private readonly BusKey _busKey;
     private readonly ILogger _logger;
+    private readonly IMessageBusRegistry _registry;
     private readonly IMessageListenerFactory _listenerFactory;
     private readonly IMessagePublisherFactory _publisherFactory;
     private readonly IMessageReceiver _receiver;
@@ -20,12 +23,16 @@ internal class MessageBus : IMessageBus
     private CancellationTokenSource? _pumpCts;
 
     public MessageBus(
+        [ServiceKey] object serviceKey,
         ILogger<MessageBus> logger,
+        IMessageBusRegistry registry,
         IMessageListenerFactory listenerFactory,
         IMessagePublisherFactory publisherFactory,
         IMessageReceiver receiver)
     {
+        _busKey = (BusKey)serviceKey;
         _logger = logger;
+        _registry = registry;
         _listenerFactory = listenerFactory;
         _publisherFactory = publisherFactory;
         _receiver = receiver;
@@ -90,8 +97,8 @@ internal class MessageBus : IMessageBus
             return (listener, cts);
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
-        if (!_listeners.TryAdd(logicalName, lazy))
-            throw new InvalidOperationException("Listener already registered");
+        await _registry.RegisterListenerAsync(_busKey.BusId, logicalName, lazy, cancellationToken);
+        _listeners.TryAdd(logicalName, lazy);
 
         var result = await lazy.Value.ConfigureAwait(false);
         return result.Listener;
@@ -111,8 +118,8 @@ internal class MessageBus : IMessageBus
             return (listener, cts);
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
-        if (!_listeners.TryAdd(logicalName, lazy))
-            throw new InvalidOperationException("Listener already registered");
+        await _registry.RegisterListenerAsync(_busKey.BusId, logicalName, lazy, cancellationToken);
+        _listeners.TryAdd(logicalName, lazy);
 
         var result = await lazy.Value.ConfigureAwait(false);
         return result.Listener;
@@ -128,8 +135,8 @@ internal class MessageBus : IMessageBus
             return publisher;
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
-        if (!_publishers.TryAdd(logicalName, lazy))
-            throw new InvalidOperationException("Publisher already registered");
+        await _registry.RegisterPublisherAsync(_busKey.BusId, logicalName, lazy, cancellationToken);
+        _publishers.TryAdd(logicalName, lazy);
 
         return await lazy.Value.ConfigureAwait(false);
     }
@@ -144,8 +151,8 @@ internal class MessageBus : IMessageBus
             return publisher;
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
-        if (!_publishers.TryAdd(logicalName, lazy))
-            throw new InvalidOperationException("Publisher already registered");
+        await _registry.RegisterPublisherAsync(_busKey.BusId, logicalName, lazy, cancellationToken);
+        _publishers.TryAdd(logicalName, lazy);
 
         return await lazy.Value.ConfigureAwait(false);
     }
@@ -233,36 +240,14 @@ internal class MessageBus : IMessageBus
 
     public async Task UnregisterListenerAsync(string logicalName, CancellationToken cancellationToken = default)
     {
-        if (_listeners.Remove(logicalName, out var lazy))
-        {
-            try
-            {
-                var (listener, cts) = await lazy.Value.ConfigureAwait(false);
-                cts.Cancel();
-                cts.Dispose();
-                await listener.StopAsync(cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to stop listener {LogicalName}.", logicalName);
-            }
-        }
+        await _registry.UnregisterListenerAsync(logicalName, cancellationToken);
+        _listeners.Remove(logicalName, out _);
     }
 
     public async Task UnregisterPublisherAsync(string logicalName, CancellationToken cancellationToken = default)
     {
-        if (_publishers.Remove(logicalName, out var lazy))
-        {
-            try
-            {
-                var publisher = await lazy.Value.ConfigureAwait(false);
-                await publisher.StopAsync(cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to stop publisher {LogicalName}.", logicalName);
-            }
-        }
+        await _registry.UnregisterPublisherAsync(logicalName, cancellationToken);
+        _publishers.Remove(logicalName, out _);
     }
 
     private async Task ExecuteListenerPumpAsync(

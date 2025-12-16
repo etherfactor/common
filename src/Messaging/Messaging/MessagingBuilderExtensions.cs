@@ -1,6 +1,7 @@
 using EtherGizmos.Common.Abstractions;
 using EtherGizmos.Common.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Reflection;
 
 namespace EtherGizmos.Common;
@@ -13,14 +14,8 @@ public static class MessagingBuilderExtensions
             string? logicalName = null)
             where TMiddleware : class, IMessageMiddleware
         {
-            if (logicalName is not null)
-            {
-                @this.Services.AddKeyedScoped<IMessageMiddleware, TMiddleware>(logicalName);
-            }
-            else
-            {
-                @this.Services.AddScoped<IMessageMiddleware, TMiddleware>();
-            }
+            var key = new BusKey(@this.BusId, logicalName);
+            @this.Services.AddKeyedScoped<IMessageMiddleware, TMiddleware>(key);
 
             return @this;
         }
@@ -29,14 +24,8 @@ public static class MessagingBuilderExtensions
             string? logicalName = null)
             where TTransformer : class, IMessageTransformer
         {
-            if (logicalName is not null)
-            {
-                @this.Services.AddKeyedScoped<IMessageTransformer, TTransformer>(logicalName);
-            }
-            else
-            {
-                @this.Services.AddScoped<IMessageTransformer, TTransformer>();
-            }
+            var key = new BusKey(@this.BusId, logicalName);
+            @this.Services.AddKeyedScoped<IMessageTransformer, TTransformer>(key);
 
             return @this;
         }
@@ -45,14 +34,8 @@ public static class MessagingBuilderExtensions
             string? logicalName = null)
             where TSerializer : class, IMessageSerializer
         {
-            if (logicalName is not null)
-            {
-                @this.Services.AddKeyedSingleton<IMessageSerializer, TSerializer>(logicalName);
-            }
-            else
-            {
-                @this.Services.AddSingleton<IMessageSerializer, TSerializer>();
-            }
+            var key = new BusKey(@this.BusId, logicalName);
+            @this.Services.AddKeyedSingleton<IMessageSerializer, TSerializer>(key);
 
             return @this;
         }
@@ -77,7 +60,7 @@ public static class MessagingBuilderExtensions
 
                     foreach (var type in types)
                     {
-                        @this.Services.AddScoped(type, consumer);
+                        @this.Services.TryAddScoped(type, consumer);
                     }
                 }
             }

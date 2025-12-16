@@ -16,7 +16,7 @@ public static class RabbitMQExtensions
 
     extension(MessagingConnectionOptions @this)
     {
-        public bool IsPostgreSql(
+        public bool IsRabbitMQ(
             [NotNullWhen(true)] out RabbitMQOptions? options)
         {
             if (@this is RabbitMQOptions typed)
@@ -46,42 +46,4 @@ public static class RabbitMQExtensions
             return @this;
         }
     }
-
-    //extension(IMessagingBuilder @this)
-    //{
-    //    public IMessagingBuilder UseRabbitMQ(
-    //        string connectionId)
-    //    {
-    //        @this.Services
-    //            .AddSingleton<RabbitMQTransport>()
-    //            .AddSingleton<IMessagePublisherFactory>(e => e.GetRequiredService<RabbitMQTransport>())
-    //            .AddSingleton<IMessageListenerFactory>(e => e.GetRequiredService<RabbitMQTransport>());
-
-    //        @this.Services
-    //            .AddKeyedSingleton(MessagingConstants.RabbitMQMessagingKey, (provider, _) =>
-    //            {
-    //                var builder=provider.GetRequiredService<>
-
-    //                var factory = new ConnectionFactory();
-    //                if (options.ConnectionString is not null)
-    //                {
-    //                    factory.Uri = new Uri(options.ConnectionString);
-    //                }
-    //                else
-    //                {
-    //                    factory.HostName = options.Host ?? "localhost";
-    //                    factory.UserName = options.Username!;
-    //                    factory.Password = options.Password!;
-    //                    factory.Port = options.Port;
-    //                }
-
-    //                factory.AutomaticRecoveryEnabled = true;
-    //                factory.TopologyRecoveryEnabled = true;
-
-    //                return factory;
-    //            });
-
-    //        return @this;
-    //    }
-    //}
 }

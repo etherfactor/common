@@ -1,18 +1,20 @@
 using EtherGizmos.Common.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace EtherGizmos.Common.Services;
 
 internal class MessageSender : IMessageSender
 {
-    private readonly IMessageBus _bus;
+    private readonly IMessageBusRegistry _registry;
 
     public IServiceProvider Services { get; }
 
     public MessageSender(
         IServiceProvider services,
-        IMessageBus bus)
+        IMessageBusRegistry registry)
     {
-        _bus = bus;
+        _registry = registry;
 
         Services = services;
     }
@@ -23,11 +25,18 @@ internal class MessageSender : IMessageSender
     {
         var logicalName = message.LogicalDestinationName;
 
-        if (!_bus.TryGetPublisher(logicalName, out var publisher))
-        {
-            throw new InvalidOperationException($"No publisher registered for {logicalName}");
-        }
+        if (!_registry.TryGetBusId(logicalName, out var busId))
+            ThrowForPublisher(logicalName);
+
+        var bus = Services.GetRequiredKeyedService<IMessageBus>(new BusKey(busId));
+        if (!bus.TryGetPublisher(logicalName, out var publisher))
+            ThrowForPublisher(logicalName);
 
         await publisher.Channel.WriteAsync(message, cancellationToken);
     }
+
+    [DoesNotReturn]
+    private void ThrowForPublisher(
+        string logicalName)
+        => throw new InvalidOperationException($"No publisher registered for {logicalName}");
 }

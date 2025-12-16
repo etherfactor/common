@@ -1,5 +1,6 @@
 using EtherGizmos.Common.Abstractions;
 using EtherGizmos.Common.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
@@ -7,56 +8,67 @@ namespace EtherGizmos.Common.Services;
 
 public class MessagePumpHostedService : IHostedService
 {
-    private readonly MessagingOptions _options;
-    private readonly IMessageBus _bus;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IOptions<MessageBusOptions> _busOptions;
+    private readonly IOptionsMonitor<MessagingOptions> _options;
 
     public MessagePumpHostedService(
-        IOptions<MessagingOptions> options,
-        IMessageBus bus)
+        IServiceProvider serviceProvider,
+        IOptions<MessageBusOptions> busOptions,
+        IOptionsMonitor<MessagingOptions> options)
     {
-        _options = options.Value;
-        _bus = bus;
+        _serviceProvider = serviceProvider;
+        _busOptions = busOptions;
+        _options = options;
     }
 
     public async Task StartAsync(
         CancellationToken cancellationToken)
     {
-        await _bus.StartAsync(cancellationToken);
-
-        foreach (var listener in _options.Listeners)
+        foreach (var busId in _busOptions.Value.Buses)
         {
-            if (_options.Serverless)
-                throw new InvalidOperationException("Cannot have listeners configured in a serverless environment.");
+            var key = new BusKey(busId);
+            var bus = _serviceProvider.GetRequiredKeyedService<IMessageBus>(key);
 
-            var logicalName = listener.Key;
-            var config = listener.Value;
+            var options = _options.Get(busId);
 
-            if (config.IsTopic)
+            await bus.StartAsync(cancellationToken);
+
+            foreach (var listener in options.Listeners)
             {
-                await _bus.RegisterListenerForTopicAsync(
-                    logicalName, topic: config.Name, subscription: config.Subscription!, cancellationToken: cancellationToken);
+                if (options.Serverless)
+                    throw new InvalidOperationException("Cannot have listeners configured in a serverless environment.");
+
+                var logicalName = listener.Key;
+                var config = listener.Value;
+
+                if (config.IsTopic)
+                {
+                    await bus.RegisterListenerForTopicAsync(
+                        logicalName, topic: config.Name, subscription: config.Subscription!, cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    await bus.RegisterListenerForQueueAsync(
+                        logicalName, queue: config.Name, cancellationToken: cancellationToken);
+                }
             }
-            else
-            {
-                await _bus.RegisterListenerForQueueAsync(
-                    logicalName, queue: config.Name, cancellationToken: cancellationToken);
-            }
-        }
 
-        foreach (var publisher in _options.Publishers)
-        {
-            var logicalName = publisher.Key;
-            var config = publisher.Value;
+            foreach (var publisher in options.Publishers)
+            {
+                var logicalName = publisher.Key;
+                var config = publisher.Value;
 
-            if (config.IsTopic)
-            {
-                await _bus.RegisterPublisherForTopicAsync(
-                    logicalName, topic: config.Name, cancellationToken: cancellationToken);
-            }
-            else
-            {
-                await _bus.RegisterPublisherForQueueAsync(
-                    logicalName, queue: config.Name, cancellationToken: cancellationToken);
+                if (config.IsTopic)
+                {
+                    await bus.RegisterPublisherForTopicAsync(
+                        logicalName, topic: config.Name, cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    await bus.RegisterPublisherForQueueAsync(
+                        logicalName, queue: config.Name, cancellationToken: cancellationToken);
+                }
             }
         }
     }
@@ -64,6 +76,11 @@ public class MessagePumpHostedService : IHostedService
     public async Task StopAsync(
         CancellationToken cancellationToken)
     {
-        await _bus.StopAsync(cancellationToken);
+        foreach (var busId in _busOptions.Value.Buses)
+        {
+            var key = new BusKey(busId);
+            var bus = _serviceProvider.GetRequiredKeyedService<IMessageBus>(key);
+            await bus.StopAsync(cancellationToken);
+        }
     }
 }

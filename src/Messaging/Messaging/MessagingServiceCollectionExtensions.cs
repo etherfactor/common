@@ -23,8 +23,13 @@ public static class MessagingServiceCollectionExtensions
             string busId,
             Action<MessagingOptions, IConfiguration> configureOptions)
         {
+            @this.AddMessagingCore();
+
             @this.AddOptions<MessagingOptions>(busId)
                 .Configure(configureOptions);
+
+            var key = new BusKey(busId);
+            @this.TryAddKeyedSingleton<IMessageBus, MessageBus>(key);
 
             @this.AddHostedService<MessagePumpHostedService>();
             @this.AddOptions<MessageBusOptions>()
@@ -33,21 +38,26 @@ public static class MessagingServiceCollectionExtensions
                     opt.Buses.Add(busId);
                 });
 
-            @this.TryAddKeyedSingleton<IMessageBus, MessageBus>(busId);
+            return new MessagingBuilder(busId, @this);
+        }
 
-            @this.TryAddKeyedSingleton<IMessageReceiver, MessageReceiver>(busId);
-            @this.TryAddKeyedSingleton<IMessageSender, MessageSender>(busId);
+        private IServiceCollection AddMessagingCore()
+        {
+            @this.TryAddSingleton<IMessageBusRegistry, MessageBusRegistry>();
 
-            @this.TryAddKeyedSingleton<IMessageSerializer, JsonMessageSerializer>(busId);
+            @this.TryAddSingleton<IMessageReceiver, MessageReceiver>();
+            @this.TryAddSingleton<IMessageSender, MessageSender>();
 
-            @this.AddOptions<JsonSerializerOptions>($"{MessagingConstants.OptionsName}:{busId}")
+            @this.TryAddSingleton<IMessageSerializer, JsonMessageSerializer>();
+
+            @this.AddOptions<JsonSerializerOptions>(MessagingConstants.OptionsName)
                 .Configure(opt =>
                 {
                     opt.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                     opt.Converters.Add(new JsonStringEnumConverter());
                 });
 
-            return new MessagingBuilder(busId, @this);
+            return @this;
         }
     }
 }

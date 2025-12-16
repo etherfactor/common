@@ -3,21 +3,25 @@ using EtherGizmos.Common.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace EtherGizmos.Common.Services;
 
 internal class MessageReceiver : IMessageReceiver
 {
-    private readonly MessagingOptions _options;
+    private readonly IMessageBusRegistry _registry;
+    private readonly IOptionsMonitor<MessagingOptions> _options;
 
     public IServiceProvider Services { get; }
 
     public MessageReceiver(
         IServiceProvider services,
-        IOptions<MessagingOptions> options)
+        IMessageBusRegistry registry,
+        IOptionsMonitor<MessagingOptions> options)
     {
-        _options = options.Value;
+        _options = options;
+        _registry = registry;
         Services = services;
     }
 
@@ -25,7 +29,12 @@ internal class MessageReceiver : IMessageReceiver
         ReceivedMessage message,
         CancellationToken cancellationToken = default)
     {
-        var type = _options.ConvertType(message.Type);
+        var logicalName = message.LogicalSourceName;
+
+        if (!_registry.TryGetBusId(logicalName, out var busId))
+            ThrowForListener(logicalName);
+
+        var type = _options.Get(busId).ConvertType(message.Type);
 
         var method = typeof(MessageReceiver)
             .GetMethod(nameof(ReceiveInternalAsync), BindingFlags.Instance | BindingFlags.NonPublic)!
@@ -45,18 +54,26 @@ internal class MessageReceiver : IMessageReceiver
     {
         var logicalName = message.LogicalSourceName;
 
+        if (!_registry.TryGetBusId(logicalName, out var busId))
+            ThrowForListener(logicalName);
+
+        var busKey = new BusKey(busId);
+        var logicalKey = new BusKey(busId, logicalName);
+
         using var scope = Services.CreateScope();
         var provider = scope.ServiceProvider;
 
         //Fetch the global and local transformers
         var globalTransformers = provider.GetRequiredService<IEnumerable<IMessageTransformer>>();
-        var localTransformers = provider.GetRequiredKeyedService<IEnumerable<IMessageTransformer>>(logicalName);
+        var busTransformers = provider.GetRequiredKeyedService<IEnumerable<IMessageTransformer>>(busKey);
+        var localTransformers = provider.GetRequiredKeyedService<IEnumerable<IMessageTransformer>>(logicalKey);
 
-        var transformers = globalTransformers.Concat(localTransformers).Reverse();
+        var transformers = globalTransformers.Concat(busTransformers).Concat(localTransformers).Reverse();
 
         //Prefer an endpoint-specific serializer, but fall back to the global one
-        var serializer = provider.GetService<IMessageSerializer>()
-            ?? provider.GetRequiredKeyedService<IMessageSerializer>(logicalName);
+        var serializer = provider.GetKeyedService<IMessageSerializer>(logicalKey)
+            ?? provider.GetKeyedService<IMessageSerializer>(busKey)
+            ?? provider.GetRequiredService<IMessageSerializer>();
 
         //Fetch all consumers of the message
         var consumers = provider.GetRequiredService<IEnumerable<IMessageConsumer<TMessage>>>();
@@ -73,9 +90,10 @@ internal class MessageReceiver : IMessageReceiver
 
             //Fetch the middlware
             var globalMiddleware = provider.GetRequiredService<IEnumerable<IMessageMiddleware>>();
-            var localMiddleware = provider.GetRequiredKeyedService<IEnumerable<IMessageMiddleware>>(logicalName);
+            var busMiddleware = provider.GetRequiredKeyedService<IEnumerable<IMessageMiddleware>>(busKey);
+            var localMiddleware = provider.GetRequiredKeyedService<IEnumerable<IMessageMiddleware>>(logicalKey);
 
-            var middleware = globalMiddleware.Concat(localMiddleware);
+            var middleware = globalMiddleware.Concat(busMiddleware).Concat(localMiddleware);
 
             try
             {
@@ -86,23 +104,20 @@ internal class MessageReceiver : IMessageReceiver
                 }
 
                 //Deserialize the message payload
-                var deserialized = serializer.Deserialize<TMessage>(message.Body);
-                var context = new MessageContext<TMessage>(deserialized, message.Actions, cancellationToken);
+                var deserialized = serializer.Deserialize<TMessage>(useMessage.Body);
+                var context = new MessageContext<TMessage>(deserialized, useMessage.Actions, cancellationToken);
 
                 //The final pipeline step is to execute the consumer
-                var execute = async () =>
+                async Task Execute()
                 {
-                    await Parallel.ForEachAsync(consumers, async (consumer, ct) =>
-                    {
-                        await consumer.ConsumeAsync(context).ConfigureAwait(false);
-                    }).ConfigureAwait(false);
-                };
+                    await consumer.ConsumeAsync(context).ConfigureAwait(false);
+                }
 
                 //Build the pipeline from the middleware; we wrap starting from the innermost
-                var pipeline = globalMiddleware
+                var pipeline = middleware
                     .Reverse()
-                    .Aggregate(execute, (acc, m) =>
-                        () => m.InvokeAsync(message, acc));
+                    .Aggregate(Execute, (acc, m) =>
+                        () => m.InvokeAsync(useMessage, acc));
 
                 await pipeline().ConfigureAwait(false);
             }
@@ -116,4 +131,9 @@ internal class MessageReceiver : IMessageReceiver
         if (exceptions.Any())
             throw new AggregateException(exceptions);
     }
+
+    [DoesNotReturn]
+    private void ThrowForListener(
+        string logicalName)
+        => throw new InvalidOperationException($"No listener registered for {logicalName}");
 }
