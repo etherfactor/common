@@ -18,4 +18,8 @@
     <InternalsVisibleTo Include="$(MSBuildProjectName).IntegrationTests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Configuration\Configuration.Messaging\Configuration.Messaging.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -1,4 +1,5 @@
 using EtherGizmos.Common.Abstractions;
+using EtherGizmos.Common.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
@@ -82,6 +83,64 @@ public static class MessagingBuilderExtensions
             }
 
             return @this;
+        }
+
+        public IMessagingBuilder UseConnection(
+            string connectionId)
+        {
+            @this.Services.AddKeyedSingleton(@this.BusId, (provider, _) =>
+            {
+                var connectionResolver = provider.GetRequiredService<IConnectionResolver>();
+                var connection = connectionResolver.GetMessagingConnection(connectionId);
+                var type = connection.GetType();
+
+                var result = (IMessagePublisherFactory)typeof(MessagingBuilderExtensions)
+                    .GetMethod(nameof(InnerUseConnectionPublisher), BindingFlags.NonPublic | BindingFlags.Static)!
+                    .MakeGenericMethod([type])
+                    .Invoke(null, [@this, provider, @this.BusId, connection])!;
+
+                return result;
+            });
+
+            @this.Services.AddKeyedSingleton(@this.BusId, (provider, _) =>
+            {
+                var connectionResolver = provider.GetRequiredService<IConnectionResolver>();
+                var connection = connectionResolver.GetMessagingConnection(connectionId);
+                var type = connection.GetType();
+
+                var result = (IMessageListenerFactory)typeof(MessagingBuilderExtensions)
+                    .GetMethod(nameof(InnerUseConnectionListener), BindingFlags.NonPublic | BindingFlags.Static)!
+                    .MakeGenericMethod([type])
+                    .Invoke(null, [@this, provider, @this.BusId, connection])!;
+
+                return result;
+            });
+
+            return @this;
+        }
+
+        internal IMessagePublisherFactory InnerUseConnectionPublisher<TOptions>(
+            IServiceProvider provider,
+            string busId,
+            TOptions options)
+            where TOptions : MessagingConnectionOptions, new()
+        {
+            var factory = provider.GetService<IMessagePublisherFactoryBuilder<TOptions>>()
+                ?? throw new InvalidOperationException($"No factory exists for creating a message publisher for type {typeof(TOptions)}");
+
+            return factory.CreatePublisherFactory(busId, options);
+        }
+
+        internal IMessageListenerFactory InnerUseConnectionListener<TOptions>(
+            IServiceProvider provider,
+            string busId,
+            TOptions options)
+            where TOptions : MessagingConnectionOptions, new()
+        {
+            var factory = provider.GetService<IMessageListenerFactoryBuilder<TOptions>>()
+                ?? throw new InvalidOperationException($"No factory exists for creating a message listener for type {typeof(TOptions)}");
+
+            return factory.CreateListenerFactory(busId, options);
         }
     }
 }

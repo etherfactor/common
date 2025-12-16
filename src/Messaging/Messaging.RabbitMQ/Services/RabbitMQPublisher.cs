@@ -1,5 +1,4 @@
 using EtherGizmos.Common.Abstractions;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System.Text;
@@ -26,21 +25,23 @@ internal class RabbitMQPublisher : IMessagePublisher, IDisposable
     public ChannelWriter<SentMessage> Channel => _channel;
 
     public RabbitMQPublisher(
-        IServiceProvider serviceProvider,
+        ILogger<RabbitMQPublisher> logger,
+        ConnectionFactory connectionFactory,
         string queue)
     {
-        _logger = serviceProvider.GetRequiredService<ILogger<RabbitMQPublisher>>();
-        _rmqConnectionFactory = serviceProvider.GetRequiredKeyedService<ConnectionFactory>(MessagingConstants.RabbitMQMessagingKey);
+        _logger = logger;
+        _rmqConnectionFactory = connectionFactory;
         _queue = queue;
     }
 
     public RabbitMQPublisher(
-        IServiceProvider serviceProvider,
+        ILogger<RabbitMQPublisher> logger,
+        ConnectionFactory connectionFactory,
         string topic,
         string subscription)
     {
-        _logger = serviceProvider.GetRequiredService<ILogger<RabbitMQPublisher>>();
-        _rmqConnectionFactory = serviceProvider.GetRequiredKeyedService<ConnectionFactory>(MessagingConstants.RabbitMQMessagingKey);
+        _logger = logger;
+        _rmqConnectionFactory = connectionFactory;
         _topic = topic;
     }
 
