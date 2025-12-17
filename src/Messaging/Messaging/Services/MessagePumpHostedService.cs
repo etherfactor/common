@@ -25,51 +25,58 @@ public class MessagePumpHostedService : IHostedService
     public async Task StartAsync(
         CancellationToken cancellationToken)
     {
-        foreach (var busId in _busOptions.Value.Buses)
+        try
         {
-            var key = new BusKey(busId);
-            var bus = _serviceProvider.GetRequiredKeyedService<IMessageBus>(key);
-
-            var options = _options.Get(busId);
-
-            await bus.StartAsync(cancellationToken);
-
-            foreach (var listener in options.Listeners)
+            foreach (var busId in _busOptions.Value.Buses)
             {
-                if (options.Serverless)
-                    throw new InvalidOperationException("Cannot have listeners configured in a serverless environment.");
+                var key = new BusKey(busId);
+                var bus = _serviceProvider.GetRequiredKeyedService<IMessageBus>(key);
 
-                var logicalName = listener.Key;
-                var config = listener.Value;
+                var options = _options.Get(busId);
 
-                if (config.IsTopic)
+                await bus.StartAsync(cancellationToken);
+
+                foreach (var listener in options.Listeners)
                 {
-                    await bus.RegisterListenerForTopicAsync(
-                        logicalName, topic: config.Name, subscription: config.Subscription!, cancellationToken: cancellationToken);
+                    if (options.Serverless)
+                        throw new InvalidOperationException("Cannot have listeners configured in a serverless environment.");
+
+                    var logicalName = listener.Key;
+                    var config = listener.Value;
+
+                    if (config.IsTopic)
+                    {
+                        await bus.RegisterListenerForTopicAsync(
+                            logicalName, topic: config.Name, subscription: config.Subscription!, cancellationToken: cancellationToken);
+                    }
+                    else
+                    {
+                        await bus.RegisterListenerForQueueAsync(
+                            logicalName, queue: config.Name, cancellationToken: cancellationToken);
+                    }
                 }
-                else
+
+                foreach (var publisher in options.Publishers)
                 {
-                    await bus.RegisterListenerForQueueAsync(
-                        logicalName, queue: config.Name, cancellationToken: cancellationToken);
+                    var logicalName = publisher.Key;
+                    var config = publisher.Value;
+
+                    if (config.IsTopic)
+                    {
+                        await bus.RegisterPublisherForTopicAsync(
+                            logicalName, topic: config.Name, cancellationToken: cancellationToken);
+                    }
+                    else
+                    {
+                        await bus.RegisterPublisherForQueueAsync(
+                            logicalName, queue: config.Name, cancellationToken: cancellationToken);
+                    }
                 }
             }
+        }
+        catch (Exception ex)
+        {
 
-            foreach (var publisher in options.Publishers)
-            {
-                var logicalName = publisher.Key;
-                var config = publisher.Value;
-
-                if (config.IsTopic)
-                {
-                    await bus.RegisterPublisherForTopicAsync(
-                        logicalName, topic: config.Name, cancellationToken: cancellationToken);
-                }
-                else
-                {
-                    await bus.RegisterPublisherForQueueAsync(
-                        logicalName, queue: config.Name, cancellationToken: cancellationToken);
-                }
-            }
         }
     }
 

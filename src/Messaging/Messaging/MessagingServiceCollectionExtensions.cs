@@ -26,7 +26,8 @@ public static class MessagingServiceCollectionExtensions
             @this.AddMessagingCore();
 
             @this.AddOptions<MessagingOptions>(busId)
-                .Configure(configureOptions);
+                .Configure(configureOptions)
+                .Configure(opt => opt.Build());
 
             var key = new BusKey(busId);
             @this.TryAddKeyedSingleton<IMessageBus, MessageBus>(key);

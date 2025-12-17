@@ -35,8 +35,8 @@ public static class RabbitMQExtensions
         public IConnectionResolverBuilder WithRabbitMQ()
         {
             @this.Services.TryAddSingleton<RabbitMQTransportBuilder>();
-            @this.Services.TryAddSingleton(provider => provider.GetRequiredService<IMessageListenerFactoryBuilder<RabbitMQOptions>>());
-            @this.Services.TryAddSingleton(provider => provider.GetRequiredService<IMessagePublisherFactoryBuilder<RabbitMQOptions>>());
+            @this.Services.TryAddSingleton<IMessageListenerFactoryBuilder<RabbitMQOptions>>(provider => provider.GetRequiredService<RabbitMQTransportBuilder>());
+            @this.Services.TryAddSingleton<IMessagePublisherFactoryBuilder<RabbitMQOptions>>(provider => provider.GetRequiredService<RabbitMQTransportBuilder>());
 
             ModularConfigurationTypeRegistry.Register<RootRabbitMQOptions, MessagingConnectionOptions>(
                 sectionName: "Connections",

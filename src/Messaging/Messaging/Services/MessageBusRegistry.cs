@@ -1,4 +1,5 @@
 ﻿using EtherGizmos.Common.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
@@ -8,14 +9,17 @@ namespace EtherGizmos.Common.Services;
 internal class MessageBusRegistry : IMessageBusRegistry
 {
     private readonly ILogger _logger;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ConcurrentDictionary<string, string> _buses = [];
     private readonly ConcurrentDictionary<string, Lazy<Task<(IMessageListener Listener, CancellationTokenSource Cts)>>> _listeners = [];
     private readonly ConcurrentDictionary<string, Lazy<Task<IMessagePublisher>>> _publishers = [];
 
     public MessageBusRegistry(
-        ILogger<MessageBusRegistry> logger)
+        ILogger<MessageBusRegistry> logger,
+        IServiceProvider serviceProvider)
     {
         _logger = logger;
+        _serviceProvider = serviceProvider;
     }
 
     public bool TryGetBusId(
@@ -23,6 +27,16 @@ internal class MessageBusRegistry : IMessageBusRegistry
         [NotNullWhen(true)] out string? busId)
     {
         return _buses.TryGetValue(logicalName, out busId);
+    }
+
+    public bool TryGetBus(
+        string busId,
+        [NotNullWhen(true)] out IMessageBus? bus)
+    {
+        var key = new BusKey(busId);
+        bus = _serviceProvider.GetKeyedService<IMessageBus>(key);
+
+        return bus is not null;
     }
 
     public async Task<IMessageListener> RegisterListenerAsync(

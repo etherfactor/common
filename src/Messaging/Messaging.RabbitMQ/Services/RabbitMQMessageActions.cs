@@ -31,7 +31,7 @@ internal class RabbitMQMessageActions : IMessageActions
 
         _logger.LogInformation("Abandoning message {MessageId}", _messageId);
 
-        await _channel.BasicNackAsync(_messageId, false, false, cancellationToken);
+        await _channel.BasicNackAsync(_messageId, false, true, cancellationToken);
     }
 
     public async Task CompleteAsync(CancellationToken cancellationToken = default)
@@ -55,6 +55,6 @@ internal class RabbitMQMessageActions : IMessageActions
 
         _logger.LogInformation("Dead lettering message {MessageId}", _messageId);
 
-        await _channel.BasicNackAsync(_messageId, false, true, cancellationToken);
+        await _channel.BasicNackAsync(_messageId, false, false, cancellationToken);
     }
 }

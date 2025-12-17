@@ -25,16 +25,15 @@ internal class MessageBus : IMessageBus
     public MessageBus(
         [ServiceKey] object serviceKey,
         ILogger<MessageBus> logger,
+        IServiceProvider serviceProvider,
         IMessageBusRegistry registry,
-        IMessageListenerFactory listenerFactory,
-        IMessagePublisherFactory publisherFactory,
         IMessageReceiver receiver)
     {
         _busKey = (BusKey)serviceKey;
         _logger = logger;
         _registry = registry;
-        _listenerFactory = listenerFactory;
-        _publisherFactory = publisherFactory;
+        _listenerFactory = serviceProvider.GetRequiredKeyedService<IMessageListenerFactory>(_busKey);
+        _publisherFactory = serviceProvider.GetRequiredKeyedService<IMessagePublisherFactory>(_busKey);
         _receiver = receiver;
     }
 

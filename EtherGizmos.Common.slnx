@@ -31,4 +31,7 @@
   <Folder Name="/tests/Data/">
     <Project Path="tests/Data/Data.PostgreSql.UnitTests/Data.PostgreSql.UnitTests.csproj" Id="211c005f-d822-4851-a7fa-efdf3408bcdd" />
   </Folder>
+  <Folder Name="/tests/Messaging/">
+    <Project Path="tests/Messaging/Messaging.RabbitMQ.IntegrationTests/Messaging.RabbitMQ.IntegrationTests.csproj" Id="8b1734fa-1bb2-466a-a8c2-e8ae1552b81f" />
+  </Folder>
 </Solution>

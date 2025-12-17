@@ -17,6 +17,10 @@ public interface IMessageBusRegistry
         Lazy<Task<IMessagePublisher>> publisher,
         CancellationToken cancellationToken = default);
 
+    bool TryGetBus(
+        string busId,
+        [NotNullWhen(true)] out IMessageBus? bus);
+
     bool TryGetBusId(
         string logicalName,
         [NotNullWhen(true)] out string? busId);

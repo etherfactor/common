@@ -60,7 +60,7 @@ public static class MessagingBuilderExtensions
 
                     foreach (var type in types)
                     {
-                        @this.Services.TryAddScoped(type, consumer);
+                        @this.Services.TryAddEnumerable(new ServiceDescriptor(type, consumer, ServiceLifetime.Scoped));
                     }
                 }
             }
@@ -71,7 +71,9 @@ public static class MessagingBuilderExtensions
         public IMessagingBuilder UseConnection(
             string connectionId)
         {
-            @this.Services.AddKeyedSingleton(@this.BusId, (provider, _) =>
+            var key = new BusKey(@this.BusId);
+
+            @this.Services.AddKeyedSingleton(key, (provider, _) =>
             {
                 var connectionResolver = provider.GetRequiredService<IConnectionResolver>();
                 var connection = connectionResolver.GetMessagingConnection(connectionId);
@@ -85,7 +87,7 @@ public static class MessagingBuilderExtensions
                 return result;
             });
 
-            @this.Services.AddKeyedSingleton(@this.BusId, (provider, _) =>
+            @this.Services.AddKeyedSingleton(key, (provider, _) =>
             {
                 var connectionResolver = provider.GetRequiredService<IConnectionResolver>();
                 var connection = connectionResolver.GetMessagingConnection(connectionId);
