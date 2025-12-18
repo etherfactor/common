@@ -15,6 +15,7 @@
     <Project Path="src/Cryptography/Cryptography.Certificates/Cryptography.Certificates.csproj" Id="5b3c17c9-8c70-494d-9cdf-72b48825219d" />
   </Folder>
   <Folder Name="/src/Data/">
+    <Project Path="src/Data/Data.Migrations/Data.Migrations.csproj" Id="e16a5975-86b0-40a0-baa2-379d12b6341e" />
     <Project Path="src/Data/Data.PostgreSql/Data.PostgreSql.csproj" Id="ddd1b9ce-b1ef-4c20-b91f-df01b6d5cf63" />
     <Project Path="src/Data/Data.UnitOfWork/Data.UnitOfWork.csproj" Id="0e11339b-e6fb-4522-8026-630aaea4a8a4" />
   </Folder>
