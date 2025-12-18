@@ -1,5 +1,6 @@
 ﻿using EtherGizmos.Common.Converters;
 using EtherGizmos.Common.Extensions;
+using EtherGizmos.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -9,6 +10,8 @@ namespace EtherGizmos.Common.Services;
 
 internal class OutboxContext : DbContext
 {
+    public virtual DbSet<OutboxMessage> OutboxMessages { get; set; }
+
     public OutboxContext(
         DbContextOptions<OutboxContext> options) : base(options)
     {
