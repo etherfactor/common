@@ -43,6 +43,7 @@ internal class EndToEndTests : IntegrationTestBase
 
         //Assert
         Assert.That(consumed.Value, Is.EqualTo("hello"));
+        await host.StopAsync();
     }
 
     [Test]
@@ -76,6 +77,7 @@ internal class EndToEndTests : IntegrationTestBase
             Assert.That(a, Is.True);
             Assert.That(b, Is.True);
         }
+        await host.StopAsync();
     }
 
     [Test]
@@ -109,6 +111,7 @@ internal class EndToEndTests : IntegrationTestBase
             Assert.That(a.Value, Is.EqualTo("ping"));
             Assert.That(b.Value, Is.EqualTo("ping"));
         }
+        await host.StopAsync();
     }
 
     [Test]
@@ -118,17 +121,17 @@ internal class EndToEndTests : IntegrationTestBase
         var topic = "test.topic." + Guid.NewGuid().ToString("N");
         var sub = "sub." + Guid.NewGuid().ToString("N");
 
-        using var host1 = await BuildHostAsync(opt =>
+        using var host = await BuildHostAsync(opt =>
         {
             opt.Publishers.AddTopic("t", topic);
         },
         consumersAssemblies: [typeof(TestConsumerA).Assembly]);
 
-        var sender = host1.Services.GetRequiredService<IMessageSender>();
+        var sender = host.Services.GetRequiredService<IMessageSender>();
 
         await sender.SendAsync("t", new TestMessage { Value = "early" });
 
-        var registry = host1.Services.GetRequiredService<IMessageBusRegistry>();
+        var registry = host.Services.GetRequiredService<IMessageBusRegistry>();
         registry.TryGetBus("bus1", out var bus);
 
         Assert.That(bus, Is.Not.Null);
@@ -142,6 +145,7 @@ internal class EndToEndTests : IntegrationTestBase
 
         //Assert
         Assert.That(msg.Value, Is.EqualTo("late"));
+        await host.StopAsync();
     }
 
     [Test]
@@ -160,7 +164,7 @@ internal class EndToEndTests : IntegrationTestBase
         var sender = host.Services.GetRequiredService<IMessageSender>();
 
         //Act
-        await sender.SendAsync("q", new TestMessage { Value = "hello" });
+        await sender.SendAsync("q", new AbandonMessage { Value = "hello" });
 
         var consumed = await AbandonOnceConsumer.Tcs.Task.WaitAsync(TimeSpan.FromSeconds(10));
 
@@ -171,6 +175,7 @@ internal class EndToEndTests : IntegrationTestBase
             Assert.That(AbandonOnceConsumer.InvocationCount, Is.GreaterThanOrEqualTo(2),
                 "Expected message to be delivered at least twice (first abandoned, then redelivered).");
         }
+        await host.StopAsync();
     }
 
     [Test]
@@ -189,13 +194,14 @@ internal class EndToEndTests : IntegrationTestBase
         var sender = host.Services.GetRequiredService<IMessageSender>();
 
         //Act
-        await sender.SendAsync("q", new TestMessage { Value = "hello" });
+        await sender.SendAsync("q", new DeadLetterMessage { Value = "hello" });
 
         await DeadLetterConsumer.FirstAttemptTcs.Task.WaitAsync(TimeSpan.FromSeconds(10));
 
         //Assert
         Assert.ThrowsAsync<TimeoutException>(async () =>
             await DeadLetterConsumer.RedeliveredTcs.Task.WaitAsync(TimeSpan.FromSeconds(2)));
+        await host.StopAsync();
     }
 
     private async Task<IHost> BuildHostAsync(
@@ -275,9 +281,14 @@ internal class EndToEndTests : IntegrationTestBase
         }
     }
 
-    internal sealed class AbandonOnceConsumer : IMessageConsumer<TestMessage>
+    public sealed class AbandonMessage
     {
-        public static TaskCompletionSource<TestMessage> Tcs { get; private set; } =
+        public string Value { get; init; } = null!;
+    }
+
+    internal sealed class AbandonOnceConsumer : IMessageConsumer<AbandonMessage>
+    {
+        public static TaskCompletionSource<AbandonMessage> Tcs { get; private set; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public static int InvocationCount => _invocations;
@@ -289,7 +300,7 @@ internal class EndToEndTests : IntegrationTestBase
             _invocations = 0;
         }
 
-        public async Task ConsumeAsync(IMessageContext<TestMessage> context)
+        public async Task ConsumeAsync(IMessageContext<AbandonMessage> context)
         {
             var attempt = Interlocked.Increment(ref _invocations);
 
@@ -304,7 +315,12 @@ internal class EndToEndTests : IntegrationTestBase
         }
     }
 
-    internal sealed class DeadLetterConsumer : IMessageConsumer<TestMessage>
+    public sealed class DeadLetterMessage
+    {
+        public string Value { get; init; } = null!;
+    }
+
+    internal sealed class DeadLetterConsumer : IMessageConsumer<DeadLetterMessage>
     {
         public static TaskCompletionSource<bool> FirstAttemptTcs { get; private set; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -321,7 +337,7 @@ internal class EndToEndTests : IntegrationTestBase
             _invocations = 0;
         }
 
-        public async Task ConsumeAsync(IMessageContext<TestMessage> context)
+        public async Task ConsumeAsync(IMessageContext<DeadLetterMessage> context)
         {
             var attempt = Interlocked.Increment(ref _invocations);
 
