@@ -24,7 +24,7 @@ public interface IMessageBusRegistry
     bool TryGetBusId(
         string logicalName,
         [NotNullWhen(true)] out string? busId);
-    
+
     Task UnregisterListenerAsync(
         string logicalName,
         CancellationToken cancellationToken = default);

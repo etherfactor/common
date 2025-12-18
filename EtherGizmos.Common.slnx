@@ -16,8 +16,11 @@
   </Folder>
   <Folder Name="/src/Data/">
     <Project Path="src/Data/Data.PostgreSql/Data.PostgreSql.csproj" Id="ddd1b9ce-b1ef-4c20-b91f-df01b6d5cf63" />
+    <Project Path="src/Data/Data.UnitOfWork/Data.UnitOfWork.csproj" Id="0e11339b-e6fb-4522-8026-630aaea4a8a4" />
   </Folder>
   <Folder Name="/src/Messaging/">
+    <Project Path="src/Messaging/Messaging.Inbox/Messaging.Inbox.csproj" Id="a61ee280-e10e-4fee-ac18-cef8eb0d9c4b" />
+    <Project Path="src/Messaging/Messaging.Outbox/Messaging.Outbox.csproj" Id="ab07c0fa-ee31-447f-9e88-0db95db999e5" />
     <Project Path="src/Messaging/Messaging.RabbitMQ/Messaging.RabbitMQ.csproj" Id="91ad851d-01cf-48e3-a4ef-08514e59d66f" />
     <Project Path="src/Messaging/Messaging/Messaging.csproj" Id="bf1e846a-cfbd-4c2a-95fa-c77a0b6788b0" />
   </Folder>
