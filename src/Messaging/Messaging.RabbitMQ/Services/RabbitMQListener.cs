@@ -167,6 +167,10 @@ internal class RabbitMQListener : IMessageListener, IDisposable
 
             var actions = new RabbitMQMessageActions(_logger, _rmqChannel, @event.DeliveryTag);
 
+            var subscription = _subscription is not null
+                ? $"{logicalHeader}/{_subscription}"
+                : logicalHeader;
+
             var message = new ReceivedMessage()
             {
                 Id = @event.DeliveryTag.ToString(),
@@ -174,6 +178,7 @@ internal class RabbitMQListener : IMessageListener, IDisposable
                 Body = body,
                 Headers = headers,
                 LogicalSourceName = logicalHeader,
+                SubscriptionName = subscription,
                 Actions = actions,
             };
 

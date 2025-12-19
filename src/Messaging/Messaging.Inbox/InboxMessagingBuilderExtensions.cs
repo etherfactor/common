@@ -26,6 +26,8 @@ public static class InboxMessagingBuilderExtensions
                     opt.BindDbContext<InboxContext>();
                 });
 
+            @this.AddTransformer<InboxSettlementTransformer>();
+            @this.AddMiddleware<InboxSettlementMiddleware>();
             @this.AddMiddleware<InboxDeduplicateMiddleware>();
 
             return @this;
