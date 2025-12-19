@@ -7,15 +7,17 @@ namespace EtherGizmos.Common.Services;
 internal class OutboxMessagePublisher : IOutboxMessagePublisher
 {
     private readonly IUnitOfWorkFactory _uowFactory;
+    private readonly IMessageSender _sender;
 
     public OutboxMessagePublisher(
-        IUnitOfWorkFactory uowFactory)
+        IUnitOfWorkFactory uowFactory,
+        ITransportMessageSender sender)
     {
         _uowFactory = uowFactory;
+        _sender = sender;
     }
 
-    public async Task PublishAsync(
-        IMessageSender innerSender,
+    public async Task<bool> PublishAsync(
         CancellationToken cancellationToken = default)
     {
         using var uow = _uowFactory.Create();
@@ -25,6 +27,7 @@ internal class OutboxMessagePublisher : IOutboxMessagePublisher
         var now = DateTimeOffset.UtcNow;
         var lockedUntil = now.Add(TimeSpan.FromSeconds(30));
 
+        var isClaimed = false;
         var claimedCount = 0;
         do
         {
@@ -58,6 +61,7 @@ internal class OutboxMessagePublisher : IOutboxMessagePublisher
                 .ToListAsync(cancellationToken: cancellationToken);
 
             claimedCount = claimed.Count;
+            if (claimedCount > 0) isClaimed = true;
 
             var parallelOptions = new ParallelOptions()
             {
@@ -74,6 +78,14 @@ internal class OutboxMessagePublisher : IOutboxMessagePublisher
 
                 try
                 {
+                    await messageRepo.Data
+                        .Where(e =>
+                            e.Id == message.Id &&
+                            e.LockId == lockId)
+                        .ExecuteUpdateAsync(e => e
+                            .SetProperty(e => e.Status, _ => OutboxStatusType.InFlight),
+                            cancellationToken: ct);
+
                     var toSend = new SentMessage()
                     {
                         Type = message.Type,
@@ -82,7 +94,7 @@ internal class OutboxMessagePublisher : IOutboxMessagePublisher
                         LogicalDestinationName = message.LogicalDestinationName,
                     };
 
-                    await innerSender.SendAsync(toSend, ct);
+                    await _sender.SendAsync(toSend, ct);
 
                     await messageRepo.Data
                         .Where(e =>
@@ -122,6 +134,8 @@ internal class OutboxMessagePublisher : IOutboxMessagePublisher
             });
         }
         while (claimedCount > 0);
+
+        return isClaimed;
     }
 
     private static (TimeSpan Delay, bool IsDead) ComputeBackoff(

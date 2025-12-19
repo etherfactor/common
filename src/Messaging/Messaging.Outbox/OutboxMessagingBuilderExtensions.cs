@@ -2,6 +2,7 @@
 using EtherGizmos.Common.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace EtherGizmos.Common;
 
@@ -28,6 +29,11 @@ public static class OutboxMessagingBuilderExtensions
                 {
                     opt.BindDbContext<OutboxContext>();
                 });
+
+            @this.Services.TryAddSingleton<IOutboxMessagePublisher, OutboxMessagePublisher>();
+            @this.Services.TryAddSingleton<IOutboxSignal, OutboxSignal>();
+
+            @this.Services.AddHostedService<OutboxHostedService>();
 
             return @this;
         }

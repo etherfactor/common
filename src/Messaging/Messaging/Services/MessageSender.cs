@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace EtherGizmos.Common.Services;
 
-internal class MessageSender : IMessageSender
+internal class MessageSender : IMessageSender, ITransportMessageSender
 {
     private readonly IMessageBusRegistry _registry;
 

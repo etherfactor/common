@@ -48,6 +48,7 @@ public static class MessagingServiceCollectionExtensions
 
             @this.TryAddSingleton<IMessageReceiver, MessageReceiver>();
             @this.TryAddSingleton<IMessageSender, MessageSender>();
+            @this.TryAddSingleton<ITransportMessageSender, MessageSender>();
 
             @this.TryAddSingleton<IMessageSerializer, JsonMessageSerializer>();
 
