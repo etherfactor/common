@@ -12,6 +12,8 @@ public record ReceivedMessage
 
     public required string LogicalSourceName { get; init; }
 
+    public required string SubscriptionName { get; init; }
+
     public required IMessageActions Actions { get; init; }
 
     public string? ConsumerName { get; init; }

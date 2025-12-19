@@ -1,6 +1,8 @@
-﻿namespace EtherGizmos.Common.Models;
+﻿using EtherGizmos.Common.Abstractions;
 
-public class InboxMessage
+namespace EtherGizmos.Common.Models;
+
+public class InboxMessage : IEntity
 {
     public virtual int Id { get; set; }
 
@@ -15,7 +17,7 @@ public class InboxMessage
     /// </summary>
     public virtual string Subscription { get; set; } = null!;
 
-    public virtual string ConsumerType { get; set; } = null!;
+    public virtual string ConsumerName { get; set; } = null!;
 
     public virtual InboxStatusType Status { get; set; }
 

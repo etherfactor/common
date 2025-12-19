@@ -18,7 +18,7 @@ public static class OutboxMessagingBuilderExtensions
             @this.Services
                 .AddDbContext<OutboxContext>((provider, opt) =>
                 {
-                    opt.UseConnection(provider, "Outbox", opt =>
+                    opt.UseConnection(provider, databaseConnectionId, opt =>
                     {
                         opt.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
                     });
