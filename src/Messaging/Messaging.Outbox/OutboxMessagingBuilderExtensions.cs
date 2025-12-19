@@ -1,5 +1,6 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using EtherGizmos.Common.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EtherGizmos.Common;
@@ -14,9 +15,12 @@ public static class OutboxMessagingBuilderExtensions
             @this.Services.Decorate<IMessageSender, OutboxMessageSender>();
 
             @this.Services
-                .AddDbContext<OutboxContext>(opt =>
+                .AddDbContext<OutboxContext>((provider, opt) =>
                 {
-
+                    opt.UseConnection(provider, "Outbox", opt =>
+                    {
+                        opt.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                    });
                 });
 
             @this.Services

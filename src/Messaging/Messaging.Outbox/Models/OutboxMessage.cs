@@ -1,6 +1,8 @@
-﻿namespace EtherGizmos.Common.Models;
+﻿using EtherGizmos.Common.Abstractions;
 
-public class OutboxMessage
+namespace EtherGizmos.Common.Models;
+
+public class OutboxMessage : IEntity
 {
     public virtual int Id { get; set; }
 
