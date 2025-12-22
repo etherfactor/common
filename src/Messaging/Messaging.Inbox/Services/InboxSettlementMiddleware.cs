@@ -19,16 +19,6 @@ internal class InboxSettlementMiddleware : IMessageMiddleware
         try
         {
             await next();
-
-            if (!message.Actions.Invoked)
-                await message.Actions.CompleteAsync();
-        }
-        catch (Exception)
-        {
-            if (!message.Actions.Invoked)
-                await message.Actions.AbandonAsync();
-
-            throw;
         }
         finally
         {

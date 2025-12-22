@@ -2,7 +2,7 @@ namespace EtherGizmos.Common.Abstractions;
 
 public record ReceivedMessage
 {
-    public required string Id { get; init; }
+    public required string MessageId { get; init; }
 
     public required string Type { get; init; }
 

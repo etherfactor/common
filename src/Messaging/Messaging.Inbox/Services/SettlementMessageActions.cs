@@ -11,6 +11,8 @@ internal class SettlementMessageActions : IMessageActions
 
     public bool Invoked { get; private set; }
 
+    public MessageDecision Decision { get; private set; }
+
     public SettlementMessageActions(
         ILogger logger,
         IMessageSettlement settlement,
@@ -27,8 +29,9 @@ internal class SettlementMessageActions : IMessageActions
             throw new InvalidOperationException("Already performed an action on this message.");
 
         Invoked = true;
+        Decision = MessageDecision.Abandon;
 
-        _logger.LogInformation("Abandoning message {MessageId}", _message.Id);
+        _logger.LogInformation("Abandoning message {MessageId}", _message.MessageId);
 
         _settlement.Abandon(_message.ConsumerName!);
     }
@@ -39,8 +42,9 @@ internal class SettlementMessageActions : IMessageActions
             throw new InvalidOperationException("Already performed an action on this message.");
 
         Invoked = true;
+        Decision = MessageDecision.Complete;
 
-        _logger.LogInformation("Completing message {MessageId}", _message.Id);
+        _logger.LogInformation("Completing message {MessageId}", _message.MessageId);
 
         _settlement.Complete(_message.ConsumerName!);
     }
@@ -51,8 +55,9 @@ internal class SettlementMessageActions : IMessageActions
             throw new InvalidOperationException("Already performed an action on this message.");
 
         Invoked = true;
+        Decision = MessageDecision.DeadLetter;
 
-        _logger.LogInformation("Dead lettering message {MessageId}", _message.Id);
+        _logger.LogInformation("Dead lettering message {MessageId}", _message.MessageId);
 
         _settlement.DeadLetter(_message.ConsumerName!);
     }

@@ -41,6 +41,37 @@ internal class EndToEndTests : IntegrationTestBase
         await host.StopAsync();
     }
 
+    [Test]
+    public async Task Queue_WithTwoConsumers_ShouldRetryOnlyFailed()
+    {
+        //Arrange
+        var q = "test.queue." + Guid.NewGuid().ToString("N");
+
+        using var host = await BuildHostAsync(opt =>
+        {
+            opt.Listeners.AddQueue("q", q);
+            opt.Publishers.AddQueue("q", q);
+        },
+        consumersAssemblies: [typeof(SplitConsumerA).Assembly]);
+
+        var sender = host.Services.GetRequiredService<IMessageSender>();
+
+        //Act
+        await sender.SendAsync("q", new SplitMessage { Value = "hello" });
+
+        var consumedA = await SplitConsumerA.Tcs.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        var consumedB = await SplitConsumerB.Tcs.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        //Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(consumedA.Value, Is.EqualTo("hello"));
+            Assert.That(SplitConsumerA.InvocationCount, Is.EqualTo(1));
+            Assert.That(SplitConsumerB.InvocationCount, Is.EqualTo(2));
+        }
+        await host.StopAsync();
+    }
+
     private async Task<IHost> BuildHostAsync(
         Action<MessagingOptions> configureMessaging,
         Assembly[]? consumersAssemblies = null)
@@ -104,6 +135,61 @@ internal class EndToEndTests : IntegrationTestBase
         {
             Tcs.TrySetResult(context.Message);
             return Task.CompletedTask;
+        }
+    }
+
+    public sealed class SplitMessage
+    {
+        public string Value { get; init; } = null!;
+    }
+
+    internal sealed class SplitConsumerA : IMessageConsumer<SplitMessage>
+    {
+        public static TaskCompletionSource<SplitMessage> Tcs { get; private set; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public static int InvocationCount => _invocations;
+        private static int _invocations;
+
+        public static void Reset() =>
+            Tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task ConsumeAsync(
+            IMessageContext<SplitMessage> context)
+        {
+            Interlocked.Increment(ref _invocations);
+
+            Tcs.TrySetResult(context.Message);
+            return Task.CompletedTask;
+        }
+    }
+
+    internal sealed class SplitConsumerB : IMessageConsumer<SplitMessage>
+    {
+        public static TaskCompletionSource<SplitMessage> Tcs { get; private set; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public static int InvocationCount => _invocations;
+        private static int _invocations;
+
+        public static void Reset()
+        {
+            Tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            _invocations = 0;
+        }
+
+        public async Task ConsumeAsync(IMessageContext<SplitMessage> context)
+        {
+            var attempt = Interlocked.Increment(ref _invocations);
+
+            if (attempt == 1)
+            {
+                await context.Actions.AbandonAsync(context.CancellationToken);
+                return;
+            }
+
+            // second delivery (or later): succeed
+            Tcs.TrySetResult(context.Message);
         }
     }
 }

@@ -26,5 +26,11 @@ public class Migration001_CreateInboxTables : AutoReversingMigration
             .WithColumn("lock_id").AsGuid().Nullable()
             .WithColumn("locked_by").AsString(100).Nullable()
             .WithColumn("locked_until_utc").AsDateTime2().Nullable();
+
+        Create.Index("IX_inbox_message_id_subscription_consumer_name")
+            .OnTable("inbox")
+            .OnColumn("message_id").Unique()
+            .OnColumn("subscription").Unique()
+            .OnColumn("consumer_name").Unique();
     }
 }

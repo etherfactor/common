@@ -33,6 +33,7 @@ public static class IMessageSenderExtensions
 
         await @this.SendAsync(new SentMessage()
         {
+            MessageId = Guid.NewGuid().ToString("N"),
             Type = type,
             Body = body,
             Headers = new Dictionary<string, string>(),

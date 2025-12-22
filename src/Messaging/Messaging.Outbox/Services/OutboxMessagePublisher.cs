@@ -88,6 +88,7 @@ internal class OutboxMessagePublisher : IOutboxMessagePublisher
 
                     var toSend = new SentMessage()
                     {
+                        MessageId = message.MessageId,
                         Type = message.Type,
                         Body = message.Payload,
                         Headers = message.Headers.ToDictionary(),

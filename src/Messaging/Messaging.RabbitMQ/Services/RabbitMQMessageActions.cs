@@ -12,6 +12,8 @@ internal class RabbitMQMessageActions : IMessageActions
 
     public bool Invoked { get; private set; }
 
+    public MessageDecision Decision { get; private set; }
+
     public RabbitMQMessageActions(
         ILogger logger,
         IChannel channel,
@@ -28,6 +30,7 @@ internal class RabbitMQMessageActions : IMessageActions
             throw new InvalidOperationException("Already performed an action on this message.");
 
         Invoked = true;
+        Decision = MessageDecision.Abandon;
 
         _logger.LogInformation("Abandoning message {MessageId}", _messageId);
 
@@ -40,6 +43,7 @@ internal class RabbitMQMessageActions : IMessageActions
             throw new InvalidOperationException("Already performed an action on this message.");
 
         Invoked = true;
+        Decision = MessageDecision.Complete;
 
         _logger.LogInformation("Completing message {MessageId}", _messageId);
 
@@ -52,6 +56,7 @@ internal class RabbitMQMessageActions : IMessageActions
             throw new InvalidOperationException("Already performed an action on this message.");
 
         Invoked = true;
+        Decision = MessageDecision.DeadLetter;
 
         _logger.LogInformation("Dead lettering message {MessageId}", _messageId);
 

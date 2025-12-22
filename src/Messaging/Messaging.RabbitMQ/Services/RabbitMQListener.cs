@@ -173,7 +173,7 @@ internal class RabbitMQListener : IMessageListener, IDisposable
 
             var message = new ReceivedMessage()
             {
-                Id = @event.DeliveryTag.ToString(),
+                MessageId = @event.BasicProperties.MessageId ?? @event.DeliveryTag.ToString(),
                 Type = typeHeader,
                 Body = body,
                 Headers = headers,

@@ -30,7 +30,7 @@ internal class InboxDeduplicateMiddleware : IMessageMiddleware
 
         var claimed = await messageRepo.Data
             .Where(e =>
-                e.MessageId == message.Id &&
+                e.MessageId == message.MessageId &&
                 e.Subscription == message.SubscriptionName &&
                 e.ConsumerName == message.ConsumerName &&
                 e.Status != InboxStatusType.Processed)
@@ -50,16 +50,21 @@ internal class InboxDeduplicateMiddleware : IMessageMiddleware
         {
             await next();
 
+            if (!message.Actions.Invoked)
+                await message.Actions.CompleteAsync();
+
             var processedAt = DateTimeOffset.UtcNow;
 
             await messageRepo.Data
                 .Where(e =>
-                    e.MessageId == message.Id &&
+                    e.MessageId == message.MessageId &&
                     e.Subscription == message.SubscriptionName &&
                     e.ConsumerName == message.ConsumerName &&
                     e.LockId == lockId)
                 .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(e => e.Status, _ => InboxStatusType.Processed)
+                    .SetProperty(e => e.Status, _ => message.Actions.Decision == MessageDecision.Complete
+                        ? InboxStatusType.Processed
+                        : InboxStatusType.Pending)
                     .SetProperty(e => e.ProcessedAt, _ => processedAt)
                     .SetProperty(e => e.LastError, _ => null)
                     .SetProperty(e => e.LockId, _ => null)
@@ -68,9 +73,12 @@ internal class InboxDeduplicateMiddleware : IMessageMiddleware
         }
         catch (Exception ex)
         {
+            if (!message.Actions.Invoked)
+                await message.Actions.AbandonAsync();
+
             await messageRepo.Data
                 .Where(e =>
-                    e.MessageId == message.Id &&
+                    e.MessageId == message.MessageId &&
                     e.Subscription == message.SubscriptionName &&
                     e.ConsumerName == message.ConsumerName &&
                     e.LockId == lockId)
@@ -93,9 +101,18 @@ internal class InboxDeduplicateMiddleware : IMessageMiddleware
 
         try
         {
+            var exists = await messageRepo.Data
+                .AnyAsync(e =>
+                    e.MessageId == message.MessageId &&
+                    e.Subscription == message.SubscriptionName &&
+                    e.ConsumerName == message.ConsumerName);
+
+            if (exists)
+                return;
+
             var inbox = new InboxMessage
             {
-                MessageId = message.Id,
+                MessageId = message.MessageId,
                 ReceivedAt = DateTimeOffset.UtcNow,
                 Subscription = message.SubscriptionName,
                 ConsumerName = message.ConsumerName!, // should be required
