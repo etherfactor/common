@@ -3,35 +3,38 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace EtherGizmos.Common.Models;
 
-public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage>
+public class InboxMessageConfiguration : IEntityTypeConfiguration<InboxMessage>
 {
     public virtual void Configure(
-        EntityTypeBuilder<OutboxMessage> builder)
+        EntityTypeBuilder<InboxMessage> builder)
     {
-        builder.ToTable("outbox");
+        builder.ToTable("inbox");
 
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Id)
-            .HasColumnName("outbox_id");
+            .HasColumnName("inbox_id");
 
         builder.Property(e => e.MessageId)
             .HasColumnName("message_id");
 
-        builder.Property(e => e.QueuedAt)
-            .HasColumnName("queued_at_utc");
+        builder.Property(e => e.ReceivedAt)
+            .HasColumnName("received_at_utc");
 
-        builder.Property(e => e.AvailableAt)
-            .HasColumnName("available_at_utc");
+        builder.Property(e => e.ProcessedAt)
+            .HasColumnName("processed_at_utc");
 
-        builder.Property(e => e.PublishedAt)
-            .HasColumnName("published_at_utc");
+        builder.Property(e => e.Subscription)
+            .HasColumnName("subscription");
+
+        builder.Property(e => e.ConsumerName)
+            .HasColumnName("consumer_name");
 
         builder.Property(e => e.Status)
-            .HasColumnName("outbox_status_type_id");
+            .HasColumnName("inbox_status_type_id");
 
-        builder.Property(e => e.LogicalDestinationName)
-            .HasColumnName("logical_destination_name");
+        builder.Property(e => e.LogicalSourceName)
+            .HasColumnName("logical_source_name");
 
         builder.Property(e => e.Type)
             .HasColumnName("type");

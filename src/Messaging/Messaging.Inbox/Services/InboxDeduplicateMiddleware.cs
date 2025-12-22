@@ -32,7 +32,8 @@ internal class InboxDeduplicateMiddleware : IMessageMiddleware
             .Where(e =>
                 e.MessageId == message.Id &&
                 e.Subscription == message.SubscriptionName &&
-                e.ConsumerName == message.ConsumerName)
+                e.ConsumerName == message.ConsumerName &&
+                e.Status != InboxStatusType.Processed)
             .ExecuteUpdateAsync(e => e
                 .SetProperty(e => e.Status, _ => InboxStatusType.InFlight)
                 .SetProperty(e => e.AttemptCount, e => e.AttemptCount + 1)
@@ -41,8 +42,9 @@ internal class InboxDeduplicateMiddleware : IMessageMiddleware
                 .SetProperty(e => e.LockedBy, _ => Environment.MachineName)
                 .SetProperty(e => e.LockedUntil, _ => lockedUntil));
 
+        //We didn't claim the message, so it may have already been processed
         if (claimed == 0)
-            throw new InvalidOperationException("Expected to be able to lock the message, but was unable");
+            return;
 
         try
         {

@@ -77,5 +77,6 @@ internal class MessageSettlement : IMessageSettlement
     {
         Interlocked.Increment(ref _registered);
         Interlocked.CompareExchange(ref _actions, actions, null);
+        Interlocked.CompareExchange(ref _closesAtTicks, DateTimeOffset.UtcNow.AddMilliseconds(50).UtcTicks, 0);
     }
 }

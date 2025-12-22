@@ -2,6 +2,7 @@
 using EtherGizmos.Common.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace EtherGizmos.Common;
 
@@ -26,9 +27,15 @@ public static class InboxMessagingBuilderExtensions
                     opt.BindDbContext<InboxContext>();
                 });
 
+            @this.Services
+                .AddMigrations("Inbox", typeof(InboxMessagingBuilderExtensions).Assembly!)
+                .UseConnection(databaseConnectionId);
+
             @this.AddTransformer<InboxSettlementTransformer>();
             @this.AddMiddleware<InboxSettlementMiddleware>();
             @this.AddMiddleware<InboxDeduplicateMiddleware>();
+
+            @this.Services.TryAddScoped<IMessageSettlement, MessageSettlement>();
 
             return @this;
         }
