@@ -228,7 +228,8 @@ internal class EndToEndTests : IntegrationTestBase
                     ["Connections:Rabbit:RabbitMQ:ConnectionString"] = Setup.RmqConnectionString,
                 });
 
-                services.AddConnectionResolver().WithRabbitMQ();
+                services.AddConnectionResolver()
+                    .WithRabbitMQ();
 
                 services
                     .AddMessaging("bus1", (opt, _) =>

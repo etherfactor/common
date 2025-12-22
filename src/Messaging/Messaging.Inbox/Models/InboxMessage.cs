@@ -27,7 +27,7 @@ public class InboxMessage : IEntity
 
     public virtual string Payload { get; set; } = null!;
 
-    public virtual IDictionary<string, object?> Headers { get; set; } = new Dictionary<string, object?>();
+    public virtual IDictionary<string, string> Headers { get; set; } = new Dictionary<string, string>();
 
     public virtual int AttemptCount { get; set; }
 

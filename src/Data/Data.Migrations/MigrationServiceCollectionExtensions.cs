@@ -3,6 +3,7 @@ using EtherGizmos.Common.Configuration;
 using EtherGizmos.Common.Services;
 using FluentMigrator.Runner;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Reflection;
 
 namespace EtherGizmos.Common;
@@ -28,6 +29,8 @@ public static class MigrationServiceCollectionExtensions
         public IMigrationBuilder UseConnection(
             string connectionId)
         {
+            @this.Services.TryAddKeyedSingleton<IMigrationManager, MigrationManager>(@this.MigrationId);
+
             @this.Services
                 .AddChildContainer((child, parent) =>
                 {

@@ -73,7 +73,7 @@ public static class UnitOfWorkServiceCollectionExtensions
             where TOptions : DatabaseConnectionOptions, new()
         {
             var factory = provider.GetService<IDbContextBuilder<TOptions>>()
-                ?? throw new InvalidOperationException($"No factory exists for configuring a migration runner for type {typeof(TOptions)}");
+                ?? throw new InvalidOperationException($"No factory exists for configuring a database context for type {typeof(TOptions)}");
 
             factory.ConfigureContext(builder, options, optionsBuilder);
         }

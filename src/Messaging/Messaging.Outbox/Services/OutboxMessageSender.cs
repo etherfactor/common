@@ -6,15 +6,18 @@ namespace EtherGizmos.Common.Services;
 internal class OutboxMessageSender : IMessageSender
 {
     private readonly IMessageSender _inner;
+    private readonly IOutboxSignal _signal;
     private readonly IUnitOfWorkFactory _uowFactory;
 
     public IServiceProvider Services => _inner.Services;
 
     public OutboxMessageSender(
         IMessageSender inner,
+        IOutboxSignal signal,
         IUnitOfWorkFactory uowFactory)
     {
         _inner = inner;
+        _signal = signal;
         _uowFactory = uowFactory;
     }
 
@@ -34,11 +37,13 @@ internal class OutboxMessageSender : IMessageSender
             LogicalDestinationName = message.LogicalDestinationName,
             Type = message.Type,
             Payload = message.Body,
-            Headers = message.Headers.ToDictionary(e => e.Key, e => (object?)e.Value),
+            Headers = message.Headers.ToDictionary(),
         };
 
         messageRepo.Create(messageRecord);
 
         await uow.SaveChangesAsync(cancellationToken);
+
+        _signal.Pulse();
     }
 }

@@ -30,6 +30,10 @@ public static class OutboxMessagingBuilderExtensions
                     opt.BindDbContext<OutboxContext>();
                 });
 
+            @this.Services
+                .AddMigrations("Outbox", typeof(OutboxMessagingBuilderExtensions).Assembly!)
+                .UseConnection(databaseConnectionId);
+
             @this.Services.TryAddSingleton<IOutboxMessagePublisher, OutboxMessagePublisher>();
             @this.Services.TryAddSingleton<IOutboxSignal, OutboxSignal>();
 

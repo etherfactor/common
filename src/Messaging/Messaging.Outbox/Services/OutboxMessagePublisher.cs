@@ -90,7 +90,7 @@ internal class OutboxMessagePublisher : IOutboxMessagePublisher
                     {
                         Type = message.Type,
                         Body = message.Payload,
-                        Headers = message.Headers.ToDictionary(e => e.Key, e => e.Value?.ToString() ?? ""),
+                        Headers = message.Headers.ToDictionary(),
                         LogicalDestinationName = message.LogicalDestinationName,
                     };
 

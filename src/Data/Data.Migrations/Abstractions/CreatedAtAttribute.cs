@@ -6,7 +6,7 @@ namespace EtherGizmos.Common.Abstractions;
 /// Generates a version number for the migration based on the date/time at which the migration was authored. Migrations will
 /// be run in order, from oldest to newest, running all migrations that have not previously been run.
 /// </summary>
-internal class CreatedAtAttribute : MigrationAttribute
+public class CreatedAtAttribute : MigrationAttribute
 {
     /// <summary>
     /// Construct the attribute.

@@ -101,7 +101,7 @@ internal class InboxDeduplicateMiddleware : IMessageMiddleware
                 LogicalSourceName = message.LogicalSourceName,
                 Type = message.Type,
                 Payload = message.Body,
-                Headers = message.Headers.ToDictionary(e => e.Key, e => (object?)e.Value),
+                Headers = message.Headers.ToDictionary(),
             };
 
             messageRepo.Create(inbox);

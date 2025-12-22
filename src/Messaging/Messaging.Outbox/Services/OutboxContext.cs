@@ -1,9 +1,11 @@
-﻿using EtherGizmos.Common.Converters;
+﻿using EtherGizmos.Common.Abstractions;
+using EtherGizmos.Common.Converters;
 using EtherGizmos.Common.Extensions;
 using EtherGizmos.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 
 namespace EtherGizmos.Common.Services;
@@ -13,9 +15,10 @@ internal class OutboxContext : DbContext
     public virtual DbSet<OutboxMessage> OutboxMessages { get; set; }
 
     public OutboxContext(
-        DbContextOptions<OutboxContext> options) : base(options)
+        DbContextOptions<OutboxContext> options,
+        [FromKeyedServices("Outbox")] IMigrationManager migrationManager) : base(options)
     {
-
+        migrationManager.EnsureMigratedAsync().GetAwaiter().GetResult();
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -47,5 +50,13 @@ internal class OutboxContext : DbContext
                 (a, b) => JsonSerializer.Serialize(a, jsonOptions) == JsonSerializer.Serialize(b, jsonOptions),
                 c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                 c => new Dictionary<string, object?>(c)));
+
+        modelBuilder.AddGlobalValueConverter(new ValueConverter<IDictionary<string, string?>, string>(
+            app => JsonSerializer.Serialize(app, jsonOptions),
+            db => JsonSerializer.Deserialize<IDictionary<string, string?>>(db, jsonOptions)!),
+            new ValueComparer<IDictionary<string, string?>>(
+                (a, b) => JsonSerializer.Serialize(a, jsonOptions) == JsonSerializer.Serialize(b, jsonOptions),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => new Dictionary<string, string?>(c)));
     }
 }
