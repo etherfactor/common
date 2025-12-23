@@ -1,13 +1,21 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using FluentMigrator;
 
-namespace EtherGizmos.Common.Migrations;
+namespace EtherGizmos.Common.Migrations.Base;
 
-[CreatedAt(year: 2025, month: 12, day: 21, hour: 23, minute: 00, description: "Create outbox table")]
+[CreatedAt(year: 2025, month: 12, day: 21, hour: 23, minute: 00, description: "Create outbox tables")]
 public class Migration001_AddOutboxTables : AutoReversingMigration
 {
     public override void Up()
     {
+        /*
+         * Create [dbo].[outbox_status_types]
+         */
+        Create.Table("outbox_status_types")
+            .WithColumn("outbox_status_type_id").AsInt32().PrimaryKey()
+            .WithColumn("name").AsString(200).NotNullable()
+            .WithColumn("description").AsString(int.MaxValue).Nullable();
+
         /*
          * Create [dbo].[outbox]
          */
@@ -28,5 +36,19 @@ public class Migration001_AddOutboxTables : AutoReversingMigration
             .WithColumn("lock_id").AsGuid().Nullable()
             .WithColumn("locked_by").AsString(100).Nullable()
             .WithColumn("locked_until_utc").AsDateTime2().Nullable();
+
+        Create.Index("IX_outbox_message_id")
+            .OnTable("outbox")
+            .OnColumn("message_id")
+            .Unique();
+
+        Create.Index("IX_outbox_lock_id")
+            .OnTable("outbox")
+            .OnColumn("lock_id")
+            .Ascending();
+
+        Create.ForeignKey("FK_outbox_outbox_status_type_id")
+            .FromTable("outbox").ForeignColumn("outbox_status_type_id")
+            .ToTable("outbox_status_types").PrimaryColumn("outbox_status_type_id");
     }
 }

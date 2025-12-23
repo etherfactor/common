@@ -23,7 +23,7 @@ public abstract class MigrationExtension : Migration
         get
         {
             //Extract the IMigrationContext from the base type through reflection
-            var context = (IMigrationContext)GetType()
+            var context = (IMigrationContext)typeof(MigrationBase)
                 .GetField("_context", BindingFlags.NonPublic | BindingFlags.Instance)!
                 .GetValue(this)!;
 

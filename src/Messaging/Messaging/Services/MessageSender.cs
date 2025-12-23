@@ -1,5 +1,4 @@
 using EtherGizmos.Common.Abstractions;
-using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
 
 namespace EtherGizmos.Common.Services;
@@ -28,7 +27,9 @@ internal class MessageSender : IMessageSender, ITransportMessageSender
         if (!_registry.TryGetBusId(logicalName, out var busId))
             ThrowForPublisher(logicalName);
 
-        var bus = Services.GetRequiredKeyedService<IMessageBus>(new BusKey(busId));
+        if (!_registry.TryGetBus(busId, out var bus))
+            ThrowForPublisher(logicalName);
+
         if (!bus.TryGetPublisher(logicalName, out var publisher))
             ThrowForPublisher(logicalName);
 

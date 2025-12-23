@@ -1,13 +1,24 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using FluentMigrator;
 
-namespace EtherGizmos.Common.Migrations;
+namespace EtherGizmos.Common.Migrations.Base;
 
 [CreatedAt(year: 2025, month: 12, day: 22, hour: 11, minute: 00, description: "Create inbox tables")]
 public class Migration001_CreateInboxTables : AutoReversingMigration
 {
     public override void Up()
     {
+        /*
+         * Create [dbo].[inbox_status_types]
+         */
+        Create.Table("inbox_status_types")
+            .WithColumn("inbox_status_type_id").AsInt32().PrimaryKey()
+            .WithColumn("name").AsString(200).NotNullable()
+            .WithColumn("description").AsString(int.MaxValue).Nullable();
+
+        /*
+         * Create [dbo].[outbox]
+         */
         Create.Table("inbox")
             .WithColumn("inbox_id").AsInt32().PrimaryKey().Identity()
             .WithColumn("message_id").AsString(100).NotNullable()
@@ -32,5 +43,14 @@ public class Migration001_CreateInboxTables : AutoReversingMigration
             .OnColumn("message_id").Unique()
             .OnColumn("subscription").Unique()
             .OnColumn("consumer_name").Unique();
+
+        Create.Index("IX_inbox_lock_id")
+            .OnTable("inbox")
+            .OnColumn("lock_id")
+            .Ascending();
+
+        Create.ForeignKey("FK_inbox_inbox_status_type_id")
+            .FromTable("inbox").ForeignColumn("inbox_status_type_id")
+            .ToTable("inbox_status_types").PrimaryColumn("inbox_status_type_id");
     }
 }

@@ -46,5 +46,6 @@
     <Project Path="tests/Messaging/Messaging.Inbox.IntegrationTests/Messaging.Inbox.IntegrationTests.csproj" Id="eb324a56-e4c1-4fe2-b4fe-d2ff7852377d" />
     <Project Path="tests/Messaging/Messaging.Outbox.IntegrationTests/Messaging.Outbox.IntegrationTests.csproj" Id="67415244-9246-4a04-91c2-704844e8395e" />
     <Project Path="tests/Messaging/Messaging.RabbitMQ.IntegrationTests/Messaging.RabbitMQ.IntegrationTests.csproj" Id="8b1734fa-1bb2-466a-a8c2-e8ae1552b81f" />
+    <Project Path="tests/Messaging/Messaging.UnitTests/Messaging.UnitTests.csproj" Id="0f324044-cc16-4f26-be95-39aece55d114" />
   </Folder>
 </Solution>

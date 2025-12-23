@@ -40,7 +40,7 @@ internal class MessageReceiver : IMessageReceiver
             .GetMethod(nameof(ReceiveInternalAsync), BindingFlags.Instance | BindingFlags.NonPublic)!
             .MakeGenericMethod(type);
 
-        var result = (Task)method.Invoke(this, [message, cancellationToken])!;
+        var result = (Task)method.Invoke(this, [busId, message, cancellationToken])!;
         await result.ConfigureAwait(false);
 
         if (!message.Actions.Invoked)
@@ -48,14 +48,12 @@ internal class MessageReceiver : IMessageReceiver
     }
 
     private async Task ReceiveInternalAsync<TMessage>(
+        string busId,
         ReceivedMessage message,
         CancellationToken cancellationToken = default)
         where TMessage : class, new()
     {
         var logicalName = message.LogicalSourceName;
-
-        if (!_registry.TryGetBusId(logicalName, out var busId))
-            ThrowForListener(logicalName);
 
         var busKey = new BusKey(busId);
         var logicalKey = new BusKey(busId, logicalName);
