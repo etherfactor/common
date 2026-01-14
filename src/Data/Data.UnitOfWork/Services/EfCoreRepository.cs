@@ -20,28 +20,20 @@ internal class EfCoreRepository<TEntity> : IRepository<TEntity>
 
     public IQueryable<TEntity> Data => _entities;
 
-    public void Attach(
-        TEntity entity)
-    {
-        _entities.Attach(entity);
-    }
-
-    public void Create(
+    public void Add(
         TEntity entity)
     {
         _entities.Add(entity);
     }
 
-    public void Delete(
+    public void Remove(
         TEntity entity)
     {
-        _entities.Remove(entity);
-    }
+        var entry = _entities.Entry(entity);
+        if (entry.State == EntityState.Detached)
+            _entities.Attach(entity);
 
-    public void Detach(
-        TEntity entity)
-    {
-        _entities.Entry(entity).State = EntityState.Detached;
+        _entities.Remove(entity);
     }
 
     public async Task<TEntity> ReloadAsync(

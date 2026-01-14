@@ -37,7 +37,9 @@
     <Project Path="src/Cryptography/Cryptography.Certificates.UnitTests/Cryptography.Certificates.UnitTests.csproj" Id="7ac53612-8dbf-42c8-9de6-695df3397f1c" />
   </Folder>
   <Folder Name="/tests/Data/">
+    <Project Path="tests/Data/Data.UnitOfWork.UnitTests/Data.UnitOfWork.UnitTests.csproj" Id="848ef4f9-1889-4cdd-b5af-4d72ed2b142c" />
     <Project Path="tests/Data/Data.PostgreSql.UnitTests/Data.PostgreSql.UnitTests.csproj" Id="211c005f-d822-4851-a7fa-efdf3408bcdd" />
+    <Project Path="tests/Data/Data.UnitOfWork.IntegrationTests/Data.UnitOfWork.IntegrationTests.csproj" Id="1868f8bb-5faf-4c5a-a9cc-2b1fc6fb9d45" />
   </Folder>
   <Folder Name="/tests/DependencyInjection/">
     <Project Path="tests/DependencyInjection/DependencyInjection.ChildContainers.UnitTests/DependencyInjection.ChildContainers.UnitTests.csproj" Id="9c5facd2-f378-4dcc-8154-e42bcb390d32" />

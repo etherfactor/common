@@ -40,7 +40,7 @@ internal class OutboxMessageSender : IMessageSender
             Headers = message.Headers.ToDictionary(),
         };
 
-        messageRepo.Create(messageRecord);
+        messageRepo.Add(messageRecord);
 
         await uow.SaveChangesAsync(cancellationToken);
 

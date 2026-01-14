@@ -71,6 +71,12 @@ internal class UnitOfWork : IUnitOfWork
             MaxDegreeOfParallelism = 8,
         };
 
+        var contexts = _contexts.Values.ToList();
+        foreach (var context in contexts)
+        {
+            context.Database.OpenConnection();
+        }
+
         Parallel.ForEach(_contexts.Values, parallelOptions, (context) =>
         {
             try
@@ -103,6 +109,11 @@ internal class UnitOfWork : IUnitOfWork
             }
         });
 
+        foreach (var context in contexts)
+        {
+            context.Database.CloseConnection();
+        }
+
         if (exceptions.Any())
         {
             throw new AggregateException(
@@ -125,6 +136,12 @@ internal class UnitOfWork : IUnitOfWork
             MaxDegreeOfParallelism = 8,
             CancellationToken = cancellationToken,
         };
+
+        var contexts = _contexts.Values.ToList();
+        foreach (var context in contexts)
+        {
+            await context.Database.OpenConnectionAsync(cancellationToken: cancellationToken);
+        }
 
         await Parallel.ForEachAsync(_contexts.Values, parallelOptions, async (context, cancellationToken) =>
         {
@@ -159,6 +176,11 @@ internal class UnitOfWork : IUnitOfWork
 
             return ValueTask.CompletedTask;
         });
+
+        foreach (var context in contexts)
+        {
+            await context.Database.CloseConnectionAsync();
+        }
 
         if (exceptions.Any())
         {

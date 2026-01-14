@@ -7,13 +7,9 @@ public interface IRepository<TEntity> : IRepository
 {
     IQueryable<TEntity> Data { get; }
 
-    void Attach(TEntity entity);
+    void Add(TEntity entity);
 
-    void Create(TEntity entity);
-
-    void Delete(TEntity entity);
-
-    void Detach(TEntity entity);
+    void Remove(TEntity entity);
 
     Task<TEntity> ReloadAsync(TEntity entity, CancellationToken cancellationToken = default);
 }

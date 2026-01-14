@@ -123,7 +123,7 @@ internal class InboxDeduplicateMiddleware : IMessageMiddleware
                 Headers = message.Headers.ToDictionary(),
             };
 
-            messageRepo.Create(inbox);
+            messageRepo.Add(inbox);
             await uow.SaveChangesAsync();
         }
         catch (DbUpdateException)
