@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace EtherGizmos.Common.Converters;
 
+[ExcludeFromCodeCoverage]
 public class ObjectToInferredTypesConverter : JsonConverter<object>
 {
     public override object? Read(
