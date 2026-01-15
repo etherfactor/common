@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Configuration\Configuration.Data\Configuration.Data.csproj" />
-    <ProjectReference Include="..\..\DependencyInjection\DependencyInjection.ChildContainers\DependencyInjection.ChildContainers.csproj" />
+    <ProjectReference Include="..\..\Composition\Composition.ChildContainers\Composition.ChildContainers.csproj" />
   </ItemGroup>
 
 </Project>

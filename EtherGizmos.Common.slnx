@@ -6,6 +6,9 @@
     <File Path="README.md" />
   </Folder>
   <Folder Name="/src/" />
+  <Folder Name="/src/Composition/">
+    <Project Path="src/Composition/Composition.ChildContainers/Composition.ChildContainers.csproj" Id="841413b8-6cec-404a-84d0-2400def901ba" />
+  </Folder>
   <Folder Name="/src/Configuration/">
     <Project Path="src/Configuration/Configuration.Data/Configuration.Data.csproj" Id="4cdf6656-9223-46f7-bb99-aeda593c4d86" />
     <Project Path="src/Configuration/Configuration.Keys/Configuration.Keys.csproj" Id="ff09a148-5229-41a3-996a-bf2e420b1c9a" />
@@ -20,9 +23,6 @@
     <Project Path="src/Data/Data.PostgreSql/Data.PostgreSql.csproj" Id="ddd1b9ce-b1ef-4c20-b91f-df01b6d5cf63" />
     <Project Path="src/Data/Data.UnitOfWork/Data.UnitOfWork.csproj" Id="0e11339b-e6fb-4522-8026-630aaea4a8a4" />
   </Folder>
-  <Folder Name="/src/DependencyInjection/">
-    <Project Path="src/DependencyInjection/DependencyInjection.ChildContainers/DependencyInjection.ChildContainers.csproj" Id="841413b8-6cec-404a-84d0-2400def901ba" />
-  </Folder>
   <Folder Name="/src/Messaging/">
     <Project Path="src/Messaging/Messaging.Inbox/Messaging.Inbox.csproj" Id="a61ee280-e10e-4fee-ac18-cef8eb0d9c4b" />
     <Project Path="src/Messaging/Messaging.Outbox/Messaging.Outbox.csproj" Id="ab07c0fa-ee31-447f-9e88-0db95db999e5" />
@@ -30,6 +30,9 @@
     <Project Path="src/Messaging/Messaging/Messaging.csproj" Id="bf1e846a-cfbd-4c2a-95fa-c77a0b6788b0" />
   </Folder>
   <Folder Name="/tests/" />
+  <Folder Name="/tests/Composition/">
+    <Project Path="tests/Composition/Composition.ChildContainers.UnitTests/Composition.ChildContainers.UnitTests.csproj" Id="9c5facd2-f378-4dcc-8154-e42bcb390d32" />
+  </Folder>
   <Folder Name="/tests/Configuration/">
     <Project Path="tests/Configuration/Configuration.UnitTests/Configuration.UnitTests.csproj" Id="642d9662-4a8c-45bb-b7a3-caa2d027974b" />
   </Folder>
@@ -40,9 +43,6 @@
     <Project Path="tests/Data/Data.UnitOfWork.UnitTests/Data.UnitOfWork.UnitTests.csproj" Id="848ef4f9-1889-4cdd-b5af-4d72ed2b142c" />
     <Project Path="tests/Data/Data.PostgreSql.UnitTests/Data.PostgreSql.UnitTests.csproj" Id="211c005f-d822-4851-a7fa-efdf3408bcdd" />
     <Project Path="tests/Data/Data.UnitOfWork.IntegrationTests/Data.UnitOfWork.IntegrationTests.csproj" Id="1868f8bb-5faf-4c5a-a9cc-2b1fc6fb9d45" />
-  </Folder>
-  <Folder Name="/tests/DependencyInjection/">
-    <Project Path="tests/DependencyInjection/DependencyInjection.ChildContainers.UnitTests/DependencyInjection.ChildContainers.UnitTests.csproj" Id="9c5facd2-f378-4dcc-8154-e42bcb390d32" />
   </Folder>
   <Folder Name="/tests/Messaging/">
     <Project Path="tests/Messaging/Messaging.Inbox.IntegrationTests/Messaging.Inbox.IntegrationTests.csproj" Id="eb324a56-e4c1-4fe2-b4fe-d2ff7852377d" />
