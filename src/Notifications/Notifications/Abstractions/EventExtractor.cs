@@ -1,0 +1,20 @@
+﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
+
+namespace EtherGizmos.Common.Abstractions;
+
+public abstract class EventExtractor<TEntity> : IEventExtractor
+    where TEntity : class, IDomainEvent
+{
+    public bool CanHandle(
+        EntityEntry entry)
+        => entry.Entity is TEntity;
+
+    public Task<IEnumerable<IDomainEvent>> ExtractAsync(
+        EntityEntry entry,
+        CancellationToken cancellationToken = default)
+        => ExtractAsync((EntityEntry<TEntity>)entry, cancellationToken);
+
+    protected abstract Task<IEnumerable<IDomainEvent>> ExtractAsync(
+        EntityEntry<TEntity> entry,
+        CancellationToken cancellationToken = default);
+}

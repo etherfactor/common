@@ -13,6 +13,7 @@
     <Project Path="src/Configuration/Configuration.Data/Configuration.Data.csproj" Id="4cdf6656-9223-46f7-bb99-aeda593c4d86" />
     <Project Path="src/Configuration/Configuration.Keys/Configuration.Keys.csproj" Id="ff09a148-5229-41a3-996a-bf2e420b1c9a" />
     <Project Path="src/Configuration/Configuration.Messaging/Configuration.Messaging.csproj" Id="39cd3d6c-0b0b-4244-86a8-1a743491df5c" />
+    <Project Path="src/Configuration/Configuration.Notifications/Configuration.Notifications.csproj" Id="038e3aa0-2eb5-4fb8-8397-2c0873bac8f2" />
     <Project Path="src/Configuration/Configuration/Configuration.csproj" />
   </Folder>
   <Folder Name="/src/Cryptography/">
@@ -29,6 +30,9 @@
     <Project Path="src/Messaging/Messaging.RabbitMQ/Messaging.RabbitMQ.csproj" Id="91ad851d-01cf-48e3-a4ef-08514e59d66f" />
     <Project Path="src/Messaging/Messaging/Messaging.csproj" Id="bf1e846a-cfbd-4c2a-95fa-c77a0b6788b0" />
   </Folder>
+  <Folder Name="/src/Notifications/">
+    <Project Path="src/Notifications/Notifications/Notifications.csproj" Id="fc093b79-a861-4fbb-8214-b9bb9f3619de" />
+  </Folder>
   <Folder Name="/tests/" />
   <Folder Name="/tests/Composition/">
     <Project Path="tests/Composition/Composition.ChildContainers.UnitTests/Composition.ChildContainers.UnitTests.csproj" Id="9c5facd2-f378-4dcc-8154-e42bcb390d32" />
@@ -40,9 +44,9 @@
     <Project Path="src/Cryptography/Cryptography.Certificates.UnitTests/Cryptography.Certificates.UnitTests.csproj" Id="7ac53612-8dbf-42c8-9de6-695df3397f1c" />
   </Folder>
   <Folder Name="/tests/Data/">
-    <Project Path="tests/Data/Data.UnitOfWork.UnitTests/Data.UnitOfWork.UnitTests.csproj" Id="848ef4f9-1889-4cdd-b5af-4d72ed2b142c" />
     <Project Path="tests/Data/Data.PostgreSql.UnitTests/Data.PostgreSql.UnitTests.csproj" Id="211c005f-d822-4851-a7fa-efdf3408bcdd" />
     <Project Path="tests/Data/Data.UnitOfWork.IntegrationTests/Data.UnitOfWork.IntegrationTests.csproj" Id="1868f8bb-5faf-4c5a-a9cc-2b1fc6fb9d45" />
+    <Project Path="tests/Data/Data.UnitOfWork.UnitTests/Data.UnitOfWork.UnitTests.csproj" Id="848ef4f9-1889-4cdd-b5af-4d72ed2b142c" />
   </Folder>
   <Folder Name="/tests/Messaging/">
     <Project Path="tests/Messaging/Messaging.Inbox.IntegrationTests/Messaging.Inbox.IntegrationTests.csproj" Id="eb324a56-e4c1-4fe2-b4fe-d2ff7852377d" />
