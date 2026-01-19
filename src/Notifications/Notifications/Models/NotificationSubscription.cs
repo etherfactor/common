@@ -9,7 +9,7 @@ public class NotificationSubscription
 
     public int EventTypeId { get; set; }
 
-    public int ChannelTypeId { get; set; }
+    public string ChannelKey { get; set; } = null!;
 
     public string ScheduleType { get; set; } = null!;
 

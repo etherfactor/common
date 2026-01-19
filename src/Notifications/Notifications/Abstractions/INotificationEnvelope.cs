@@ -1,3 +1,3 @@
 ﻿namespace EtherGizmos.Common.Abstractions;
 
-public interface IChannelEnvelope;
+public interface INotificationEnvelope;

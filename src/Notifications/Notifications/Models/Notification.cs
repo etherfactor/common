@@ -13,6 +13,4 @@ public class Notification
     public NotificationStatusType StatusType { get; set; }
 
     public int AttemptCount { get; set; }
-
-
 }

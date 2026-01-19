@@ -2,10 +2,10 @@
 
 namespace EtherGizmos.Common.Abstractions;
 
-public interface IChannelFormatter
+public interface INotificationChannelFormatter
 {
-    int NotificationChannelDefinitionId { get; }
+    string ChannelKey { get; }
 
-    IChannelEnvelope Format(
+    INotificationEnvelope Format(
         Notification notification);
 }
