@@ -4,6 +4,7 @@ using EtherGizmos.Common.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Reflection;
 
 namespace EtherGizmos.Common;
@@ -15,8 +16,9 @@ public static class UnitOfWorkServiceCollectionExtensions
         public IServiceCollection AddUnitOfWork(
             Action<UnitOfWorkOptions> configureOptions)
         {
-            @this.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>()
-                .AddScoped(typeof(IRepository<>), typeof(EfCoreRepository<>));
+            @this.TryAddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
+            @this.TryAddSingleton<IUnitOfWorkAccessor, UnitOfWorkAccessor>();
+            @this.TryAddScoped(typeof(IRepository<>), typeof(EfCoreRepository<>));
 
             @this.AddOptions<UnitOfWorkOptions>()
                 .Configure(configureOptions);

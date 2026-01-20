@@ -20,6 +20,8 @@ internal class UnitOfWork : IUnitOfWork
 
     public IServiceProvider Services => _serviceProvider;
 
+    public IDisposable? AmbientDisposable { get; set; }
+
     public UnitOfWork(
         IOptions<UnitOfWorkOptions> options,
         IServiceScope serviceScope)

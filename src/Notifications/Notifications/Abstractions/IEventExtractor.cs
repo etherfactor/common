@@ -9,5 +9,6 @@ public interface IEventExtractor
 
     Task<IEnumerable<IDomainEvent>> ExtractAsync(
         EntityEntry entry,
+        IUnitOfWork unitOfWork,
         CancellationToken cancellationToken = default);
 }

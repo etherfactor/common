@@ -1,4 +1,5 @@
-﻿using EtherGizmos.Common.Configuration;
+﻿using EtherGizmos.Common.Abstractions;
+using EtherGizmos.Common.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -16,15 +17,19 @@ internal class UnitOfWorkFactoryTests
     {
         var services = new ServiceCollection();
 
-        var accessorMock = new Mock<IHttpContextAccessor>();
-        accessorMock.Setup(@interface =>
+        var httpAccessorMock = new Mock<IHttpContextAccessor>();
+        httpAccessorMock.Setup(@interface =>
             @interface.HttpContext)
             .Returns(() => new DefaultHttpContext()
             {
                 RequestServices = _serviceProvider,
             });
 
-        services.AddSingleton(accessorMock.Object);
+        services.AddSingleton(httpAccessorMock.Object);
+
+        var uowAccessorMock = new Mock<IUnitOfWorkAccessor>();
+
+        services.AddSingleton(uowAccessorMock.Object);
 
         _serviceProvider = services.BuildServiceProvider();
         _uowFactory = new(new Mock<IOptions<UnitOfWorkOptions>>().Object, _serviceProvider);
@@ -61,7 +66,7 @@ internal class UnitOfWorkFactoryTests
     public void Create_WithRequestTrue_ShouldUseRequestScope()
     {
         //Arrange & Act
-        using var uow = _uowFactory.Create(useRequestScope: true);
+        using var uow = _uowFactory.Create(new() { SccopeMode = UnitOfWorkScopeMode.RequestScope });
 
         //Assert
         Assert.That(uow.Services, Is.EqualTo(_serviceProvider));
@@ -71,7 +76,7 @@ internal class UnitOfWorkFactoryTests
     public void Create_WithRequestFalse_ShouldUseNewScope()
     {
         //Arrange & Act
-        using var uow = _uowFactory.Create(useRequestScope: false);
+        using var uow = _uowFactory.Create(new() { SccopeMode = UnitOfWorkScopeMode.NewScope });
 
         //Assert
         Assert.That(uow.Services, Is.Not.EqualTo(_serviceProvider));

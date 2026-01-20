@@ -11,5 +11,14 @@ public static class UnitOfWorkExtensions
         {
             return new UnfilteredUnitOfWorkFactory(@this);
         }
+
+        public IUnitOfWork Create(IServiceProvider provider)
+        {
+            return @this.Create(new()
+            {
+                SccopeMode = UnitOfWorkScopeMode.ProvidedScope,
+                ScopeProvider = provider,
+            });
+        }
     }
 }

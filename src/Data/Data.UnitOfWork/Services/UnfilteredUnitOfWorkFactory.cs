@@ -22,18 +22,9 @@ internal class UnfilteredUnitOfWorkFactory : IUnitOfWorkFactory
         return uow;
     }
 
-    public IUnitOfWork Create(bool useRequestScope)
+    public IUnitOfWork Create(UnitOfWorkCreateOptions options)
     {
-        var uow = _inner.Create(useRequestScope);
-        var filter = uow.Services.GetRequiredService<IFilterContext>();
-        filter.Disabled = true;
-
-        return uow;
-    }
-
-    public IUnitOfWork Create(IServiceProvider provider)
-    {
-        var uow = _inner.Create(provider);
+        var uow = _inner.Create(options);
         var filter = uow.Services.GetRequiredService<IFilterContext>();
         filter.Disabled = true;
 

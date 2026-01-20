@@ -11,10 +11,12 @@ public abstract class EventExtractor<TEntity> : IEventExtractor
 
     public Task<IEnumerable<IDomainEvent>> ExtractAsync(
         EntityEntry entry,
+        IUnitOfWork unitOfWork,
         CancellationToken cancellationToken = default)
-        => ExtractAsync((EntityEntry<TEntity>)entry, cancellationToken);
+        => ExtractAsync((EntityEntry<TEntity>)entry, unitOfWork, cancellationToken);
 
     protected abstract Task<IEnumerable<IDomainEvent>> ExtractAsync(
         EntityEntry<TEntity> entry,
+        IUnitOfWork unitOfWork,
         CancellationToken cancellationToken = default);
 }
