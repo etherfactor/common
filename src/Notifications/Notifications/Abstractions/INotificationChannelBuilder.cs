@@ -2,7 +2,9 @@
 
 namespace EtherGizmos.Common.Abstractions;
 
-public interface INotificationBuilder
+public interface INotificationChannelBuilder
 {
+    string ChannelType { get; }
+
     IServiceCollection Services { get; }
 }

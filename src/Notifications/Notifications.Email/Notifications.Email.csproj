@@ -19,8 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Data\Data.UnitOfWork\Data.UnitOfWork.csproj" />
-    <ProjectReference Include="..\..\Messaging\Messaging\Messaging.csproj" />
+    <ProjectReference Include="..\..\Email\Email.Smtp\Email.Smtp.csproj" />
+    <ProjectReference Include="..\Notifications\Notifications.csproj" />
   </ItemGroup>
 
 </Project>

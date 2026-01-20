@@ -5,7 +5,7 @@ public abstract class NotificationChannelSender<TEnvelope> : INotificationChanne
 {
     public abstract string ChannelKey { get; }
 
-    public async Task SendAsync(INotificationEnvelope envelope, CancellationToken ct)
+    public async Task SendAsync(INotificationEnvelope envelope, CancellationToken cancellationToken = default)
     {
         if (envelope is not TEnvelope typed)
         {
@@ -14,8 +14,8 @@ public abstract class NotificationChannelSender<TEnvelope> : INotificationChanne
                 $"Expected '{typeof(TEnvelope).Name}', got '{envelope.GetType().Name}'.");
         }
 
-        await SendTypedAsync(typed, ct);
+        await SendTypedAsync(typed, cancellationToken);
     }
 
-    protected abstract Task SendTypedAsync(TEnvelope envelope, CancellationToken ct);
+    protected abstract Task SendTypedAsync(TEnvelope envelope, CancellationToken cancellationToken = default);
 }

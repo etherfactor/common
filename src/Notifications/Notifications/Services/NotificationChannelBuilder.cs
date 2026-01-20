@@ -3,13 +3,17 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EtherGizmos.Common.Services;
 
-internal class NotificationBuilder : INotificationBuilder
+internal class NotificationChannelBuilder : INotificationChannelBuilder
 {
+    public string ChannelType { get; }
+
     public IServiceCollection Services { get; }
 
-    public NotificationBuilder(
+    public NotificationChannelBuilder(
+        string channelType,
         IServiceCollection services)
     {
+        ChannelType = channelType;
         Services = services;
     }
 }

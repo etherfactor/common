@@ -10,11 +10,15 @@ public static class NotificationsServiceCollectionExtensions
 {
     extension(IServiceCollection @this)
     {
-        public INotificationBuilder AddNotifications()
+        public IServiceCollection AddNotifications(
+            Action<INotificationBuilder> configureNotifications)
         {
             @this.TryAddEnumerable(new ServiceDescriptor(typeof(IInterceptor), typeof(NotificationSaveChangesInterceptor)));
 
-            return new NotificationBuilder();
+            var builder = new NotificationBuilder(@this);
+            configureNotifications(builder);
+
+            return @this;
         }
     }
 }
