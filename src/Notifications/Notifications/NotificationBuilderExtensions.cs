@@ -1,5 +1,6 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using EtherGizmos.Common.Configuration;
+using EtherGizmos.Common.Models;
 using EtherGizmos.Common.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -12,12 +13,13 @@ public static class NotificationBuilderExtensions
 {
     extension(INotificationBuilder @this)
     {
-        public INotificationBuilder AddChannel<TChannel>(
+        public INotificationBuilder AddChannel<TMethod, TChannel>(
             string channelType,
             Action<INotificationChannelBuilder>? configureChannel = null)
-            where TChannel : class, INotificationChannelSender
+            where TMethod : DeliveryMethod
+            where TChannel : class, INotificationChannelSender<TMethod>
         {
-            @this.Services.TryAddKeyedScoped<INotificationChannelSender, TChannel>(channelType);
+            @this.Services.TryAddKeyedScoped<INotificationChannelSender<TMethod>, TChannel>(channelType);
 
             if (configureChannel is not null)
             {
@@ -30,9 +32,10 @@ public static class NotificationBuilderExtensions
 
         public INotificationBuilder AddNotification<TNotification>(
             string eventType,
-            Action<INotificationTypeBuilder> configureType)
+            Action<INotificationTypeBuilder<TNotification>> configureType)
+            where TNotification : class
         {
-            var builder = new NotificationTypeBuilder(eventType, @this.Services);
+            var builder = new NotificationTypeBuilder<TNotification>(eventType, @this.Services);
             configureType(builder);
 
             return @this;
@@ -56,16 +59,34 @@ public static class NotificationBuilderExtensions
         }
     }
 
-    extension(INotificationTypeBuilder @this)
+    extension<TModel>(INotificationTypeBuilder<TModel> @this)
+        where TModel : class
     {
-        public INotificationTypeBuilder Supports<TFormatter>(
-            string eventType)
-            where TFormatter : class, INotificationChannelFormatter
+        public INotificationTypeBuilder<TModel> Supports<TMethod, TFormatter>(
+            TMethod method)
+            where TMethod : DeliveryMethod
+            where TFormatter : class, INotificationChannelFormatter<ImmediateMode, TMethod, TModel>
         {
             @this.Services.AddOptions<NotificationTypeOptions>(@this.EventType)
                 .Configure(opt =>
                 {
-                    opt.FormatterMap.Add(eventType, typeof(TFormatter));
+                    opt.FormatterMap[DeliveryModes.Immediate] ??= [];
+                    opt.FormatterMap[DeliveryModes.Immediate][method] = typeof(TFormatter);
+                });
+
+            return @this;
+        }
+
+        public INotificationTypeBuilder<TModel> SupportsDigest<TMethod, TFormatter>(
+            TMethod method)
+            where TMethod : DeliveryMethod
+            where TFormatter : class, INotificationChannelFormatter<DigestMode, TMethod, Digest<TModel>>
+        {
+            @this.Services.AddOptions<NotificationTypeOptions>(@this.EventType)
+                .Configure(opt =>
+                {
+                    opt.FormatterMap[DeliveryModes.Digest] ??= [];
+                    opt.FormatterMap[DeliveryModes.Digest][method] = typeof(TFormatter);
                 });
 
             return @this;

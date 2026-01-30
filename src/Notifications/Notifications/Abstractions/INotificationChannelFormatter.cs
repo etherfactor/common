@@ -2,10 +2,12 @@
 
 namespace EtherGizmos.Common.Abstractions;
 
-public interface INotificationChannelFormatter
+public interface INotificationChannelFormatter<TMode, TMethod, TModel>
+    where TMode : DeliveryMode
+    where TMethod : DeliveryMethod
+    where TModel : class
 {
-    string ChannelKey { get; }
-
     INotificationEnvelope Format(
-        Notification notification);
+        Notification notification,
+        TModel model);
 }

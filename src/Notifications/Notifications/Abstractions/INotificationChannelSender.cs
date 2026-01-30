@@ -1,9 +1,8 @@
 ﻿namespace EtherGizmos.Common.Abstractions;
 
-public interface INotificationChannelSender
+public interface INotificationChannelSender<TMethod>
+    where TMethod : DeliveryMethod
 {
-    string ChannelKey { get; }
-
     Task SendAsync(
         INotificationEnvelope envelope,
         CancellationToken cancellationToken = default);

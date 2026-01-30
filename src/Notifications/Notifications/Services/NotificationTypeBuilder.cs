@@ -3,7 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EtherGizmos.Common.Services;
 
-internal class NotificationTypeBuilder : INotificationTypeBuilder
+internal class NotificationTypeBuilder<TModel> : INotificationTypeBuilder<TModel>
+    where TModel : class
 {
     public string EventType { get; }
 

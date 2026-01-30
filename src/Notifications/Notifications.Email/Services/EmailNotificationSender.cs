@@ -3,11 +3,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EtherGizmos.Common.Services;
 
-internal class EmailNotificationSender : NotificationChannelSender<EmailEnvelope>
+internal class EmailNotificationSender : NotificationChannelSender<EmailMethod, EmailEnvelope>
 {
     private readonly IEmailSender _sender;
-
-    public override string ChannelKey => NotificationChannelType.Email;
 
     public EmailNotificationSender(
         [ServiceKey] object serviceKey,
