@@ -7,7 +7,7 @@ public interface INotificationChannelFormatter<TMode, TMethod, TModel>
     where TMethod : DeliveryMethod
     where TModel : class
 {
-    INotificationEnvelope Format(
+    INotificationEnvelope<TMethod> Format(
         Notification notification,
         TModel model);
 }

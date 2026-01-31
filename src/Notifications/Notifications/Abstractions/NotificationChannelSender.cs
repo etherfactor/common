@@ -2,9 +2,11 @@
 
 public abstract class NotificationChannelSender<TMethod, TEnvelope> : INotificationChannelSender<TMethod>
     where TMethod : DeliveryMethod
-    where TEnvelope : class, INotificationEnvelope
+    where TEnvelope : class, INotificationEnvelope<TMethod>
 {
-    public async Task SendAsync(INotificationEnvelope envelope, CancellationToken cancellationToken = default)
+    public async Task SendAsync(
+        INotificationEnvelope<TMethod> envelope,
+        CancellationToken cancellationToken = default)
     {
         if (envelope is not TEnvelope typed)
         {
@@ -16,5 +18,7 @@ public abstract class NotificationChannelSender<TMethod, TEnvelope> : INotificat
         await SendTypedAsync(typed, cancellationToken);
     }
 
-    protected abstract Task SendTypedAsync(TEnvelope envelope, CancellationToken cancellationToken = default);
+    protected abstract Task SendTypedAsync(
+        TEnvelope envelope,
+        CancellationToken cancellationToken = default);
 }

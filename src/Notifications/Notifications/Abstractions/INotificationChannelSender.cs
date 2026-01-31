@@ -4,6 +4,6 @@ public interface INotificationChannelSender<TMethod>
     where TMethod : DeliveryMethod
 {
     Task SendAsync(
-        INotificationEnvelope envelope,
+        INotificationEnvelope<TMethod> envelope,
         CancellationToken cancellationToken = default);
 }

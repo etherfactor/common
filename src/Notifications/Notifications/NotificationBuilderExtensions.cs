@@ -67,6 +67,7 @@ public static class NotificationBuilderExtensions
             where TMethod : DeliveryMethod
             where TFormatter : class, INotificationChannelFormatter<ImmediateMode, TMethod, TModel>
         {
+            @this.Services.AddSingleton<INotificationChannelFormatter<ImmediateMode, TMethod, TModel>, TFormatter>();
             @this.Services.AddOptions<NotificationTypeOptions>(@this.EventType)
                 .Configure(opt =>
                 {
@@ -82,6 +83,7 @@ public static class NotificationBuilderExtensions
             where TMethod : DeliveryMethod
             where TFormatter : class, INotificationChannelFormatter<DigestMode, TMethod, Digest<TModel>>
         {
+            @this.Services.AddSingleton<INotificationChannelFormatter<DigestMode, TMethod, Digest<TModel>>, TFormatter>();
             @this.Services.AddOptions<NotificationTypeOptions>(@this.EventType)
                 .Configure(opt =>
                 {

@@ -1,3 +1,4 @@
 ﻿namespace EtherGizmos.Common.Abstractions;
 
-public interface INotificationEnvelope;
+public interface INotificationEnvelope<TMethod>
+    where TMethod : DeliveryMethod;
