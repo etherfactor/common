@@ -1,6 +1,6 @@
 ﻿namespace EtherGizmos.Common.Abstractions;
 
-public class EmailEnvelope : INotificationEnvelope
+public class EmailEnvelope : INotificationEnvelope<EmailMethod>
 {
     public EmailMessage Message { get; set; }
 

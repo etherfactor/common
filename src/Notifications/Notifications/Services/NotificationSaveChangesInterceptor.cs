@@ -59,7 +59,7 @@ internal class NotificationSaveChangesInterceptor : SaveChangesInterceptor
                 owned = true;
             }
 
-            var events = ExtractAsync(eventData, uow, cancellationToken).GetAwaiter().GetResult();
+            var events = await ExtractAsync(eventData, uow, cancellationToken);
 
             return await base.SavingChangesAsync(eventData, result, cancellationToken);
         }
