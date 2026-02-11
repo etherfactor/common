@@ -2,7 +2,7 @@
 
 namespace EtherGizmos.Common.Abstractions;
 
-public interface IEventExtractor
+public interface IDomainEventExtractor
 {
     bool CanHandle(
         EntityEntry entry);

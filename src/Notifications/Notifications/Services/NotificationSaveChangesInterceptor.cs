@@ -7,16 +7,19 @@ internal class NotificationSaveChangesInterceptor : SaveChangesInterceptor
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly IUnitOfWorkAccessor _uowAccessor;
-    private readonly IEnumerable<IEventExtractor> _eventExtractors;
+    private readonly IEnumerable<IDomainEventExtractor> _eventExtractors;
+    private readonly IDomainEventEmitter _eventEmitter;
 
     public NotificationSaveChangesInterceptor(
         IUnitOfWorkFactory uowFactory,
         IUnitOfWorkAccessor uowAccessor,
-        IEnumerable<IEventExtractor> eventExtractors)
+        IEnumerable<IDomainEventExtractor> eventExtractors,
+        IDomainEventEmitter eventEmitter)
     {
         _uowFactory = uowFactory;
         _uowAccessor = uowAccessor;
         _eventExtractors = eventExtractors;
+        _eventEmitter = eventEmitter;
     }
 
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
@@ -33,6 +36,11 @@ internal class NotificationSaveChangesInterceptor : SaveChangesInterceptor
             }
 
             var events = ExtractAsync(eventData, uow).GetAwaiter().GetResult();
+
+            foreach (var @event in events)
+            {
+                _eventEmitter.EmitAsync(@event).GetAwaiter().GetResult();
+            }
 
             return base.SavingChanges(eventData, result);
         }
@@ -60,6 +68,11 @@ internal class NotificationSaveChangesInterceptor : SaveChangesInterceptor
             }
 
             var events = await ExtractAsync(eventData, uow, cancellationToken);
+
+            foreach (var @event in events)
+            {
+                await _eventEmitter.EmitAsync(@event, cancellationToken);
+            }
 
             return await base.SavingChangesAsync(eventData, result, cancellationToken);
         }

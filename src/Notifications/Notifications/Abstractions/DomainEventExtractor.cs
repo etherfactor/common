@@ -2,7 +2,7 @@
 
 namespace EtherGizmos.Common.Abstractions;
 
-public abstract class EventExtractor<TEntity> : IEventExtractor
+public abstract class DomainEventExtractor<TEntity> : IDomainEventExtractor
     where TEntity : class, IDomainEvent
 {
     public bool CanHandle(
