@@ -38,6 +38,18 @@ public static class NotificationBuilderExtensions
             var builder = new NotificationTypeBuilder<TNotification>(eventType, @this.Services);
             configureType(builder);
 
+            @this.Services.AddOptions<NotificationTypeOptions>()
+                .Configure(opt =>
+                {
+                    if (opt.EventTypeMap.TryGetValue(eventType, out var type))
+                    {
+                        if (type != typeof(TNotification))
+                            throw new InvalidOperationException($"The event type '{eventType}' is already associated with type '{type}'");
+                    }
+
+                    opt.EventTypeMap[eventType] = typeof(TNotification);
+                });
+
             return @this;
         }
     }
