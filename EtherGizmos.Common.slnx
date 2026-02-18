@@ -59,4 +59,7 @@
     <Project Path="tests/Messaging/Messaging.RabbitMQ.IntegrationTests/Messaging.RabbitMQ.IntegrationTests.csproj" Id="8b1734fa-1bb2-466a-a8c2-e8ae1552b81f" />
     <Project Path="tests/Messaging/Messaging.UnitTests/Messaging.UnitTests.csproj" Id="0f324044-cc16-4f26-be95-39aece55d114" />
   </Folder>
+  <Folder Name="/tests/Notifications/">
+    <Project Path="tests/Notifications/Notifications.Test/Notifications.Test.csproj" Id="7a44bb32-62df-4e64-b122-f112d631e5a3" />
+  </Folder>
 </Solution>

@@ -12,6 +12,7 @@ public static class NotificationsServiceCollectionExtensions
     extension(IServiceCollection @this)
     {
         public IServiceCollection AddNotifications(
+            string connectionId,
             Action<INotificationBuilder> configureNotifications)
         {
             @this.TryAddEnumerable(new ServiceDescriptor(typeof(IInterceptor), typeof(NotificationSaveChangesInterceptor)));
@@ -22,7 +23,8 @@ public static class NotificationsServiceCollectionExtensions
                     opt.Publishers.AddQueue("domain-events", "domain-events");
                     opt.Publishers.AddQueue("notifications", "notifications");
                 })
-                .AddConsumersFromAssemblies(typeof(NotificationConstants).Assembly!);
+                .AddConsumersFromAssemblies(typeof(NotificationConstants).Assembly!)
+                .UseConnection(connectionId);
 
             var builder = new NotificationBuilder(@this);
             configureNotifications(builder);
