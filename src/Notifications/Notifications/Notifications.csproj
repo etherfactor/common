@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Data\Data.Migrations\Data.Migrations.csproj" />
     <ProjectReference Include="..\..\Data\Data.UnitOfWork\Data.UnitOfWork.csproj" />
     <ProjectReference Include="..\..\Messaging\Messaging\Messaging.csproj" />
   </ItemGroup>

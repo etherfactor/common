@@ -30,14 +30,16 @@ public static class NotificationBuilderExtensions
             return @this;
         }
 
-        public INotificationBuilder AddNotification<TNotification>(
+        public INotificationBuilder AddNotification<TNotification, TRouter>(
             string eventType,
             Action<INotificationTypeBuilder<TNotification>> configureType)
-            where TNotification : class
+            where TNotification : class, IDomainEvent
+            where TRouter : class, IDomainEventRouter<TNotification>
         {
             var builder = new NotificationTypeBuilder<TNotification>(eventType, @this.Services);
             configureType(builder);
 
+            @this.Services.TryAddSingleton<IDomainEventRouter<TNotification>, TRouter>();
             @this.Services.AddOptions<NotificationTypeOptions>()
                 .Configure(opt =>
                 {

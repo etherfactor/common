@@ -1,13 +1,14 @@
-﻿namespace EtherGizmos.Common.Models;
+﻿using EtherGizmos.Common.Abstractions;
 
-public class NotificationSubscription
+namespace EtherGizmos.Common.Models;
+
+public class NotificationSubscription : IEntity
 {
     public long Id { get; set; }
 
-    //TODO: Make this generic, to allow other user id types
-    public Guid UserId { get; set; }
+    public string UserId { get; set; } = null!;
 
-    public int EventTypeId { get; set; }
+    public string EventType { get; set; } = null!;
 
     public string ChannelKey { get; set; } = null!;
 

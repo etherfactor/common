@@ -3,7 +3,7 @@
 public enum NotificationStatusType
 {
     Pending = 1,
-    Sending = 10,
+    InFlight = 10,
     Sent = 100,
     Failed = -100,
 }

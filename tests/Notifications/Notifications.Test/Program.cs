@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Notifications.Test;
 using Serilog;
+using Testcontainers.PostgreSql;
 using Testcontainers.RabbitMq;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -27,25 +28,31 @@ builder.Services.AddSerilog((services, logger) =>
 var rmq = new RabbitMqBuilder("rabbitmq:latest").Build();
 await rmq.StartAsync();
 
+var psql = new PostgreSqlBuilder("postgres:latest").Build();
+await psql.StartAsync();
+
 builder.Configuration
     .AddInMemoryCollection(new Dictionary<string, string?>()
     {
+        ["Connections:GeneralDatabase:Type"] = "Database",
+        ["Connections:GeneralDatabase:PostgreSql:ConnectionString"] = psql.GetConnectionString(),
         ["Connections:NotificationBus:Type"] = "MessageBroker",
         ["Connections:NotificationBus:RabbitMQ:ConnectionString"] = rmq.GetConnectionString(),
     });
 
 builder.Services
     .AddConnectionResolver()
-    .WithRabbitMQ();
+    .WithRabbitMQ()
+    .WithPostgreSql();
 
 builder.Services
     .AddMessaging("Messaging", (opt, conf) => { })
     .UseConnection("NotificationBus");
 
 builder.Services
-    .AddNotifications("Messaging", opt =>
+    .AddNotifications("GeneralDatabase", "Messaging", opt =>
     {
-        opt.AddNotification<TestDomainEvent>("test.domain.event", type =>
+        opt.AddNotification<TestDomainEvent, TestDomainEventRouter>("test.domain.event", type =>
         {
 
         });

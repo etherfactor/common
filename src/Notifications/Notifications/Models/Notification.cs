@@ -1,6 +1,8 @@
-﻿namespace EtherGizmos.Common.Models;
+﻿using EtherGizmos.Common.Abstractions;
 
-public class Notification
+namespace EtherGizmos.Common.Models;
+
+public class Notification : IEntity
 {
     public long Id { get; set; }
 
