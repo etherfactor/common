@@ -24,6 +24,8 @@ internal class MessageSender : IMessageSender, ITransportMessageSender
     {
         var logicalName = message.LogicalDestinationName;
 
+        await _registry.OnReady;
+
         if (!_registry.TryGetBusId(logicalName, out var busId))
             ThrowForPublisher(logicalName);
 

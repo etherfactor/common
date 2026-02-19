@@ -4,5 +4,7 @@ public static class NotificationConstants
 {
     public const string BusId = "notifications-bus";
 
-    public const string DomainEventLogicalName = "domain-event";
+    public const string DomainEventsLogicalName = "domain-events";
+
+    public const string NotificationsLogicalName = "notifications";
 }

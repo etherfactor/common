@@ -4,6 +4,7 @@ using EtherGizmos.Common.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -32,7 +33,7 @@ public static class MessagingServiceCollectionExtensions
             var key = new BusKey(busId);
             @this.TryAddKeyedSingleton<IMessageBus, MessageBus>(key);
 
-            @this.AddHostedService<MessagePumpHostedService>();
+            @this.TryAddEnumerable(new ServiceDescriptor(typeof(IHostedService), typeof(MessagePumpHostedService), ServiceLifetime.Singleton));
             @this.AddOptions<MessageBusOptions>()
                 .Configure(opt =>
                 {
@@ -42,7 +43,7 @@ public static class MessagingServiceCollectionExtensions
             return new MessagingBuilder(busId, @this);
         }
 
-        private IServiceCollection AddMessagingCore()
+        internal IServiceCollection AddMessagingCore()
         {
             @this.TryAddSingleton<IMessageBusRegistry, MessageBusRegistry>();
 

@@ -14,12 +14,20 @@ internal class MessageBusRegistry : IMessageBusRegistry
     private readonly ConcurrentDictionary<string, Lazy<Task<(IMessageListener Listener, CancellationTokenSource Cts)>>> _listeners = [];
     private readonly ConcurrentDictionary<string, Lazy<Task<IMessagePublisher>>> _publishers = [];
 
+    private readonly TaskCompletionSource _onReadySource = new();
+    public Task OnReady => _onReadySource.Task;
+
     public MessageBusRegistry(
         ILogger<MessageBusRegistry> logger,
         IServiceProvider serviceProvider)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
+    }
+
+    public void MarkReady()
+    {
+        _onReadySource.SetResult();
     }
 
     public bool TryGetBusId(

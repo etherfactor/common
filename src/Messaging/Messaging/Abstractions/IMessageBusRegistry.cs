@@ -5,6 +5,10 @@ namespace EtherGizmos.Common.Abstractions;
 
 public interface IMessageBusRegistry
 {
+    Task OnReady { get; }
+
+    void MarkReady();
+
     Task<IMessageListener> RegisterListenerAsync(
         string busId,
         string logicalName,

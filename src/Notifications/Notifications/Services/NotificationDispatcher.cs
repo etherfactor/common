@@ -18,12 +18,12 @@ internal class NotificationDispatcher : INotificationDispatcher
         Notification notification,
         CancellationToken cancellationToken = default)
     {
-        var channelKey = notification.NotificationSubscription.ChannelKey;
+        //var channelKey = notification.NotificationSubscription.ChannelKey;
 
-        var formatter = _serviceProvider.GetRequiredKeyedService<INotificationChannelFormatter>(channelKey);
-        var sender = _serviceProvider.GetRequiredKeyedService<INotificationChannelSender>(channelKey);
+        //var formatter = _serviceProvider.GetRequiredKeyedService<INotificationChannelFormatter>(channelKey);
+        //var sender = _serviceProvider.GetRequiredKeyedService<INotificationChannelSender>(channelKey);
 
-        var envelope = formatter.Format(notification);
-        await sender.SendAsync(envelope, cancellationToken);
+        //var envelope = formatter.Format(notification);
+        //await sender.SendAsync(envelope, cancellationToken);
     }
 }

@@ -4,5 +4,5 @@ namespace Notifications.Test;
 
 internal class TestDomainEvent : IDomainEvent
 {
-    public string EventTypeId => "test.domain.event";
+    public int Value { get; set; }
 }

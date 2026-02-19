@@ -35,13 +35,15 @@ internal class DomainEventEmitter : IDomainEventEmitter
         var serialized = _eventSerializer.Serialize(@event);
         var message = new DomainEventMessage()
         {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTimeOffset.UtcNow,
             EventType = eventType,
             PayloadType = serialized.Type,
             Payload = serialized.Payload,
         };
 
         await _messageSender.SendAsync(
-            NotificationConstants.DomainEventLogicalName,
+            NotificationConstants.DomainEventsLogicalName,
             message,
             cancellationToken: cancellationToken);
     }
