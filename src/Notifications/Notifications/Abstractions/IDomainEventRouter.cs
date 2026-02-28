@@ -1,12 +1,11 @@
-﻿using EtherGizmos.Common.Models;
-
-namespace EtherGizmos.Common.Abstractions;
+﻿namespace EtherGizmos.Common.Abstractions;
 
 public interface IDomainEventRouter<TEvent>
     where TEvent : IDomainEvent
 {
-    IQueryable<NotificationSubscription> FilterScope(
-        IUnitOfWork uow,
-        IQueryable<NotificationSubscription> queryable,
-        TEvent @event);
+    IAsyncEnumerable<string> FilterScopeAsync(
+        TEvent @event,
+        IEnumerable<AudienceKey> audiences,
+        IEnumerable<string> userIds,
+        CancellationToken cancellationToken = default);
 }

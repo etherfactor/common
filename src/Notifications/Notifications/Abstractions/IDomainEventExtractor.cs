@@ -7,7 +7,7 @@ public interface IDomainEventExtractor
     bool CanHandle(
         EntityEntry entry);
 
-    Task<IEnumerable<IDomainEvent>> ExtractAsync(
+    IAsyncEnumerable<DomainEventEmission> ExtractAsync(
         EntityEntry entry,
         IUnitOfWork unitOfWork,
         CancellationToken cancellationToken = default);

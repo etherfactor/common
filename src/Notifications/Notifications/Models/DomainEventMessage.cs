@@ -1,4 +1,6 @@
-﻿namespace EtherGizmos.Common.Models;
+﻿using EtherGizmos.Common.Abstractions;
+
+namespace EtherGizmos.Common.Models;
 
 public class DomainEventMessage
 {
@@ -7,6 +9,8 @@ public class DomainEventMessage
     public DateTimeOffset OccurredAt { get; set; }
 
     public string EventType { get; set; } = null!;
+
+    public List<AudienceKey> Audiences { get; set; } = [];
 
     public string PayloadType { get; set; } = null!;
 

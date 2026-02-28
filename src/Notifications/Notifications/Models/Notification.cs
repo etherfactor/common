@@ -6,6 +6,8 @@ public class Notification : IEntity
 {
     public long Id { get; set; }
 
+    public Guid EventId { get; set; }
+
     public long NotificationSubscriptionId { get; set; }
 
     public NotificationSubscription NotificationSubscription { get; set; } = null!;

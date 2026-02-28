@@ -33,10 +33,16 @@ public class Migration001_CreateNotificationTables : AutoReversingMigration
          */
         Create.Table("notifications")
             .WithColumn("notification_id").AsInt64().PrimaryKey().Identity()
+            .WithColumn("event_id").AsGuid().NotNullable()
             .WithColumn("notification_subscription_id").AsInt64().NotNullable()
             .WithColumn("payload").AsString(int.MaxValue).NotNullable()
             .WithColumn("notification_status_type_id").AsInt32().NotNullable()
             .WithColumn("attempt_count").AsInt32().NotNullable();
+
+        Create.Index("IX_notifications_event_id")
+            .OnTable("notifications")
+            .OnColumn("event_id")
+            .Unique();
 
         Create.ForeignKey("FK_notifications_notification_subscription_id")
             .FromTable("notifications").ForeignColumn("notification_subscription_id")

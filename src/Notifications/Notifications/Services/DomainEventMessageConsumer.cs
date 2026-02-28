@@ -2,6 +2,7 @@
 using EtherGizmos.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace EtherGizmos.Common.Services;
@@ -11,6 +12,8 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
     private readonly IServiceProvider _serviceProvider;
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly IDomainEventSerializer _serializer;
+
+    private readonly ConcurrentDictionary<Type, MethodInfo> _consumeInnerLookup = [];
 
     public DomainEventMessageConsumer(
         IServiceProvider serviceProvider,
@@ -28,10 +31,12 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
         var message = context.Message;
         var @event = _serializer.Deserialize(message.PayloadType, message.Payload);
 
-        await (Task)typeof(DomainEventMessageConsumer)
-            .GetMethod(nameof(ConsumeInnerAsync), BindingFlags.Instance | BindingFlags.NonPublic)!
-            .MakeGenericMethod(@event.GetType())
-            .Invoke(this, [message, @event, context.CancellationToken])!;
+        var method = _consumeInnerLookup.GetOrAdd(@event.GetType(), type =>
+            typeof(DomainEventMessageConsumer)
+                .GetMethod(nameof(ConsumeInnerAsync), BindingFlags.Instance | BindingFlags.NonPublic)!
+                .MakeGenericMethod(type));
+
+        await (Task)method.Invoke(this, [message, @event, context.CancellationToken])!;
     }
 
     private async Task ConsumeInnerAsync<TEvent>(
@@ -46,21 +51,32 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
 
         var router = _serviceProvider.GetRequiredService<IDomainEventRouter<TEvent>>();
 
-        var ofType = subscriptionRepo.Data.Where(e => e.IsEnabled && e.EventType == message.EventType);
-        var ofTypeFiltered = router.FilterScope(uow, ofType, @event);
+        var subscriptions = await subscriptionRepo.Data.Where(e => e.IsEnabled && e.EventType == message.EventType)
+            .ToListAsync(cancellationToken: cancellationToken);
+        var subsByUser = subscriptions.ToLookup(e => e.UserId, StringComparer.OrdinalIgnoreCase);
 
-        var subscriptions = await ofTypeFiltered.ToListAsync(cancellationToken: cancellationToken);
-        foreach (var subscription in subscriptions)
+        var allUsers = subscriptions.Select(e => e.UserId).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var applicableUsers = router.FilterScopeAsync(@event, message.Audiences, allUsers, cancellationToken);
+
+        var seenUsers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        await foreach (var userId in applicableUsers)
         {
-            var notification = new Notification()
-            {
-                NotificationSubscriptionId = subscription.Id,
-                Payload = message.Payload,
-                StatusType = NotificationStatusType.Pending,
-                AttemptCount = 0,
-            };
+            if (!seenUsers.Add(userId)) continue;
 
-            notificationRepo.Add(notification);
+            var userSubs = subsByUser[userId];
+            foreach (var subscription in userSubs)
+            {
+                var notification = new Notification()
+                {
+                    EventId = message.EventId,
+                    NotificationSubscriptionId = subscription.Id,
+                    Payload = message.Payload,
+                    StatusType = NotificationStatusType.Pending,
+                    AttemptCount = 0,
+                };
+
+                notificationRepo.Add(notification);
+            }
         }
 
         await uow.SaveChangesAsync(cancellationToken);

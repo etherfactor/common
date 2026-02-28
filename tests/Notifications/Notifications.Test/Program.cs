@@ -14,10 +14,10 @@ builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment}.json", optional: true, reloadOnChange: true)
     .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
     .AddRemappedEnvironmentVariables(
-        new Remap(new(@"(?<=[^:_])_(?=[^_])"), "."),
-        new Remap(new(@"(?<=[^_]):_(?=[^_])"), " "),
-        new Remap(new(@"^ConnectionStrings:(?=[^_:])"), ""));
-    //.AddExpandedConnections(builder.Configuration);
+        new Remap(new(@"(?<=[^:_])_(?=[^_])"), ".")!,
+        new Remap(new(@"(?<=[^_]):_(?=[^_])"), " ")!,
+        new Remap(new(@"^ConnectionStrings:(?=[^_:])"), "")!);
+//.AddExpandedConnections(builder.Configuration);
 
 builder.Logging.ClearProviders();
 

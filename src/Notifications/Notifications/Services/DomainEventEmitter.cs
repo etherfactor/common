@@ -23,6 +23,7 @@ internal class DomainEventEmitter : IDomainEventEmitter
 
     public async Task EmitAsync(
         IDomainEvent @event,
+        IEnumerable<AudienceKey> audiences,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(@event);
@@ -38,6 +39,7 @@ internal class DomainEventEmitter : IDomainEventEmitter
             EventId = Guid.NewGuid(),
             OccurredAt = DateTimeOffset.UtcNow,
             EventType = eventType,
+            Audiences = [.. audiences],
             PayloadType = serialized.Type,
             Payload = serialized.Payload,
         };

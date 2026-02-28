@@ -12,6 +12,9 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
 
         entity.HasKey(e => e.Id);
 
+        entity.Property(e => e.EventId)
+            .HasColumnName("event_id");
+
         entity.Property(e => e.Id)
             .HasColumnName("notification_id");
 

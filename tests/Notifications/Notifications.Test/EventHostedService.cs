@@ -17,10 +17,13 @@ internal class EventHostedService : BackgroundService
     {
         while (true)
         {
-            await _emitter.EmitAsync(new TestDomainEvent()
-            {
-                Value = new Random().Next(),
-            }, stoppingToken);
+            await _emitter
+                .EmitAsync(new TestDomainEvent()
+                {
+                    Value = new Random().Next(),
+                },
+                [new("test", "123")],
+                stoppingToken);
 
             await Task.Delay(5000, stoppingToken);
         }

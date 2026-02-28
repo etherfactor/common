@@ -1,6 +1,5 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using EtherGizmos.Common.Models;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace EtherGizmos.Common.Services;
 

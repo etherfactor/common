@@ -9,13 +9,13 @@ public abstract class DomainEventExtractor<TEntity> : IDomainEventExtractor
         EntityEntry entry)
         => entry.Entity is TEntity;
 
-    public Task<IEnumerable<IDomainEvent>> ExtractAsync(
+    public IAsyncEnumerable<DomainEventEmission> ExtractAsync(
         EntityEntry entry,
         IUnitOfWork unitOfWork,
         CancellationToken cancellationToken = default)
         => ExtractAsync((EntityEntry<TEntity>)entry, unitOfWork, cancellationToken);
 
-    protected abstract Task<IEnumerable<IDomainEvent>> ExtractAsync(
+    protected abstract IAsyncEnumerable<DomainEventEmission> ExtractAsync(
         EntityEntry<TEntity> entry,
         IUnitOfWork unitOfWork,
         CancellationToken cancellationToken = default);

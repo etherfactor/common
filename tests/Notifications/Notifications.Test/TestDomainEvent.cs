@@ -1,5 +1,5 @@
 ﻿using EtherGizmos.Common.Abstractions;
-using EtherGizmos.Common.Models;
+using System.Runtime.CompilerServices;
 
 namespace Notifications.Test;
 
@@ -10,12 +10,18 @@ internal class TestDomainEvent : IDomainEvent
 
 internal class TestDomainEventRouter : IDomainEventRouter<TestDomainEvent>
 {
-    public IQueryable<NotificationSubscription> FilterScope(
-        IUnitOfWork uow,
-        IQueryable<NotificationSubscription> queryable,
-        TestDomainEvent @event)
+    public async IAsyncEnumerable<string> FilterScopeAsync(
+        TestDomainEvent @event,
+        IEnumerable<AudienceKey> audiences,
+        IEnumerable<string> userIds,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        //Fire all events
-        return queryable;
+        foreach (var userId in userIds)
+        {
+            if (userId.Equals("ABC", StringComparison.OrdinalIgnoreCase))
+            {
+                yield return userId;
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace EtherGizmos.Common.Services;
 
@@ -35,11 +36,11 @@ internal class NotificationSaveChangesInterceptor : SaveChangesInterceptor
                 owned = true;
             }
 
-            var events = ExtractAsync(eventData, uow).GetAwaiter().GetResult();
+            var events = ExtractAsync(eventData, uow);
 
-            foreach (var @event in events)
+            foreach (var @event in events.ToBlockingEnumerable())
             {
-                _eventEmitter.EmitAsync(@event).GetAwaiter().GetResult();
+                _eventEmitter.EmitAsync(@event.Event, @event.Audience).GetAwaiter().GetResult();
             }
 
             return base.SavingChanges(eventData, result);
@@ -67,11 +68,11 @@ internal class NotificationSaveChangesInterceptor : SaveChangesInterceptor
                 owned = true;
             }
 
-            var events = await ExtractAsync(eventData, uow, cancellationToken);
+            var events = ExtractAsync(eventData, uow, cancellationToken);
 
-            foreach (var @event in events)
+            await foreach (var @event in events)
             {
-                await _eventEmitter.EmitAsync(@event, cancellationToken);
+                await _eventEmitter.EmitAsync(@event.Event, @event.Audience, cancellationToken);
             }
 
             return await base.SavingChangesAsync(eventData, result, cancellationToken);
@@ -86,24 +87,24 @@ internal class NotificationSaveChangesInterceptor : SaveChangesInterceptor
         }
     }
 
-    private async Task<IEnumerable<IDomainEvent>> ExtractAsync(
+    private async IAsyncEnumerable<DomainEventEmission> ExtractAsync(
         DbContextEventData eventData,
         IUnitOfWork unitOfWork,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var events = new List<IDomainEvent>();
         foreach (var entry in eventData.Context!.ChangeTracker.Entries())
         {
             foreach (var eventExtractor in _eventExtractors)
             {
                 if (eventExtractor.CanHandle(entry))
                 {
-                    var toAdd = await eventExtractor.ExtractAsync(entry, unitOfWork, cancellationToken);
-                    events.AddRange(toAdd);
+                    var toAddEvents = eventExtractor.ExtractAsync(entry, unitOfWork, cancellationToken);
+                    await foreach (var toAddEvent in toAddEvents)
+                    {
+                        yield return toAddEvent;
+                    }
                 }
             }
         }
-
-        return events;
     }
 }
