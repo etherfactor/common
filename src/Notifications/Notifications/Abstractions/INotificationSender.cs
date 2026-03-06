@@ -2,7 +2,7 @@
 
 namespace EtherGizmos.Common.Abstractions;
 
-public interface INotificationDispatcher
+public interface INotificationSender
 {
     Task SendAsync(
         Notification notification,

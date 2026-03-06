@@ -11,12 +11,21 @@ public abstract class NotificationChannelFormatter<TMode, TMethod, TModel, TEnve
 {
     public abstract string ChannelKey { get; }
 
-    public INotificationEnvelope<TMethod> Format(
-        Notification notification,
-        TModel model)
-        => FormatTyped(notification, model);
-
-    protected abstract TEnvelope FormatTyped(
+    public abstract INotificationEnvelope<TMethod> Format(
         Notification notification,
         TModel model);
+
+    public INotificationEnvelope Format(
+        Notification notification,
+        object model)
+        => Format(notification, TryCast(model));
+
+    private TModel TryCast(
+        object model)
+    {
+        if (model is not TModel typed)
+            throw new InvalidOperationException($"Must provide a model of type {typeof(TModel)}");
+
+        return typed;
+    }
 }

@@ -17,4 +17,8 @@ public class NotificationSubscription : IEntity
     public string? ScheduleConfig { get; set; }
 
     public bool IsEnabled { get; set; }
+
+    public DateTimeOffset? LastNotificationAt { get; set; }
+
+    public DateTimeOffset? NextNotificationAt { get; set; }
 }

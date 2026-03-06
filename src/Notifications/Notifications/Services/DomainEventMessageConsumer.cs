@@ -2,6 +2,7 @@
 using EtherGizmos.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Reflection;
 
@@ -9,20 +10,26 @@ namespace EtherGizmos.Common.Services;
 
 internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
 {
+    private readonly ILogger _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly IDomainEventSerializer _serializer;
+    private readonly IMessageSender _sender;
 
     private readonly ConcurrentDictionary<Type, MethodInfo> _consumeInnerLookup = [];
 
     public DomainEventMessageConsumer(
+        ILogger<DomainEventMessageConsumer> logger,
         IServiceProvider serviceProvider,
         IUnitOfWorkFactory uowFactory,
-        IDomainEventSerializer serializer)
+        IDomainEventSerializer serializer,
+        IMessageSender sender)
     {
+        _logger = logger;
         _serviceProvider = serviceProvider;
         _uowFactory = uowFactory;
         _serializer = serializer;
+        _sender = sender;
     }
 
     public async Task ConsumeAsync(
@@ -58,6 +65,7 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
         var allUsers = subscriptions.Select(e => e.UserId).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         var applicableUsers = router.FilterScopeAsync(@event, message.Audiences, allUsers, cancellationToken);
 
+        var toPublish = new List<(NotificationSubscription Subscription, Notification Notification)>();
         var seenUsers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         await foreach (var userId in applicableUsers)
         {
@@ -69,16 +77,36 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
                 var notification = new Notification()
                 {
                     EventId = message.EventId,
+                    CreatedAt = DateTimeOffset.UtcNow,
                     NotificationSubscriptionId = subscription.Id,
+                    PayloadType = message.PayloadType,
                     Payload = message.Payload,
                     StatusType = NotificationStatusType.Pending,
                     AttemptCount = 0,
                 };
 
                 notificationRepo.Add(notification);
+                toPublish.Add((subscription, notification));
             }
         }
 
         await uow.SaveChangesAsync(cancellationToken);
+
+        foreach (var entry in toPublish)
+        {
+            try
+            {
+                await _sender.SendAsync("notification-created", new NotificationCreatedMessage()
+                {
+                    NotificationId = entry.Notification.Id,
+                    ScheduleType = entry.Subscription.ScheduleType,
+                }, cancellationToken: cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to publish created message for notification {NotificationId}",
+                    entry.Notification.Id);
+            }
+        }
     }
 }

@@ -15,6 +15,4 @@ public class DomainEventMessage
     public string PayloadType { get; set; } = null!;
 
     public string Payload { get; set; } = null!;
-
-    public DomainEventMessage() { }
 }

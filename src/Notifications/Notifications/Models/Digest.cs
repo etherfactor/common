@@ -1,6 +1,9 @@
-﻿namespace EtherGizmos.Common.Models;
+﻿using EtherGizmos.Common.Abstractions;
+
+namespace EtherGizmos.Common.Models;
 
 public class Digest<TNotification>
+    : IDomainEvent
     where TNotification : class
 {
     public DateTimeOffset StartAt { get; set; }
