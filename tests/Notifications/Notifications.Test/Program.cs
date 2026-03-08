@@ -43,17 +43,17 @@ builder.Services
     .WithRabbitMQ()
     .WithPostgreSql();
 
-builder.Services
-    .AddMessaging("Messaging", (opt, conf) => { })
-    .UseConnection("NotificationBus");
+//builder.Services
+//    .AddMessaging("Messaging", (opt, conf) => { })
+//    .UseConnection("NotificationBus");
 
 builder.Services
-    .AddNotifications("GeneralDatabase", "Messaging", opt =>
+    .AddNotifications("GeneralDatabase", "NotificationBus", opt =>
     {
         opt.AddNotification<TestDomainEvent, TestDomainEventRouter>("test.domain.event", type =>
         {
-            type.Supports<TestDomainEvent, WebhookMethod, TestDomainEventWebhookFormatter>(DeliveryMethods.Webhook);
-            type.SupportsDigest<TestDomainEvent, WebhookMethod, TestDomainEventDigestWebhookFormatter>(DeliveryMethods.Webhook);
+            type.Supports<TestDomainEvent, WebhookMethod, TestDomainEventWebhookFormatter>();
+            type.SupportsDigest<TestDomainEvent, WebhookMethod, TestDomainEventDigestWebhookFormatter>();
         });
 
         opt.AddWebhookChannel();

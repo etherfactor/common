@@ -9,9 +9,4 @@ public interface INotificationChannelSender
 
 public interface INotificationChannelSender<TMethod>
     : INotificationChannelSender
-    where TMethod : DeliveryMethod
-{
-    Task SendAsync(
-        INotificationEnvelope<TMethod> envelope,
-        CancellationToken cancellationToken = default);
-}
+    where TMethod : DeliveryMethod;

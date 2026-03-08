@@ -1,10 +1,11 @@
 ﻿namespace EtherGizmos.Common.Abstractions;
 
-public abstract class NotificationChannelSender<TMethod> : INotificationChannelSender<TMethod>
+public abstract class NotificationChannelSender<TMethod, TEnvelope> : INotificationChannelSender<TMethod>
     where TMethod : DeliveryMethod
+    where TEnvelope : class, INotificationEnvelope<TMethod>
 {
     public abstract Task SendAsync(
-        INotificationEnvelope<TMethod> envelope,
+        TEnvelope envelope,
         CancellationToken cancellationToken = default);
 
     public Task SendAsync(
@@ -12,10 +13,10 @@ public abstract class NotificationChannelSender<TMethod> : INotificationChannelS
         CancellationToken cancellationToken = default)
         => SendAsync(TryCast(envelope), cancellationToken);
 
-    public INotificationEnvelope<TMethod> TryCast(
+    protected TEnvelope TryCast(
         INotificationEnvelope envelope)
     {
-        if (envelope is not INotificationEnvelope<TMethod> typed)
+        if (envelope is not TEnvelope typed)
             throw new InvalidOperationException($"Must provide an envelope of type {typeof(INotificationEnvelope<TMethod>)}");
 
         return typed;

@@ -13,9 +13,4 @@ public interface INotificationChannelFormatter<TMode, TMethod, TModel>
     : INotificationChannelFormatter
     where TMode : DeliveryMode
     where TMethod : DeliveryMethod
-    where TModel : class
-{
-    INotificationEnvelope<TMethod> Format(
-        Notification notification,
-        TModel model);
-}
+    where TModel : class;

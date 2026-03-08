@@ -19,9 +19,7 @@ public static class NotificationBuilderExtensions
             where TMethod : DeliveryMethod
             where TChannel : class, INotificationChannelSender<TMethod>
         {
-            @this.Services.TryAddKeyedScoped<INotificationChannelSender<TMethod>, TChannel>(method.Key);
-            @this.Services.TryAddKeyedScoped<INotificationChannelSender>(method.Key, (provider, _) =>
-                provider.GetRequiredKeyedService<INotificationChannelSender<TMethod>>(method.Key));
+            @this.Services.TryAddKeyedScoped<INotificationChannelSender, TChannel>(method.Key);
 
             if (configureChannel is not null)
             {
@@ -78,14 +76,13 @@ public static class NotificationBuilderExtensions
     extension<TModel>(INotificationTypeBuilder<TModel> @this)
         where TModel : class, IDomainEvent
     {
-        public INotificationTypeBuilder<TModel> Supports<TMethod, TFormatter>(
-            TMethod method)
+        public INotificationTypeBuilder<TModel> Supports<TMethod, TFormatter>()
             where TMethod : DeliveryMethod
             where TFormatter : class, INotificationChannelFormatter<ImmediateMode, TMethod, TModel>
         {
-            @this.Services.AddSingleton<INotificationChannelFormatter<ImmediateMode, TMethod, TModel>, TFormatter>();
-            @this.Services.AddKeyedSingleton<INotificationChannelFormatter>((method.Key, typeof(TModel)), (provider, _) =>
-                provider.GetRequiredService<INotificationChannelFormatter<ImmediateMode, TMethod, TModel>>());
+            var method = Activator.CreateInstance<TMethod>()!;
+
+            @this.Services.AddKeyedSingleton<INotificationChannelFormatter, TFormatter>((method.Key, typeof(TModel)));
 
             @this.Services.AddOptions<NotificationTypeOptions>(@this.EventType)
                 .Configure(opt =>
@@ -97,14 +94,13 @@ public static class NotificationBuilderExtensions
             return @this;
         }
 
-        public INotificationTypeBuilder<TModel> SupportsDigest<TMethod, TFormatter>(
-            TMethod method)
+        public INotificationTypeBuilder<TModel> SupportsDigest<TMethod, TFormatter>()
             where TMethod : DeliveryMethod
             where TFormatter : class, INotificationChannelFormatter<DigestMode, TMethod, Digest<TModel>>
         {
-            @this.Services.AddSingleton<INotificationChannelFormatter<DigestMode, TMethod, Digest<TModel>>, TFormatter>();
-            @this.Services.AddKeyedSingleton<INotificationChannelFormatter>((method.Key, typeof(Digest<TModel>)), (provider, _) =>
-                provider.GetRequiredService<INotificationChannelFormatter<ImmediateMode, TMethod, Digest<TModel>>>());
+            var method = Activator.CreateInstance<TMethod>()!;
+
+            @this.Services.AddKeyedSingleton<INotificationChannelFormatter, TFormatter>((method.Key, typeof(Digest<TModel>)));
 
             @this.Services.AddOptions<NotificationTypeOptions>(@this.EventType)
                 .Configure(opt =>

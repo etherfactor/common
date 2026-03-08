@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EtherGizmos.Common.Services;
 
-internal class EmailNotificationSender : NotificationChannelSender<EmailMethod>
+internal class EmailNotificationSender : NotificationChannelSender<EmailMethod, EmailEnvelope>
 {
     private readonly IEmailSender _sender;
 
@@ -15,10 +15,9 @@ internal class EmailNotificationSender : NotificationChannelSender<EmailMethod>
     }
 
     public override async Task SendAsync(
-        INotificationEnvelope<EmailMethod> envelope,
+        EmailEnvelope envelope,
         CancellationToken cancellationToken = default)
     {
-        //TODO: Fix this, I don't like it
-        await _sender.SendAsync(((EmailEnvelope)envelope).Message, cancellationToken);
+        await _sender.SendAsync(envelope.Message, cancellationToken);
     }
 }

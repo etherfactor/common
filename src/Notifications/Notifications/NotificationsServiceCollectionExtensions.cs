@@ -14,7 +14,7 @@ public static class NotificationsServiceCollectionExtensions
     {
         public IServiceCollection AddNotifications(
             string databaseConnectionId,
-            string busId,
+            string messageBusConnectionId,
             Action<INotificationBuilder> configureNotifications)
         {
             @this.AddNotificationsCore(databaseConnectionId);
@@ -25,7 +25,7 @@ public static class NotificationsServiceCollectionExtensions
                 ServiceLifetime.Singleton));
 
             @this
-                .AddMessaging(busId, (opt, conf) =>
+                .AddMessaging("__Notifications", (opt, conf) =>
                 {
                     opt.Publishers.AddQueue(NotificationConstants.DomainEventsLogicalName, "domain-events");
                     opt.Listeners.AddQueue(NotificationConstants.DomainEventsLogicalName, "domain-events");
@@ -33,7 +33,8 @@ public static class NotificationsServiceCollectionExtensions
                     opt.Publishers.AddQueue(NotificationConstants.NotificationsLogicalName, "notifications");
                     opt.Listeners.AddQueue(NotificationConstants.NotificationsLogicalName, "notifications");
                 })
-                .AddConsumersFromAssemblies(typeof(NotificationConstants).Assembly!);
+                .AddConsumersFromAssemblies(typeof(NotificationConstants).Assembly!)
+                .UseConnection(messageBusConnectionId);
 
             var builder = new NotificationBuilder(@this);
             configureNotifications(builder);

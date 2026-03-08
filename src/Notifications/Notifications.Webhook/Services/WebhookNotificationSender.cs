@@ -2,7 +2,7 @@
 
 namespace EtherGizmos.Common.Services;
 
-internal class WebhookNotificationSender : NotificationChannelSender<WebhookMethod>
+internal class WebhookNotificationSender : NotificationChannelSender<WebhookMethod, WebhookEnvelope>
 {
     private readonly IHttpClientFactory _httpClientFactory;
 
@@ -13,13 +13,11 @@ internal class WebhookNotificationSender : NotificationChannelSender<WebhookMeth
     }
 
     public override async Task SendAsync(
-        INotificationEnvelope<WebhookMethod> envelope,
+        WebhookEnvelope envelope,
         CancellationToken cancellationToken = default)
     {
-        var typed = (WebhookEnvelope)envelope;
-
-        var content = new StringContent(typed.Payload);
-        content.Headers.ContentType = new(typed.ContentType);
+        var content = new StringContent(envelope.Payload);
+        content.Headers.ContentType = new(envelope.ContentType);
 
         using var client = _httpClientFactory.CreateClient(WebhookMethod.Instance.Key);
         await client.PostAsync("https://localhost:52227/webhook/post", content, cancellationToken);

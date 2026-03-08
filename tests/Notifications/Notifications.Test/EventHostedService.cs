@@ -1,5 +1,4 @@
 ﻿using EtherGizmos.Common.Abstractions;
-using Microsoft.Extensions.Hosting;
 
 namespace Notifications.Test;
 
