@@ -55,6 +55,8 @@ builder.Services
             type.Supports<TestDomainEvent, WebhookMethod, TestDomainEventWebhookFormatter>(DeliveryMethods.Webhook);
             type.SupportsDigest<TestDomainEvent, WebhookMethod, TestDomainEventDigestWebhookFormatter>(DeliveryMethods.Webhook);
         });
+
+        opt.AddWebhookChannel();
     });
 
 builder.Services.AddHostedService<EventHostedService>();

@@ -32,5 +32,11 @@ public class NotificationSubscriptionConfiguration : IEntityTypeConfiguration<No
 
         entity.Property(e => e.IsEnabled)
             .HasColumnName("is_enabled");
+
+        entity.Property(e => e.LastNotificationAt)
+            .HasColumnName("last_notification_at");
+
+        entity.Property(e => e.NextNotificationAt)
+            .HasColumnName("next_notification_at");
     }
 }

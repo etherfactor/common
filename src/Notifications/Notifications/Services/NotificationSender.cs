@@ -21,12 +21,15 @@ internal class NotificationSender : INotificationSender
         Notification notification,
         CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var provider = scope.ServiceProvider;
+
         var channelKey = notification.NotificationSubscription.ChannelKey;
 
         var model = _serializer.Deserialize(notification.PayloadType, notification.Payload);
 
-        var formatter = _serviceProvider.GetRequiredKeyedService<INotificationChannelFormatter>((channelKey, model.GetType()));
-        var sender = _serviceProvider.GetRequiredKeyedService<INotificationChannelSender>(channelKey);
+        var formatter = provider.GetRequiredKeyedService<INotificationChannelFormatter>((channelKey, model.GetType()));
+        var sender = provider.GetRequiredKeyedService<INotificationChannelSender>(channelKey);
 
         var envelope = formatter.Format(notification, model);
         await sender.SendAsync(envelope, cancellationToken);

@@ -9,12 +9,12 @@ public class WebhookController : ControllerBase
     private readonly ILogger _logger;
 
     public WebhookController(
-        ILogger logger)
+        ILogger<WebhookController> logger)
     {
         _logger = logger;
     }
 
-    [HttpPost]
+    [HttpPost("post")]
     public IActionResult Post(
         [FromBody] JsonDocument payload,
         CancellationToken cancellationToken = default)

@@ -14,16 +14,18 @@ public static class NotificationBuilderExtensions
     extension(INotificationBuilder @this)
     {
         public INotificationBuilder AddChannel<TMethod, TChannel>(
-            string channelType,
+            TMethod method,
             Action<INotificationChannelBuilder>? configureChannel = null)
             where TMethod : DeliveryMethod
             where TChannel : class, INotificationChannelSender<TMethod>
         {
-            @this.Services.TryAddKeyedScoped<INotificationChannelSender<TMethod>, TChannel>(channelType);
+            @this.Services.TryAddKeyedScoped<INotificationChannelSender<TMethod>, TChannel>(method.Key);
+            @this.Services.TryAddKeyedScoped<INotificationChannelSender>(method.Key, (provider, _) =>
+                provider.GetRequiredKeyedService<INotificationChannelSender<TMethod>>(method.Key));
 
             if (configureChannel is not null)
             {
-                var builder = new NotificationChannelBuilder(channelType, @this.Services);
+                var builder = new NotificationChannelBuilder(method.Key, @this.Services);
                 configureChannel(builder);
             }
 

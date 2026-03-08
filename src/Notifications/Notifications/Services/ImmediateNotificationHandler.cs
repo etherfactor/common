@@ -67,6 +67,7 @@ internal class ImmediateNotificationHandler : INotificationHandler
             _logger.LogError(ex, "Failed to send notification {NotificationId}", notificationId);
             if (notification.AttemptCount < 10) notification.StatusType = NotificationStatusType.Pending;
             else notification.StatusType = NotificationStatusType.Failed;
+            throw;
         }
         finally
         {

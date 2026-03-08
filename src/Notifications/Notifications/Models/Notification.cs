@@ -6,11 +6,11 @@ public class Notification : IEntity
 {
     public long Id { get; set; }
 
-    public DateTimeOffset CreatedAt { get; set; }
+    public Guid EventId { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public DateTimeOffset? SentAt { get; set; }
-
-    public Guid EventId { get; set; }
 
     public long NotificationSubscriptionId { get; set; }
 

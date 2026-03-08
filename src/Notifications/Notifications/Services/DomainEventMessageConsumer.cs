@@ -96,11 +96,14 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
         {
             try
             {
-                await _sender.SendAsync("notification-created", new NotificationCreatedMessage()
-                {
-                    NotificationId = entry.Notification.Id,
-                    ScheduleType = entry.Subscription.ScheduleType,
-                }, cancellationToken: cancellationToken);
+                await _sender.SendAsync(
+                    NotificationConstants.NotificationsLogicalName,
+                    new NotificationCreatedMessage()
+                    {
+                        NotificationId = entry.Notification.Id,
+                        ScheduleType = entry.Subscription.ScheduleType,
+                    },
+                    cancellationToken: cancellationToken);
             }
             catch (Exception ex)
             {
