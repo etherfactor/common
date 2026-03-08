@@ -1,4 +1,5 @@
 ﻿using EtherGizmos.Common.Abstractions;
+using EtherGizmos.Common.Models;
 using System.Runtime.CompilerServices;
 
 namespace Notifications.Test;
@@ -24,4 +25,14 @@ internal class TestDomainEventRouter : IDomainEventRouter<TestDomainEvent>
             }
         }
     }
+}
+
+internal class TestDomainEventWebhookFormatter : WebhookNotificationChannelFormatter<ImmediateMode, TestDomainEvent>
+{
+    public override string ChannelKey => WebhookMethod.Instance.Key;
+}
+
+internal class TestDomainEventDigestWebhookFormatter : WebhookNotificationChannelFormatter<DigestMode, Digest<TestDomainEvent>>
+{
+    public override string ChannelKey => WebhookMethod.Instance.Key;
 }

@@ -36,6 +36,7 @@
   </Folder>
   <Folder Name="/src/Notifications/">
     <Project Path="src/Notifications/Notifications.Email/Notifications.Email.csproj" Id="a2dd00c6-46d5-4ff8-ae36-e143acb8af90" />
+    <Project Path="src/Notifications/Notifications.Webhook/Notifications.Webhook.csproj" Id="6be26326-5132-4173-a833-97198022668e" />
     <Project Path="src/Notifications/Notifications/Notifications.csproj" Id="fc093b79-a861-4fbb-8214-b9bb9f3619de" />
   </Folder>
   <Folder Name="/tests/" />

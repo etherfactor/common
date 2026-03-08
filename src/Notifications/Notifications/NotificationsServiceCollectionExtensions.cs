@@ -19,7 +19,10 @@ public static class NotificationsServiceCollectionExtensions
         {
             @this.AddNotificationsCore(databaseConnectionId);
 
-            @this.TryAddEnumerable(new ServiceDescriptor(typeof(IInterceptor), typeof(NotificationSaveChangesInterceptor)));
+            @this.TryAddEnumerable(new ServiceDescriptor(
+                typeof(IInterceptor),
+                typeof(NotificationSaveChangesInterceptor),
+                ServiceLifetime.Singleton));
 
             @this
                 .AddMessaging(busId, (opt, conf) =>

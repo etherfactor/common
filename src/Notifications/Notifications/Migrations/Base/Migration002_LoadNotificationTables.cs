@@ -19,8 +19,8 @@ public class Migration002_LoadNotificationTables : MigrationExtension
 
         // TODO: DELETE THIS
         Insert.IntoTable("notification_subscriptions")
-            .Row(new { user_id = "ABC", event_type = "test.domain.event", channel_key = "email", schedule_type = "immediate", schedule_config = null as string, is_enabled = true })
-            .Row(new { user_id = "DEF", event_type = "test.domain.event", channel_key = "email", schedule_type = "immediate", schedule_config = null as string, is_enabled = true });
+            .Row(new { user_id = "ABC", event_type = "test.domain.event", channel_key = "webhook", schedule_type = "immediate", schedule_config = null as string, is_enabled = true })
+            .Row(new { user_id = "DEF", event_type = "test.domain.event", channel_key = "webhook", schedule_type = "immediate", schedule_config = null as string, is_enabled = true });
     }
 
     public override void Down() { }

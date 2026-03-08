@@ -1,14 +1,12 @@
 ﻿using EtherGizmos.Common;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using EtherGizmos.Common.Abstractions;
+using Microsoft.AspNetCore.HttpOverrides;
 using Notifications.Test;
 using Serilog;
 using Testcontainers.PostgreSql;
 using Testcontainers.RabbitMq;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment}.json", optional: true, reloadOnChange: true)
@@ -54,12 +52,56 @@ builder.Services
     {
         opt.AddNotification<TestDomainEvent, TestDomainEventRouter>("test.domain.event", type =>
         {
-
+            type.Supports<TestDomainEvent, WebhookMethod, TestDomainEventWebhookFormatter>(DeliveryMethods.Webhook);
+            type.SupportsDigest<TestDomainEvent, WebhookMethod, TestDomainEventDigestWebhookFormatter>(DeliveryMethods.Webhook);
         });
     });
 
 builder.Services.AddHostedService<EventHostedService>();
 
+// Controllers
+builder.Services
+    .AddRouting(opt =>
+    {
+        opt.LowercaseUrls = true;
+    })
+    .AddControllers();
+
 var app = builder.Build();
+
+app.UseForwardedHeaders(
+    new()
+    {
+        ForwardedHeaders =
+            ForwardedHeaders.XForwardedFor |
+            ForwardedHeaders.XForwardedProto |
+            ForwardedHeaders.XForwardedHost
+    });
+
+app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app
+    .UseCors(opt =>
+    {
+        opt.AllowAnyOrigin();
+        opt.AllowAnyMethod();
+        opt.AllowAnyHeader();
+    });
+
+app
+    .Use(async (context, next) =>
+    {
+        context.Request.EnableBuffering();
+        await next();
+    });
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
 
 app.Run();
