@@ -1,4 +1,5 @@
 ﻿using EtherGizmos.Common.Abstractions;
+using EtherGizmos.Common.Configuration;
 using EtherGizmos.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -44,7 +45,7 @@ internal class DigestNotificationCollector : NotificationCollector
         var digest = DeliveryModes.Digest.Key;
         var subscriptions = await subscriptionRepo.Data
             .Where(e => e.ScheduleType == digest
-                && e.NextNotificationAt <= DateTimeOffset.UtcNow)
+                && (e.NextNotificationAt ?? DateTimeOffset.MinValue) <= DateTimeOffset.UtcNow)
             .ToListAsync(cancellationToken: cancellationToken);
 
         foreach (var subscription in subscriptions)
@@ -73,7 +74,7 @@ internal class DigestNotificationCollector : NotificationCollector
                 var schedule = CrontabSchedule.Parse(config.CronExpression, new() { IncludingSeconds = false });
 
                 var previous = subscription.LastNotificationAt ?? DateTimeOffset.MinValue;
-                var current = subscription.NextNotificationAt ?? DateTimeOffset.Now;
+                var current = subscription.NextNotificationAt ?? DateTimeOffset.UtcNow;
                 var next = schedule.GetNextOccurrence(current.DateTime);
 
                 var types = events.GroupBy(e => e.GetType());
@@ -99,7 +100,7 @@ internal class DigestNotificationCollector : NotificationCollector
                 }
 
                 subscription.LastNotificationAt = subscription.NextNotificationAt ?? current;
-                subscription.NextNotificationAt = next;
+                subscription.NextNotificationAt = new DateTimeOffset(next, TimeSpan.Zero);
             }
             catch (Exception ex)
             {

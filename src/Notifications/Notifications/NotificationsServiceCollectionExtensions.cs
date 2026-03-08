@@ -52,6 +52,11 @@ public static class NotificationsServiceCollectionExtensions
             @this.TryAddKeyedSingleton<INotificationHandler, DigestNotificationHandler>(DigestMode.Instance.Key);
             @this.TryAddKeyedSingleton<INotificationHandler, ImmediateNotificationHandler>(ImmediateMode.Instance.Key);
 
+            @this.TryAddEnumerable(new ServiceDescriptor(typeof(INotificationCollector), typeof(DigestNotificationCollector), ServiceLifetime.Singleton));
+            @this.TryAddEnumerable(new ServiceDescriptor(typeof(INotificationCollector), typeof(ImmediateNotificationCollector), ServiceLifetime.Singleton));
+
+            @this.AddHostedService<NotificationCollectorHostedService>();
+
             @this
                 .AddDbContext<NotificationContext>((provider, opt) =>
                 {

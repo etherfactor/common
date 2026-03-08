@@ -28,8 +28,15 @@ internal class DomainEventEmitter : IDomainEventEmitter
     {
         ArgumentNullException.ThrowIfNull(@event);
 
+        var lookupType = @event.GetType();
+        if (lookupType.IsGenericType
+            && lookupType.GetGenericTypeDefinition() == typeof(Digest<>))
+        {
+            lookupType = lookupType.GetGenericArguments()[0];
+        }
+
         var eventType = _typeOptions.CurrentValue.EventTypeMap
-            .FirstOrDefault(e => e.Value == @event.GetType())
+            .FirstOrDefault(e => e.Value == lookupType)
             .Key
             ?? throw new InvalidOperationException($"Unknown event type '{@event.GetType()}'");
 

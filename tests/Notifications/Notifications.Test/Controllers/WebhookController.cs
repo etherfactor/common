@@ -19,7 +19,7 @@ public class WebhookController : ControllerBase
         [FromBody] JsonDocument payload,
         CancellationToken cancellationToken = default)
     {
-        var data = payload.ToString();
+        var data = payload.RootElement.GetRawText();
         _logger.LogInformation("Received payload: {Data}", data);
 
         return Accepted();

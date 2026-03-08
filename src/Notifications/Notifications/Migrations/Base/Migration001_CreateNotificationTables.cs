@@ -47,7 +47,7 @@ public class Migration001_CreateNotificationTables : AutoReversingMigration
         Create.Index("IX_notifications_event_id")
             .OnTable("notifications")
             .OnColumn("event_id")
-            .Unique();
+            .Ascending();
 
         Create.ForeignKey("FK_notifications_notification_subscription_id")
             .FromTable("notifications").ForeignColumn("notification_subscription_id")

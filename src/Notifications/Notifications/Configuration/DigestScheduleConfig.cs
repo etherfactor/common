@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace EtherGizmos.Common.Models;
+namespace EtherGizmos.Common.Configuration;
 
 public class DigestScheduleConfig
 {
