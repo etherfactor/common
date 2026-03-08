@@ -27,6 +27,9 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
         entity.Property(e => e.NotificationSubscriptionId)
             .HasColumnName("notification_subscription_id");
 
+        entity.Property(e => e.IsDerived)
+            .HasColumnName("is_derived");
+
         entity.Property(e => e.PayloadType)
             .HasColumnName("payload_type");
 

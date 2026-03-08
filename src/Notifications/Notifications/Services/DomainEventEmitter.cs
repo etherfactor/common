@@ -24,6 +24,7 @@ internal class DomainEventEmitter : IDomainEventEmitter
     public async Task EmitAsync(
         IDomainEvent @event,
         IEnumerable<AudienceKey> audiences,
+        DomainEventEmissionOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(@event);
@@ -47,6 +48,7 @@ internal class DomainEventEmitter : IDomainEventEmitter
             OccurredAt = DateTimeOffset.UtcNow,
             EventType = eventType,
             Audiences = [.. audiences],
+            IsDerived = options?.IsDerived ?? false,
             PayloadType = serialized.Type,
             Payload = serialized.Payload,
         };

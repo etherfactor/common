@@ -72,7 +72,7 @@ internal class NotificationSaveChangesInterceptor : SaveChangesInterceptor
 
             await foreach (var @event in events)
             {
-                await _eventEmitter.EmitAsync(@event.Event, @event.Audience, cancellationToken);
+                await _eventEmitter.EmitAsync(@event.Event, @event.Audience, cancellationToken: cancellationToken);
             }
 
             return await base.SavingChangesAsync(eventData, result, cancellationToken);

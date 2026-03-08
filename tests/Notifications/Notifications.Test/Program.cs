@@ -33,9 +33,9 @@ builder.Configuration
     .AddInMemoryCollection(new Dictionary<string, string?>()
     {
         ["Connections:GeneralDatabase:Type"] = "Database",
-        ["Connections:GeneralDatabase:PostgreSql:ConnectionString"] = psql.GetConnectionString(),
+        ["Connections:GeneralDatabase:PostgreSql:ConnectionString"] = $"{psql.GetConnectionString()}; Include Error Detail=true;",
         ["Connections:NotificationBus:Type"] = "MessageBroker",
-        ["Connections:NotificationBus:RabbitMQ:ConnectionString"] = rmq.GetConnectionString(),
+        ["Connections:NotificationBus:RabbitMQ:ConnectionString"] = $"{rmq.GetConnectionString()}",
     });
 
 builder.Services

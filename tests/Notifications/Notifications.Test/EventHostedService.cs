@@ -22,7 +22,7 @@ internal class EventHostedService : BackgroundService
                     Value = new Random().Next(),
                 },
                 [new("test", "123")],
-                stoppingToken);
+                cancellationToken: stoppingToken);
 
             await Task.Delay(5000, stoppingToken);
         }

@@ -54,6 +54,7 @@ internal class DigestNotificationCollector : NotificationCollector
             {
                 var notifications = await notificationRepo.Data
                     .Where(e => e.NotificationSubscriptionId == subscription.Id
+                        && !e.IsDerived
                         && e.StatusType == NotificationStatusType.Pending
                         && e.CreatedAt <= subscription.NextNotificationAt
                         && e.AttemptCount < 10)
@@ -128,6 +129,13 @@ internal class DigestNotificationCollector : NotificationCollector
             Notifications = typedEvents,
         };
 
-        await _emitter.EmitAsync(digest, audience: new("$self", userId), cancellationToken: cancellationToken);
+        await _emitter.EmitAsync(
+            digest,
+            audience: new("$self", userId),
+            options: new()
+            {
+                IsDerived = true,
+            },
+            cancellationToken: cancellationToken);
     }
 }

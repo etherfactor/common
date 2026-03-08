@@ -16,6 +16,8 @@ public class Notification : IEntity
 
     public NotificationSubscription NotificationSubscription { get; set; } = null!;
 
+    public bool IsDerived { get; set; }
+
     public string PayloadType { get; set; } = null!;
 
     public string Payload { get; set; } = null!;

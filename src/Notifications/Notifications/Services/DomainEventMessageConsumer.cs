@@ -79,6 +79,7 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
                     EventId = message.EventId,
                     CreatedAt = DateTimeOffset.UtcNow,
                     NotificationSubscriptionId = subscription.Id,
+                    IsDerived = message.IsDerived,
                     PayloadType = message.PayloadType,
                     Payload = message.Payload,
                     StatusType = NotificationStatusType.Pending,

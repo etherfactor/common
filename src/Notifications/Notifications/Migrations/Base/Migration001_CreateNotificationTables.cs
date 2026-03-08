@@ -39,6 +39,7 @@ public class Migration001_CreateNotificationTables : AutoReversingMigration
             .WithColumn("created_at").AsDateTime2().NotNullable().WithDefault(SystemMethods.CurrentUTCDateTime)
             .WithColumn("sent_at").AsDateTime2().Nullable()
             .WithColumn("notification_subscription_id").AsInt64().NotNullable()
+            .WithColumn("is_derived").AsBoolean().NotNullable()
             .WithColumn("payload_type").AsString(int.MaxValue).NotNullable()
             .WithColumn("payload").AsString(int.MaxValue).NotNullable()
             .WithColumn("notification_status_type_id").AsInt32().NotNullable()

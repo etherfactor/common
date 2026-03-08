@@ -12,6 +12,8 @@ public class DomainEventMessage
 
     public List<AudienceKey> Audiences { get; set; } = [];
 
+    public bool IsDerived { get; set; }
+
     public string PayloadType { get; set; } = null!;
 
     public string Payload { get; set; } = null!;
