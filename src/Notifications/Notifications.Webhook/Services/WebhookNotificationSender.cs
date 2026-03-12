@@ -20,6 +20,8 @@ internal class WebhookNotificationSender : NotificationChannelSender<WebhookMeth
         content.Headers.ContentType = new(envelope.ContentType);
 
         using var client = _httpClientFactory.CreateClient(WebhookMethod.Instance.Key);
-        await client.PostAsync("https://localhost:52227/webhook/post", content, cancellationToken);
+
+        var request = new HttpRequestMessage(new HttpMethod(envelope.Method), envelope.Endpoint) { Content = content };
+        await client.SendAsync(request, cancellationToken);
     }
 }

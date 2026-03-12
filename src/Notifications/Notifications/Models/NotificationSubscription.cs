@@ -12,9 +12,11 @@ public class NotificationSubscription : IEntity
 
     public string ChannelKey { get; set; } = null!;
 
+    public string ChannelConfigRaw { get; set; } = null!;
+
     public string ScheduleType { get; set; } = null!;
 
-    public string? ScheduleConfig { get; set; }
+    public string ScheduleConfigRaw { get; set; } = null!;
 
     public bool IsEnabled { get; set; }
 

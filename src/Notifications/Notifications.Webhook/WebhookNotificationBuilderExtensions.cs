@@ -10,7 +10,7 @@ public static class WebhookNotificationBuilderExtensions
     {
         public INotificationBuilder AddWebhookChannel()
         {
-            @this.AddChannel<WebhookMethod, WebhookNotificationSender>(DeliveryMethods.Webhook);
+            @this.AddChannel<WebhookMethod, WebhookNotificationSender>("Webhook", typeof(WebhookChannelConfig));
 
             @this.Services.AddHttpClient(DeliveryMethods.Webhook.Key);
 

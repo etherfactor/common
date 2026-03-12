@@ -27,12 +27,6 @@ internal class TestDomainEventRouter : IDomainEventRouter<TestDomainEvent>
     }
 }
 
-internal class TestDomainEventWebhookFormatter : WebhookNotificationChannelFormatter<ImmediateMode, TestDomainEvent>
-{
-    public override string ChannelKey => WebhookMethod.Instance.Key;
-}
+internal class TestDomainEventWebhookFormatter : WebhookNotificationChannelFormatter<ImmediateMode, TestDomainEvent>;
 
-internal class TestDomainEventDigestWebhookFormatter : WebhookNotificationChannelFormatter<DigestMode, Digest<TestDomainEvent>>
-{
-    public override string ChannelKey => WebhookMethod.Instance.Key;
-}
+internal class TestDomainEventDigestWebhookFormatter : WebhookNotificationChannelFormatter<DigestMode, Digest<TestDomainEvent>>;

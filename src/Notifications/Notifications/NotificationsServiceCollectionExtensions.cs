@@ -45,6 +45,9 @@ public static class NotificationsServiceCollectionExtensions
         internal IServiceCollection AddNotificationsCore(
             string databaseConnectionId)
         {
+            NotificationMetadata.RegisterSchedule(DeliveryModes.Immediate.Key, "Immediate", typeof(ImmediateScheduleConfig));
+            NotificationMetadata.RegisterSchedule(DeliveryModes.Digest.Key, "Digest", typeof(DigestScheduleConfig));
+
             @this.TryAddSingleton<IDomainEventEmitter, DomainEventEmitter>();
             @this.TryAddSingleton<IDomainEventSerializer, DomainEventSerializer>();
             @this.TryAddSingleton<INotificationSender, NotificationSender>();

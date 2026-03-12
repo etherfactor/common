@@ -9,8 +9,6 @@ public abstract class NotificationChannelFormatter<TMode, TMethod, TEnvelope, TM
     where TEnvelope : class, INotificationEnvelope<TMethod>
     where TModel : class
 {
-    public abstract string ChannelKey { get; }
-
     public abstract TEnvelope Format(
         Notification notification,
         TModel model);

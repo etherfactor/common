@@ -14,11 +14,15 @@ public static class NotificationBuilderExtensions
     extension(INotificationBuilder @this)
     {
         public INotificationBuilder AddChannel<TMethod, TChannel>(
-            TMethod method,
+            string displayName,
+            Type channelConfigType,
             Action<INotificationChannelBuilder>? configureChannel = null)
             where TMethod : DeliveryMethod
             where TChannel : class, INotificationChannelSender<TMethod>
         {
+            var method = Activator.CreateInstance<TMethod>()!;
+            NotificationMetadata.RegisterChannel(method.Key, displayName, channelConfigType);
+
             @this.Services.TryAddKeyedScoped<INotificationChannelSender, TChannel>(method.Key);
 
             if (configureChannel is not null)
@@ -76,6 +80,22 @@ public static class NotificationBuilderExtensions
     extension<TModel>(INotificationTypeBuilder<TModel> @this)
         where TModel : class, IDomainEvent
     {
+        public INotificationTypeBuilder<TModel> HasDisplayName(
+            string displayName)
+        {
+            @this.Services
+                .AddOptions<NotificationEventOptions>()
+                .Configure(opt =>
+                {
+                    opt.Metadata.AddOrUpdate(
+                        @this.EventType,
+                        _ => new(@this.EventType, displayName, []),
+                        (_, current) => current with { DisplayName = displayName });
+                });
+
+            return @this;
+        }
+
         public INotificationTypeBuilder<TModel> Supports<TMethod, TFormatter>()
             where TMethod : DeliveryMethod
             where TFormatter : class, INotificationChannelFormatter<ImmediateMode, TMethod, TModel>
@@ -89,6 +109,18 @@ public static class NotificationBuilderExtensions
                 {
                     opt.FormatterMap[DeliveryModes.Immediate] ??= [];
                     opt.FormatterMap[DeliveryModes.Immediate][method] = typeof(TFormatter);
+                });
+
+            @this.Services
+                .AddOptions<NotificationEventOptions>()
+                .Configure(opt =>
+                {
+                    var schedule = NotificationMetadata.GetSchedule(DeliveryModes.Immediate.Key);
+                    var channel = NotificationMetadata.GetChannel(method.Key);
+                    opt.Metadata.AddOrUpdate(
+                        @this.EventType,
+                        _ => new(@this.EventType, @this.EventType, [new(schedule, channel)]),
+                        (_, current) => current with { Supports = current.Supports.Add(new(schedule, channel)) });
                 });
 
             return @this;
@@ -115,6 +147,18 @@ public static class NotificationBuilderExtensions
                 typeof(IDomainEventRouter<Digest<TModel>>),
                 typeof(DigestRouter<TModel>),
                 ServiceLifetime.Singleton));
+
+            @this.Services
+                .AddOptions<NotificationEventOptions>()
+                .Configure(opt =>
+                {
+                    var schedule = NotificationMetadata.GetSchedule(DeliveryModes.Digest.Key);
+                    var channel = NotificationMetadata.GetChannel(method.Key);
+                    opt.Metadata.AddOrUpdate(
+                        @this.EventType,
+                        _ => new(@this.EventType, @this.EventType, [new(schedule, channel)]),
+                        (_, current) => current with { Supports = current.Supports.Add(new(schedule, channel)) });
+                });
 
             return @this;
         }

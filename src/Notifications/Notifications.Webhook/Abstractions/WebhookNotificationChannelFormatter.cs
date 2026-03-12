@@ -11,6 +11,7 @@ public abstract class WebhookNotificationChannelFormatter<TMode, TModel>
         Notification notification,
         TModel model)
     {
-        return new WebhookEnvelope("application/json", notification.Payload);
+        var config = (WebhookChannelConfig)notification.NotificationSubscription.ChannelConfig;
+        return new WebhookEnvelope(config.Method, config.Endpoint, "application/json", notification.Payload);
     }
 }

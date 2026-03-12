@@ -24,8 +24,9 @@ public class Migration001_CreateNotificationTables : AutoReversingMigration
             .WithColumn("user_id").AsString(100).NotNullable()
             .WithColumn("event_type").AsString(100).NotNullable()
             .WithColumn("channel_key").AsString(100).NotNullable()
+            .WithColumn("channel_config").AsString(int.MaxValue).NotNullable()
             .WithColumn("schedule_type").AsString(100).NotNullable()
-            .WithColumn("schedule_config").AsString(int.MaxValue).Nullable()
+            .WithColumn("schedule_config").AsString(int.MaxValue).NotNullable()
             .WithColumn("is_enabled").AsBoolean().NotNullable()
             .WithColumn("last_notification_at").AsDateTime2().Nullable()
             .WithColumn("next_notification_at").AsDateTime2().Nullable();

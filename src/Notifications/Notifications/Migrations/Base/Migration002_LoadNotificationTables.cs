@@ -19,9 +19,9 @@ public class Migration002_LoadNotificationTables : MigrationExtension
 
         // TODO: DELETE THIS
         Insert.IntoTable("notification_subscriptions")
-            .Row(new { user_id = "ABC", event_type = "test.domain.event", channel_key = "webhook", schedule_type = "immediate", schedule_config = null as string, is_enabled = true })
-            .Row(new { user_id = "ABC", event_type = "test.domain.event", channel_key = "webhook", schedule_type = "digest", schedule_config = "{\"cronExpression\":\"* * * * *\"}", is_enabled = true })
-            .Row(new { user_id = "DEF", event_type = "test.domain.event", channel_key = "webhook", schedule_type = "immediate", schedule_config = null as string, is_enabled = true });
+            .Row(new { user_id = "ABC", event_type = "test.domain.event", channel_key = "webhook", channel_config = "{\"method\":\"POST\",\"endpoint\":\"https://localhost:52227/webhook/post\",\"headers\":{}}", schedule_type = "immediate", schedule_config = "{}", is_enabled = true })
+            .Row(new { user_id = "ABC", event_type = "test.domain.event", channel_key = "webhook", channel_config = "{\"method\":\"POST\",\"endpoint\":\"https://localhost:52227/webhook/post\",\"headers\":{}}", schedule_type = "digest", schedule_config = "{\"cronExpression\":\"* * * * *\"}", is_enabled = true })
+            .Row(new { user_id = "DEF", event_type = "test.domain.event", channel_key = "webhook", channel_config = "{\"method\":\"POST\",\"endpoint\":\"https://localhost:52227/webhook/post\",\"headers\":{}}", schedule_type = "immediate", schedule_config = "{}", is_enabled = true });
     }
 
     public override void Down() { }

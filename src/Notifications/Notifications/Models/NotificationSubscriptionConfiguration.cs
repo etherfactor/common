@@ -24,10 +24,13 @@ public class NotificationSubscriptionConfiguration : IEntityTypeConfiguration<No
         entity.Property(e => e.ChannelKey)
             .HasColumnName("channel_key");
 
+        entity.Property(e => e.ChannelConfigRaw)
+            .HasColumnName("channel_config");
+
         entity.Property(e => e.ScheduleType)
             .HasColumnName("schedule_type");
 
-        entity.Property(e => e.ScheduleConfig)
+        entity.Property(e => e.ScheduleConfigRaw)
             .HasColumnName("schedule_config");
 
         entity.Property(e => e.IsEnabled)

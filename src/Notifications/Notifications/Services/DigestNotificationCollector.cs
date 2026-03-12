@@ -67,7 +67,7 @@ internal class DigestNotificationCollector : NotificationCollector
                     events.Add(@event);
                 }
 
-                var configStr = subscription.ScheduleConfig
+                var configStr = subscription.ScheduleConfigRaw
                     ?? throw new InvalidOperationException($"The subscription {subscription.Id} does not have a configuration");
 
                 var config = JsonSerializer.Deserialize<DigestScheduleConfig>(configStr, JsonSerializerOptions.Web)!;

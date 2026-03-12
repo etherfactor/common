@@ -12,7 +12,7 @@ public static class EmailNotificationBuilderExtensions
         public INotificationBuilder AddEmailChannel(
             string connectionId)
         {
-            @this.AddChannel<EmailMethod, EmailNotificationSender>(DeliveryMethods.Email);
+            @this.AddChannel<EmailMethod, EmailNotificationSender>("Email", typeof(EmailChannelConfig));
 
             @this.Services.TryAddKeyedTransient(DeliveryMethods.Email.Key, (provider, _) =>
             {
@@ -20,39 +20,7 @@ public static class EmailNotificationBuilderExtensions
                 return resolver.GetEmailConnection(connectionId);
             });
 
-            //@this.Services
-            //    .AddNotifications(opt =>
-            //    {
-            //        opt.AddEmailChannel("MySmtpServer");
-
-            //        opt.AddNotification<PackageDelivered>("package.delivered", type =>
-            //        {
-            //            type.SupportsEmail<PackageDelivered, PackageDeliveredEmailFormatter>();
-            //            type.SupportsEmailDigest<PackageDelivered, PackageDeliveredEmailDigestFormatter>();
-            //        });
-            //    });
-
             return @this;
         }
     }
-
-    //public class PackageDelivered { }
-    //public class PackageDeliveredEmailFormatter : IEmailNotificationChannelFormatter<ImmediateMode, PackageDelivered> { }
-    //public class PackageDeliveredEmailDigestFormatter:IEmailNotificationChannelFormatter<DigestMode, Digest<PackageDelivered>> { }
-
-    //extension<TModel>(INotificationTypeBuilder<TModel> @this)
-    //    where TModel : class
-    //{
-    //    public INotificationTypeBuilder<TModel> SupportsEmail<TFormatter>()
-    //        where TFormatter : class, IEmailNotificationChannelFormatter<ImmediateMode, TModel>
-    //    {
-    //        return @this.Supports<TModel, EmailMethod, TFormatter>(DeliveryMethods.Email);
-    //    }
-
-    //    public INotificationTypeBuilder<TModel> SupportsEmailDigest<TFormatter>()
-    //        where TFormatter : class, IEmailNotificationChannelFormatter<DigestMode, Digest<TModel>>
-    //    {
-    //        return @this.SupportsDigest<TModel, EmailMethod, TFormatter>(DeliveryMethods.Email);
-    //    }
-    //}
 }
