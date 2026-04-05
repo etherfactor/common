@@ -51,6 +51,7 @@ public static class NotificationsServiceCollectionExtensions
             @this.TryAddSingleton<IDomainEventEmitter, DomainEventEmitter>();
             @this.TryAddSingleton<IDomainEventSerializer, DomainEventSerializer>();
             @this.TryAddSingleton<INotificationSender, NotificationSender>();
+            @this.TryAddSingleton<INotificationCapabilitiesProvider, NotificationCapabilitiesProvider>();
 
             @this.TryAddKeyedSingleton<INotificationHandler, DigestNotificationHandler>(DigestMode.Instance.Key);
             @this.TryAddKeyedSingleton<INotificationHandler, ImmediateNotificationHandler>(ImmediateMode.Instance.Key);
