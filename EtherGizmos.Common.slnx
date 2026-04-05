@@ -50,6 +50,8 @@
     <Project Path="src/Cryptography/Cryptography.Certificates.UnitTests/Cryptography.Certificates.UnitTests.csproj" Id="7ac53612-8dbf-42c8-9de6-695df3397f1c" />
   </Folder>
   <Folder Name="/tests/Data/">
+    <Project Path="tests/Data/Data.Migrations.IntegrationTests/Data.Migrations.IntegrationTests.csproj" Id="f7bba016-c828-4e31-9402-befef819c19d" />
+    <Project Path="tests/Data/Data.Migrations.UnitTests/Data.Migrations.UnitTests.csproj" Id="5e353949-4164-4f0b-b6de-b15f581419d1" />
     <Project Path="tests/Data/Data.PostgreSql.UnitTests/Data.PostgreSql.UnitTests.csproj" Id="211c005f-d822-4851-a7fa-efdf3408bcdd" />
     <Project Path="tests/Data/Data.UnitOfWork.IntegrationTests/Data.UnitOfWork.IntegrationTests.csproj" Id="1868f8bb-5faf-4c5a-a9cc-2b1fc6fb9d45" />
     <Project Path="tests/Data/Data.UnitOfWork.UnitTests/Data.UnitOfWork.UnitTests.csproj" Id="848ef4f9-1889-4cdd-b5af-4d72ed2b142c" />

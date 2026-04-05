@@ -64,16 +64,12 @@ as
 begin
     set nocount on;
 
-    {string.Join(Environment.NewLine + "    ", primaryKeys.Select((key, i) => $"@RecordId{i} {SqlServerHelper.ToDbString(key.Type)};"))}
-
-    --Get the id of the inserted record
-    select {string.Join("," + Environment.NewLine + "      ", primaryKeys.Select((key, i) => $"@RecordId{i} = inserted.{SqlServerHelper.Escape(key.Name)}"))}
-      from inserted;
-
     --Set the last modified time of the record
-    update {SqlServerHelper.Escape(table)}
+    update [target]
       set [modified_at_utc] = getutcdate()
-      where {string.Join(Environment.NewLine + "        and ", primaryKeys.Select((key, i) => $"{SqlServerHelper.Escape(key.Name)} = @RecordId{i}"))}
+      from {SqlServerHelper.Escape(table)} [target]
+        inner join inserted [source]
+          on {string.Join(Environment.NewLine + "            and ", primaryKeys.Select((key, i) => $"[source].{SqlServerHelper.Escape(key.Name)} = [target].{SqlServerHelper.Escape(key.Name)}"))};
 end;");
     }
 }
