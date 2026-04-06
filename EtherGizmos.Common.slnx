@@ -56,6 +56,9 @@
     <Project Path="tests/Data/Data.UnitOfWork.IntegrationTests/Data.UnitOfWork.IntegrationTests.csproj" Id="1868f8bb-5faf-4c5a-a9cc-2b1fc6fb9d45" />
     <Project Path="tests/Data/Data.UnitOfWork.UnitTests/Data.UnitOfWork.UnitTests.csproj" Id="848ef4f9-1889-4cdd-b5af-4d72ed2b142c" />
   </Folder>
+  <Folder Name="/tests/Email/">
+    <Project Path="tests/Email/Email.Smtp.UnitTests/Email.Smtp.UnitTests.csproj" Id="a9c0a2cb-bd71-4e0f-b776-5de5116c679b" />
+  </Folder>
   <Folder Name="/tests/Messaging/">
     <Project Path="tests/Messaging/Messaging.Inbox.IntegrationTests/Messaging.Inbox.IntegrationTests.csproj" Id="eb324a56-e4c1-4fe2-b4fe-d2ff7852377d" />
     <Project Path="tests/Messaging/Messaging.Outbox.IntegrationTests/Messaging.Outbox.IntegrationTests.csproj" Id="67415244-9246-4a04-91c2-704844e8395e" />

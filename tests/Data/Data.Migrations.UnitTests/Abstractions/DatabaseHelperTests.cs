@@ -1,5 +1,4 @@
-﻿using EtherGizmos.Common.Abstractions;
-using System.Data;
+﻿using System.Data;
 
 namespace EtherGizmos.Common.Abstractions;
 

@@ -1,5 +1,4 @@
-﻿using EtherGizmos.Common;
-using EtherGizmos.Common.Services;
+﻿using EtherGizmos.Common.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 

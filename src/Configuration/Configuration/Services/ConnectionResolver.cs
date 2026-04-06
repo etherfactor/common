@@ -1,5 +1,4 @@
-﻿using EtherGizmos.Common;
-using EtherGizmos.Common.Abstractions;
+﻿using EtherGizmos.Common.Abstractions;
 using EtherGizmos.Common.Configuration;
 using Microsoft.Extensions.Configuration;
 

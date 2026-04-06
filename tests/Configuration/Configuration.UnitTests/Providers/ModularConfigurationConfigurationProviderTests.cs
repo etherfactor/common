@@ -1,5 +1,4 @@
-﻿using EtherGizmos.Common;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EtherGizmos.Common.Providers;
