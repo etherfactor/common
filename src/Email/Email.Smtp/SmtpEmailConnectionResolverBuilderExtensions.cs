@@ -12,6 +12,7 @@ public static class SmtpEmailConnectionResolverBuilderExtensions
         public IConnectionResolverBuilder WithSmtp()
         {
             @this.Services.TryAddSingleton<IEmailSenderFactory<SmtpEmailOptions>, SmtpEmailSenderFactory>();
+            @this.Services.TryAddSingleton<ISmtpClientAdapterFactory, MailKitSmtpClientAdapterFactory>();
 
             ModularConfigurationTypeRegistry.Register<RootSmtpEmailOptions, EmailConnectionOptions>(
                 sectionName: "Connections",

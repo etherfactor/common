@@ -57,6 +57,7 @@
     <Project Path="tests/Data/Data.UnitOfWork.UnitTests/Data.UnitOfWork.UnitTests.csproj" Id="848ef4f9-1889-4cdd-b5af-4d72ed2b142c" />
   </Folder>
   <Folder Name="/tests/Email/">
+    <Project Path="tests/Email/Email.Smtp.IntegrationTests/Email.Smtp.IntegrationTests.csproj" Id="d476fc92-8057-4718-80ac-1c39d3242cfb" />
     <Project Path="tests/Email/Email.Smtp.UnitTests/Email.Smtp.UnitTests.csproj" Id="a9c0a2cb-bd71-4e0f-b776-5de5116c679b" />
   </Folder>
   <Folder Name="/tests/Messaging/">
