@@ -4,10 +4,10 @@ using System.Text.Json.Schema;
 
 namespace EtherGizmos.Common;
 
-public static class NotificationMetadata
+public static class NotificationRegistry
 {
-    private static readonly ConcurrentDictionary<string, NotificationChannelMetadata> _channelConfig = [];
-    private static readonly ConcurrentDictionary<string, NotificationScheduleMetadata> _scheduleConfig = [];
+    private static readonly ConcurrentDictionary<string, RegisteredNotificationChannel> _channelConfig = [];
+    private static readonly ConcurrentDictionary<string, RegisteredNotificationSchedule> _scheduleConfig = [];
 
     public static void RegisterChannel(
         string channelKey,
@@ -20,11 +20,11 @@ public static class NotificationMetadata
                 TreatNullObliviousAsNonNullable = true,
             })
             .ToJsonString(JsonSerializerOptions.Web);
-        var meta = new NotificationChannelMetadata(channelKey, displayName, configType, schema);
+        var meta = new RegisteredNotificationChannel(channelKey, displayName, configType, schema);
         _channelConfig.AddOrUpdate(channelKey, _ => meta, (_, _) => meta);
     }
 
-    public static NotificationChannelMetadata GetChannel(
+    public static RegisteredNotificationChannel GetChannel(
         string channelKey)
         => _channelConfig[channelKey];
 
@@ -39,11 +39,11 @@ public static class NotificationMetadata
                 TreatNullObliviousAsNonNullable = true,
             })
             .ToJsonString(JsonSerializerOptions.Web);
-        var meta = new NotificationScheduleMetadata(scheduleKey, displayName, configType, schema);
+        var meta = new RegisteredNotificationSchedule(scheduleKey, displayName, configType, schema);
         _scheduleConfig.AddOrUpdate(scheduleKey, _ => meta, (_, _) => meta);
     }
 
-    public static NotificationScheduleMetadata GetSchedule(
+    public static RegisteredNotificationSchedule GetSchedule(
         string scheduleKey)
         => _scheduleConfig[scheduleKey];
 }

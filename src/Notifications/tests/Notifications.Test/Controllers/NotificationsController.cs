@@ -6,10 +6,10 @@ namespace Notifications.Test.Controllers;
 [Route("notifications")]
 public class NotificationsController : ControllerBase
 {
-    private readonly INotificationCapabilitiesProvider _capabilitiesProvider;
+    private readonly INotificationCatalogProvider _capabilitiesProvider;
 
     public NotificationsController(
-        INotificationCapabilitiesProvider capabilitiesProvider)
+        INotificationCatalogProvider capabilitiesProvider)
     {
         _capabilitiesProvider = capabilitiesProvider;
     }
@@ -17,6 +17,6 @@ public class NotificationsController : ControllerBase
     [HttpGet("meta")]
     public async Task<IActionResult> Meta()
     {
-        return Ok(_capabilitiesProvider.GetCapabilities());
+        return Ok(_capabilitiesProvider.GetCatalog());
     }
 }

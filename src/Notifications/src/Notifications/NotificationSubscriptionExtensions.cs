@@ -9,14 +9,14 @@ public static class NotificationSubscriptionExtensions
     {
         public object ChannelConfig
         {
-            get => JsonSerializer.Deserialize(@this.ChannelConfigRaw, NotificationMetadata.GetChannel(@this.ChannelKey).ConfigType, JsonSerializerOptions.Web)!;
-            set => @this.ChannelConfigRaw = JsonSerializer.Serialize(value, NotificationMetadata.GetChannel(@this.ChannelKey).ConfigType, JsonSerializerOptions.Web);
+            get => JsonSerializer.Deserialize(@this.ChannelConfigRaw, NotificationRegistry.GetChannel(@this.ChannelKey).ConfigType, JsonSerializerOptions.Web)!;
+            set => @this.ChannelConfigRaw = JsonSerializer.Serialize(value, NotificationRegistry.GetChannel(@this.ChannelKey).ConfigType, JsonSerializerOptions.Web);
         }
 
         public object ScheduleConfig
         {
-            get => JsonSerializer.Deserialize(@this.ScheduleConfigRaw, NotificationMetadata.GetSchedule(@this.ScheduleType).ConfigType, JsonSerializerOptions.Web)!;
-            set => @this.ScheduleConfigRaw = JsonSerializer.Serialize(value, NotificationMetadata.GetSchedule(@this.ScheduleType).ConfigType, JsonSerializerOptions.Web);
+            get => JsonSerializer.Deserialize(@this.ScheduleConfigRaw, NotificationRegistry.GetSchedule(@this.ScheduleType).ConfigType, JsonSerializerOptions.Web)!;
+            set => @this.ScheduleConfigRaw = JsonSerializer.Serialize(value, NotificationRegistry.GetSchedule(@this.ScheduleType).ConfigType, JsonSerializerOptions.Web);
         }
     }
 }

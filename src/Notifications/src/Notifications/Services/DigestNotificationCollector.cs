@@ -42,7 +42,7 @@ internal class DigestNotificationCollector : NotificationCollector
         var subscriptionRepo = uow.Repository<NotificationSubscription>();
         var notificationRepo = uow.Repository<Notification>();
 
-        var digest = DeliveryModes.Digest.Key;
+        var digest = NotificationSchedules.Digest.Key;
         var subscriptions = await subscriptionRepo.Data
             .Where(e => e.ScheduleType == digest
                 && (e.NextNotificationAt ?? DateTimeOffset.MinValue) <= DateTimeOffset.UtcNow)

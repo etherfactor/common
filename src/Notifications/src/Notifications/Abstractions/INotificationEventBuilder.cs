@@ -2,7 +2,7 @@
 
 namespace EtherGizmos.Common.Abstractions;
 
-public interface INotificationTypeBuilder<TModel>
+public interface INotificationEventBuilder<TModel>
     where TModel : class
 {
     string EventType { get; }

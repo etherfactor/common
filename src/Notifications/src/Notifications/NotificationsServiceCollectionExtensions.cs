@@ -45,16 +45,16 @@ public static class NotificationsServiceCollectionExtensions
         internal IServiceCollection AddNotificationsCore(
             string databaseConnectionId)
         {
-            NotificationMetadata.RegisterSchedule(DeliveryModes.Immediate.Key, "Immediate", typeof(ImmediateScheduleConfig));
-            NotificationMetadata.RegisterSchedule(DeliveryModes.Digest.Key, "Digest", typeof(DigestScheduleConfig));
+            NotificationRegistry.RegisterSchedule(NotificationSchedules.Immediate.Key, "Immediate", typeof(ImmediateScheduleConfig));
+            NotificationRegistry.RegisterSchedule(NotificationSchedules.Digest.Key, "Digest", typeof(DigestScheduleConfig));
 
             @this.TryAddSingleton<IDomainEventEmitter, DomainEventEmitter>();
             @this.TryAddSingleton<IDomainEventSerializer, DomainEventSerializer>();
-            @this.TryAddSingleton<INotificationSender, NotificationSender>();
-            @this.TryAddSingleton<INotificationCapabilitiesProvider, NotificationCapabilitiesProvider>();
+            @this.TryAddSingleton<INotificationDispatcher, NotificationDispatcher>();
+            @this.TryAddSingleton<INotificationCatalogProvider, NotificationCatalogProvider>();
 
-            @this.TryAddKeyedSingleton<INotificationHandler, DigestNotificationHandler>(DigestMode.Instance.Key);
-            @this.TryAddKeyedSingleton<INotificationHandler, ImmediateNotificationHandler>(ImmediateMode.Instance.Key);
+            @this.TryAddKeyedSingleton<INotificationHandler, DigestNotificationHandler>(DigestSchedule.Instance.Key);
+            @this.TryAddKeyedSingleton<INotificationHandler, ImmediateNotificationHandler>(ImmediateSchedule.Instance.Key);
 
             @this.TryAddEnumerable(new ServiceDescriptor(typeof(INotificationCollector), typeof(DigestNotificationCollector), ServiceLifetime.Singleton));
             @this.TryAddEnumerable(new ServiceDescriptor(typeof(INotificationCollector), typeof(ImmediateNotificationCollector), ServiceLifetime.Singleton));

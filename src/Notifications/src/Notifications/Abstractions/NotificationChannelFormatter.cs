@@ -2,11 +2,11 @@
 
 namespace EtherGizmos.Common.Abstractions;
 
-public abstract class NotificationChannelFormatter<TMode, TMethod, TEnvelope, TModel>
-    : INotificationChannelFormatter<TMode, TMethod, TModel>
-    where TMode : DeliveryMode
-    where TMethod : DeliveryMethod
-    where TEnvelope : class, INotificationEnvelope<TMethod>
+public abstract class NotificationChannelFormatter<TSchedule, TChannel, TEnvelope, TModel>
+    : INotificationChannelFormatter<TSchedule, TChannel, TModel>
+    where TSchedule : NotificationSchedule
+    where TChannel : NotificationChannel
+    where TEnvelope : class, INotificationEnvelope<TChannel>
     where TModel : class
 {
     public abstract TEnvelope Format(

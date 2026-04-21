@@ -7,6 +7,6 @@ public interface INotificationChannelSender
         CancellationToken cancellationToken = default);
 }
 
-public interface INotificationChannelSender<TMethod>
+public interface INotificationChannelSender<TChannel>
     : INotificationChannelSender
-    where TMethod : DeliveryMethod;
+    where TChannel : NotificationChannel;

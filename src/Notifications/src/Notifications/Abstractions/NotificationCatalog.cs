@@ -2,16 +2,16 @@
 
 namespace EtherGizmos.Common.Abstractions;
 
-public class NotificationCapabilities
+public class NotificationCatalog
 {
-    public required IReadOnlyList<NotificationEventCapability> Events { get; set; }
+    public required IReadOnlyList<NotificationCatalogEvent> Events { get; set; }
 
-    public required IReadOnlyList<NotificationChannelCapability> Channels { get; set; }
+    public required IReadOnlyList<NotificationCatalogChannel> Channels { get; set; }
 
-    public required IReadOnlyList<NotificationScheduleCapability> Schedules { get; set; }
+    public required IReadOnlyList<NotificationCatalogSchedule> Schedules { get; set; }
 }
 
-public class NotificationChannelCapability
+public class NotificationCatalogChannel
 {
     public required string ChannelKey { get; set; }
 
@@ -20,7 +20,7 @@ public class NotificationChannelCapability
     public required JsonNode ConfigSchema { get; set; }
 }
 
-public class NotificationScheduleCapability
+public class NotificationCatalogSchedule
 {
     public required string ScheduleKey { get; set; }
 
@@ -29,16 +29,16 @@ public class NotificationScheduleCapability
     public required JsonNode ConfigSchema { get; set; }
 }
 
-public class NotificationEventCapability
+public class NotificationCatalogEvent
 {
     public required string EventKey { get; set; }
 
     public required string DisplayName { get; set; }
 
-    public required IReadOnlyList<NotificationChannelScheduleCapability> Supports { get; set; }
+    public required IReadOnlyList<NotificationCatalogChannelSchedule> Supports { get; set; }
 }
 
-public class NotificationChannelScheduleCapability
+public class NotificationCatalogChannelSchedule
 {
     public required string ChannelKey { get; set; }
 

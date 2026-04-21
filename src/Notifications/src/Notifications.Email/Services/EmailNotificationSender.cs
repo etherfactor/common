@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EtherGizmos.Common.Services;
 
-internal class EmailNotificationSender : NotificationChannelSender<EmailMethod, EmailEnvelope>
+internal class EmailNotificationSender : NotificationChannelSender<EmailChannel, EmailEnvelope>
 {
     private readonly IEmailSender _sender;
 

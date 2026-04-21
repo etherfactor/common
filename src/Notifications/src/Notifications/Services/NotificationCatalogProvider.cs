@@ -5,31 +5,31 @@ using System.Text.Json.Nodes;
 
 namespace EtherGizmos.Common.Services;
 
-internal class NotificationCapabilitiesProvider : INotificationCapabilitiesProvider
+internal class NotificationCatalogProvider : INotificationCatalogProvider
 {
     private readonly IOptions<NotificationEventOptions> _eventOptions;
-    private NotificationCapabilities? _capabilities;
+    private NotificationCatalog? _capabilities;
 
-    public NotificationCapabilitiesProvider(
+    public NotificationCatalogProvider(
         IOptions<NotificationEventOptions> eventOptions)
     {
         _eventOptions = eventOptions;
     }
 
-    public NotificationCapabilities GetCapabilities()
+    public NotificationCatalog GetCatalog()
     {
         _capabilities ??= BuildCapabilities();
         return _capabilities;
     }
 
-    private NotificationCapabilities BuildCapabilities()
+    private NotificationCatalog BuildCapabilities()
     {
         var options = _eventOptions.Value;
 
         var channels = options.Metadata.Values
             .SelectMany(e => e.Supports.Select(e => e.Channel))
             .Distinct()
-            .Select(e => new NotificationChannelCapability()
+            .Select(e => new NotificationCatalogChannel()
             {
                 ChannelKey = e.ChannelKey,
                 DisplayName = e.DisplayName,
@@ -40,7 +40,7 @@ internal class NotificationCapabilitiesProvider : INotificationCapabilitiesProvi
         var schedules = options.Metadata.Values
             .SelectMany(e => e.Supports.Select(e => e.Schedule))
             .Distinct()
-            .Select(e => new NotificationScheduleCapability()
+            .Select(e => new NotificationCatalogSchedule()
             {
                 ScheduleKey = e.ScheduleKey,
                 DisplayName = e.DisplayName,
@@ -49,11 +49,11 @@ internal class NotificationCapabilitiesProvider : INotificationCapabilitiesProvi
             .ToList();
 
         var events = options.Metadata.Values
-            .Select(e => new NotificationEventCapability()
+            .Select(e => new NotificationCatalogEvent()
             {
                 EventKey = e.EventType,
                 DisplayName = e.DisplayName,
-                Supports = [.. e.Supports.Select(f => new NotificationChannelScheduleCapability()
+                Supports = [.. e.Supports.Select(f => new NotificationCatalogChannelSchedule()
                 {
                     ScheduleKey = f.Schedule.ScheduleKey,
                     ChannelKey = f.Channel.ChannelKey,
@@ -61,7 +61,7 @@ internal class NotificationCapabilitiesProvider : INotificationCapabilitiesProvi
             })
             .ToList();
 
-        return new NotificationCapabilities()
+        return new NotificationCatalog()
         {
             Events = events,
             Channels = channels,

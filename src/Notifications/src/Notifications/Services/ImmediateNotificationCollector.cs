@@ -9,14 +9,14 @@ internal class ImmediateNotificationCollector : NotificationCollector
 {
     private readonly ILogger _logger;
     private readonly IUnitOfWorkFactory _uowFactory;
-    private readonly INotificationSender _sender;
+    private readonly INotificationDispatcher _sender;
 
     public override TimeSpan Delay => TimeSpan.FromMinutes(5);
 
     public ImmediateNotificationCollector(
         ILogger<ImmediateNotificationCollector> logger,
         IUnitOfWorkFactory uowFactory,
-        INotificationSender sender)
+        INotificationDispatcher sender)
         : base(logger)
     {
         _logger = logger;
@@ -30,7 +30,7 @@ internal class ImmediateNotificationCollector : NotificationCollector
         using var uow = _uowFactory.Create();
         var notificationRepo = uow.Repository<Notification>();
 
-        var immediate = DeliveryModes.Immediate.Key;
+        var immediate = NotificationSchedules.Immediate.Key;
         var notifications = await notificationRepo.Data
             .Where(e => e.NotificationSubscription.ScheduleType == immediate
                 && e.StatusType == NotificationStatusType.Pending
@@ -53,7 +53,7 @@ internal class ImmediateNotificationCollector : NotificationCollector
                 //Something else may have tried to send the notification
                 if (count == 0) continue;
 
-                await _sender.SendAsync(notification, cancellationToken);
+                await _sender.DispatchAsync(notification, cancellationToken);
 
                 notification.StatusType = NotificationStatusType.Sent;
             }

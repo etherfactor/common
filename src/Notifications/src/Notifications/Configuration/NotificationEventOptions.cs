@@ -7,5 +7,5 @@ public class NotificationEventOptions
     /// <summary>
     /// Mapping from event type to its metadata.
     /// </summary>
-    public ConcurrentDictionary<string, NotificationEventMetadata> Metadata { get; } = [];
+    public ConcurrentDictionary<string, RegisteredNotificationEvent> Metadata { get; } = [];
 }

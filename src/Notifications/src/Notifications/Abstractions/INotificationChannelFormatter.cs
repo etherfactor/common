@@ -9,8 +9,8 @@ public interface INotificationChannelFormatter
         object model);
 }
 
-public interface INotificationChannelFormatter<TMode, TMethod, TModel>
+public interface INotificationChannelFormatter<TSchedule, TChannel, TModel>
     : INotificationChannelFormatter
-    where TMode : DeliveryMode
-    where TMethod : DeliveryMethod
+    where TSchedule : NotificationSchedule
+    where TChannel : NotificationChannel
     where TModel : class;

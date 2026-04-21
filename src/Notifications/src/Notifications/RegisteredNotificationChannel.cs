@@ -1,6 +1,6 @@
 ﻿namespace EtherGizmos.Common;
 
-public record NotificationChannelMetadata(
+public record RegisteredNotificationChannel(
     string ChannelKey,
     string DisplayName,
     Type ConfigType,

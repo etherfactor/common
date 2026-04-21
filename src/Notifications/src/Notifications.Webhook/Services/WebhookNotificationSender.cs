@@ -2,7 +2,7 @@
 
 namespace EtherGizmos.Common.Services;
 
-internal class WebhookNotificationSender : NotificationChannelSender<WebhookMethod, WebhookEnvelope>
+internal class WebhookNotificationSender : NotificationChannelSender<WebhookChannel, WebhookEnvelope>
 {
     private readonly IHttpClientFactory _httpClientFactory;
 
@@ -19,7 +19,7 @@ internal class WebhookNotificationSender : NotificationChannelSender<WebhookMeth
         var content = new StringContent(envelope.Payload);
         content.Headers.ContentType = new(envelope.ContentType);
 
-        using var client = _httpClientFactory.CreateClient(WebhookMethod.Instance.Key);
+        using var client = _httpClientFactory.CreateClient(WebhookChannel.Instance.Key);
 
         var request = new HttpRequestMessage(new HttpMethod(envelope.Method), envelope.Endpoint) { Content = content };
         await client.SendAsync(request, cancellationToken);

@@ -27,6 +27,6 @@ internal class TestDomainEventRouter : IDomainEventRouter<TestDomainEvent>
     }
 }
 
-internal class TestDomainEventWebhookFormatter : WebhookNotificationChannelFormatter<ImmediateMode, TestDomainEvent>;
+internal class TestDomainEventWebhookFormatter : WebhookNotificationChannelFormatter<ImmediateSchedule, TestDomainEvent>;
 
-internal class TestDomainEventDigestWebhookFormatter : WebhookNotificationChannelFormatter<DigestMode, Digest<TestDomainEvent>>;
+internal class TestDomainEventDigestWebhookFormatter : WebhookNotificationChannelFormatter<DigestSchedule, Digest<TestDomainEvent>>;

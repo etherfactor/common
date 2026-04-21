@@ -2,6 +2,6 @@
 
 public interface INotificationEnvelope;
 
-public interface INotificationEnvelope<TMethod>
+public interface INotificationEnvelope<TChannel>
     : INotificationEnvelope
-    where TMethod : DeliveryMethod;
+    where TChannel : NotificationChannel;

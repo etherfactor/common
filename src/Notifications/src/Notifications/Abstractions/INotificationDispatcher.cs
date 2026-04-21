@@ -2,9 +2,9 @@
 
 namespace EtherGizmos.Common.Abstractions;
 
-public interface INotificationSender
+public interface INotificationDispatcher
 {
-    Task SendAsync(
+    Task DispatchAsync(
         Notification notification,
         CancellationToken cancellationToken = default);
 }

@@ -13,17 +13,17 @@ public static class NotificationBuilderExtensions
 {
     extension(INotificationBuilder @this)
     {
-        public INotificationBuilder AddChannel<TMethod, TChannel>(
+        public INotificationBuilder AddChannel<TChannel, TSender>(
             string displayName,
             Type channelConfigType,
             Action<INotificationChannelBuilder>? configureChannel = null)
-            where TMethod : DeliveryMethod
-            where TChannel : class, INotificationChannelSender<TMethod>
+            where TChannel : NotificationChannel
+            where TSender : class, INotificationChannelSender<TChannel>
         {
-            var method = Activator.CreateInstance<TMethod>()!;
-            NotificationMetadata.RegisterChannel(method.Key, displayName, channelConfigType);
+            var method = Activator.CreateInstance<TChannel>()!;
+            NotificationRegistry.RegisterChannel(method.Key, displayName, channelConfigType);
 
-            @this.Services.TryAddKeyedScoped<INotificationChannelSender, TChannel>(method.Key);
+            @this.Services.TryAddKeyedScoped<INotificationChannelSender, TSender>(method.Key);
 
             if (configureChannel is not null)
             {
@@ -36,11 +36,11 @@ public static class NotificationBuilderExtensions
 
         public INotificationBuilder AddNotification<TNotification, TRouter>(
             string eventType,
-            Action<INotificationTypeBuilder<TNotification>> configureType)
+            Action<INotificationEventBuilder<TNotification>> configureType)
             where TNotification : class, IDomainEvent
             where TRouter : class, IDomainEventRouter<TNotification>
         {
-            var builder = new NotificationTypeBuilder<TNotification>(eventType, @this.Services);
+            var builder = new NotificationEventBuilder<TNotification>(eventType, @this.Services);
             configureType(builder);
 
             @this.Services.TryAddSingleton<IDomainEventRouter<TNotification>, TRouter>();
@@ -65,7 +65,7 @@ public static class NotificationBuilderExtensions
         public INotificationChannelBuilder HasConfiguration<TModel>()
             where TModel : class
         {
-            @this.Services.AddOptions<NotificationChannelOptions>(@this.ChannelType)
+            @this.Services.AddOptions<NotificationChannelUserConfigurationOptions>(@this.ChannelType)
                 .Configure(opt =>
                 {
                     opt.ConfigurationSchema = JsonSchemaExporter
@@ -77,10 +77,10 @@ public static class NotificationBuilderExtensions
         }
     }
 
-    extension<TModel>(INotificationTypeBuilder<TModel> @this)
+    extension<TModel>(INotificationEventBuilder<TModel> @this)
         where TModel : class, IDomainEvent
     {
-        public INotificationTypeBuilder<TModel> HasDisplayName(
+        public INotificationEventBuilder<TModel> HasDisplayName(
             string displayName)
         {
             @this.Services
@@ -96,27 +96,27 @@ public static class NotificationBuilderExtensions
             return @this;
         }
 
-        public INotificationTypeBuilder<TModel> Supports<TMethod, TFormatter>()
-            where TMethod : DeliveryMethod
-            where TFormatter : class, INotificationChannelFormatter<ImmediateMode, TMethod, TModel>
+        public INotificationEventBuilder<TModel> Supports<TChannel, TFormatter>()
+            where TChannel : NotificationChannel
+            where TFormatter : class, INotificationChannelFormatter<ImmediateSchedule, TChannel, TModel>
         {
-            var method = Activator.CreateInstance<TMethod>()!;
+            var method = Activator.CreateInstance<TChannel>()!;
 
             @this.Services.AddKeyedSingleton<INotificationChannelFormatter, TFormatter>((method.Key, typeof(TModel)));
 
             @this.Services.AddOptions<NotificationTypeOptions>(@this.EventType)
                 .Configure(opt =>
                 {
-                    opt.FormatterMap[DeliveryModes.Immediate] ??= [];
-                    opt.FormatterMap[DeliveryModes.Immediate][method] = typeof(TFormatter);
+                    opt.FormatterMap[NotificationSchedules.Immediate] ??= [];
+                    opt.FormatterMap[NotificationSchedules.Immediate][method] = typeof(TFormatter);
                 });
 
             @this.Services
                 .AddOptions<NotificationEventOptions>()
                 .Configure(opt =>
                 {
-                    var schedule = NotificationMetadata.GetSchedule(DeliveryModes.Immediate.Key);
-                    var channel = NotificationMetadata.GetChannel(method.Key);
+                    var schedule = NotificationRegistry.GetSchedule(NotificationSchedules.Immediate.Key);
+                    var channel = NotificationRegistry.GetChannel(method.Key);
                     opt.Metadata.AddOrUpdate(
                         @this.EventType,
                         _ => new(@this.EventType, @this.EventType, [new(schedule, channel)]),
@@ -126,19 +126,19 @@ public static class NotificationBuilderExtensions
             return @this;
         }
 
-        public INotificationTypeBuilder<TModel> SupportsDigest<TMethod, TFormatter>()
-            where TMethod : DeliveryMethod
-            where TFormatter : class, INotificationChannelFormatter<DigestMode, TMethod, Digest<TModel>>
+        public INotificationEventBuilder<TModel> SupportsDigest<TChannel, TFormatter>()
+            where TChannel : NotificationChannel
+            where TFormatter : class, INotificationChannelFormatter<DigestSchedule, TChannel, Digest<TModel>>
         {
-            var method = Activator.CreateInstance<TMethod>()!;
+            var method = Activator.CreateInstance<TChannel>()!;
 
             @this.Services.AddKeyedSingleton<INotificationChannelFormatter, TFormatter>((method.Key, typeof(Digest<TModel>)));
 
             @this.Services.AddOptions<NotificationTypeOptions>(@this.EventType)
                 .Configure(opt =>
                 {
-                    opt.FormatterMap[DeliveryModes.Digest] ??= [];
-                    opt.FormatterMap[DeliveryModes.Digest][method] = typeof(TFormatter);
+                    opt.FormatterMap[NotificationSchedules.Digest] ??= [];
+                    opt.FormatterMap[NotificationSchedules.Digest][method] = typeof(TFormatter);
                 });
 
             //If we support digests, we need to be able to route them to the user that owns them. This service is
@@ -152,8 +152,8 @@ public static class NotificationBuilderExtensions
                 .AddOptions<NotificationEventOptions>()
                 .Configure(opt =>
                 {
-                    var schedule = NotificationMetadata.GetSchedule(DeliveryModes.Digest.Key);
-                    var channel = NotificationMetadata.GetChannel(method.Key);
+                    var schedule = NotificationRegistry.GetSchedule(NotificationSchedules.Digest.Key);
+                    var channel = NotificationRegistry.GetChannel(method.Key);
                     opt.Metadata.AddOrUpdate(
                         @this.EventType,
                         _ => new(@this.EventType, @this.EventType, [new(schedule, channel)]),

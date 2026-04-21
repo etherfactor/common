@@ -1,6 +1,6 @@
 ﻿namespace EtherGizmos.Common.Configuration;
 
-public class NotificationChannelOptions
+public class NotificationChannelUserConfigurationOptions
 {
     public string? ConfigurationSchema { get; set; }
 }

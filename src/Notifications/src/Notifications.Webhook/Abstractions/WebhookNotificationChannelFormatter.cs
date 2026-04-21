@@ -3,8 +3,8 @@
 namespace EtherGizmos.Common.Abstractions;
 
 public abstract class WebhookNotificationChannelFormatter<TMode, TModel>
-    : NotificationChannelFormatter<TMode, WebhookMethod, WebhookEnvelope, TModel>
-    where TMode : DeliveryMode
+    : NotificationChannelFormatter<TMode, WebhookChannel, WebhookEnvelope, TModel>
+    where TMode : NotificationSchedule
     where TModel : class
 {
     public override WebhookEnvelope Format(

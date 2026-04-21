@@ -4,12 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EtherGizmos.Common.Services;
 
-internal class NotificationSender : INotificationSender
+internal class NotificationDispatcher : INotificationDispatcher
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IDomainEventSerializer _serializer;
 
-    public NotificationSender(
+    public NotificationDispatcher(
         IServiceProvider serviceProvider,
         IDomainEventSerializer serializer)
     {
@@ -17,7 +17,7 @@ internal class NotificationSender : INotificationSender
         _serializer = serializer;
     }
 
-    public async Task SendAsync(
+    public async Task DispatchAsync(
         Notification notification,
         CancellationToken cancellationToken = default)
     {

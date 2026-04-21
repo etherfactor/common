@@ -5,4 +5,4 @@ public record WebhookEnvelope(
     string Endpoint,
     string ContentType,
     string Payload)
-    : INotificationEnvelope<WebhookMethod>;
+    : INotificationEnvelope<WebhookChannel>;

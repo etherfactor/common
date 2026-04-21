@@ -6,5 +6,5 @@ public class NotificationTypeOptions
 {
     public Dictionary<string, Type> EventTypeMap { get; set; } = [];
 
-    public Dictionary<DeliveryMode, Dictionary<DeliveryMethod, Type>> FormatterMap { get; set; } = [];
+    public Dictionary<NotificationSchedule, Dictionary<NotificationChannel, Type>> FormatterMap { get; set; } = [];
 }

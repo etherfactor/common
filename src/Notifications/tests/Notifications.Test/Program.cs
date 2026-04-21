@@ -53,8 +53,8 @@ builder.Services
         opt.AddNotification<TestDomainEvent, TestDomainEventRouter>("test.domain.event", type =>
         {
             type.HasDisplayName("Test Domain Event");
-            type.Supports<TestDomainEvent, WebhookMethod, TestDomainEventWebhookFormatter>();
-            type.SupportsDigest<TestDomainEvent, WebhookMethod, TestDomainEventDigestWebhookFormatter>();
+            type.Supports<TestDomainEvent, WebhookChannel, TestDomainEventWebhookFormatter>();
+            type.SupportsDigest<TestDomainEvent, WebhookChannel, TestDomainEventDigestWebhookFormatter>();
         });
 
         opt.AddWebhookChannel();

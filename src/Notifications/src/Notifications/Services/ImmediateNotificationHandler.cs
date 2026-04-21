@@ -9,12 +9,12 @@ internal class ImmediateNotificationHandler : INotificationHandler
 {
     private readonly ILogger _logger;
     private readonly IUnitOfWorkFactory _uowFactory;
-    private readonly INotificationSender _sender;
+    private readonly INotificationDispatcher _sender;
 
     public ImmediateNotificationHandler(
         ILogger<ImmediateNotificationHandler> logger,
         IUnitOfWorkFactory uowFactory,
-        INotificationSender sender)
+        INotificationDispatcher sender)
     {
         _logger = logger;
         _uowFactory = uowFactory;
@@ -58,7 +58,7 @@ internal class ImmediateNotificationHandler : INotificationHandler
             //Something else may have tried to send the notification
             if (count == 0) return;
 
-            await _sender.SendAsync(notification, cancellationToken);
+            await _sender.DispatchAsync(notification, cancellationToken);
 
             notification.StatusType = NotificationStatusType.Sent;
         }

@@ -1,6 +1,6 @@
 ﻿namespace EtherGizmos.Common;
 
-public record NotificationScheduleMetadata(
+public record RegisteredNotificationSchedule(
     string ScheduleKey,
     string DisplayName,
     Type ConfigType,

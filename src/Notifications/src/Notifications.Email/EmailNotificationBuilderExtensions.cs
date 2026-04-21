@@ -12,9 +12,9 @@ public static class EmailNotificationBuilderExtensions
         public INotificationBuilder AddEmailChannel(
             string connectionId)
         {
-            @this.AddChannel<EmailMethod, EmailNotificationSender>("Email", typeof(EmailChannelConfig));
+            @this.AddChannel<EmailChannel, EmailNotificationSender>("Email", typeof(EmailChannelConfig));
 
-            @this.Services.TryAddKeyedTransient(DeliveryMethods.Email.Key, (provider, _) =>
+            @this.Services.TryAddKeyedTransient(NotificationChannels.Email.Key, (provider, _) =>
             {
                 var resolver = provider.GetRequiredService<IConnectionResolver>();
                 return resolver.GetEmailConnection(connectionId);
