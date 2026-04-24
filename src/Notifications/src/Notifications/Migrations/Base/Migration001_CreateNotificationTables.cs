@@ -44,7 +44,12 @@ public class Migration001_CreateNotificationTables : AutoReversingMigration
             .WithColumn("payload_type").AsString(int.MaxValue).NotNullable()
             .WithColumn("payload").AsString(int.MaxValue).NotNullable()
             .WithColumn("notification_status_type_id").AsInt32().NotNullable()
-            .WithColumn("attempt_count").AsInt32().NotNullable();
+            .WithColumn("attempt_count").AsInt32().NotNullable()
+            .WithColumn("last_attempt_at_utc").AsDateTime2().Nullable()
+            .WithColumn("last_error").AsString(int.MaxValue).Nullable()
+            .WithColumn("lock_id").AsGuid().Nullable()
+            .WithColumn("locked_by").AsString(100).Nullable()
+            .WithColumn("locked_until_utc").AsDateTime2().Nullable();
 
         Create.Index("IX_notifications_event_id")
             .OnTable("notifications")
@@ -67,6 +72,11 @@ public class Migration001_CreateNotificationTables : AutoReversingMigration
         Create.Index("IX_notifications_notification_status_type_id")
             .OnTable("notifications")
             .OnColumn("notification_status_type_id")
+            .Ascending();
+
+        Create.Index("IX_notifications_lock_id")
+            .OnTable("notifications")
+            .OnColumn("lock_id")
             .Ascending();
     }
 }

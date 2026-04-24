@@ -116,8 +116,7 @@ internal class DomainEventEmitterTests
                 It.Is<SentMessage>(e =>
                     e.Body.StartsWith("{\"eventId\"")
                     && e.Body.Contains("\"eventType\":\"test.domain.event\"")
-                    && e.LogicalDestinationName == NotificationConstants.DomainEventsLogicalName
-                ),
+                    && e.LogicalDestinationName == NotificationConstants.DomainEventsLogicalName),
                 It.IsAny<CancellationToken>()),
             Times.Once());
     }
@@ -149,8 +148,7 @@ internal class DomainEventEmitterTests
                 It.Is<SentMessage>(e =>
                     e.Body.StartsWith("{\"eventId\"")
                     && e.Body.Contains("\"eventType\":\"test.domain.event\"")
-                    && e.LogicalDestinationName == NotificationConstants.DomainEventsLogicalName
-                ),
+                    && e.LogicalDestinationName == NotificationConstants.DomainEventsLogicalName),
                 It.IsAny<CancellationToken>()),
             Times.Once());
     }

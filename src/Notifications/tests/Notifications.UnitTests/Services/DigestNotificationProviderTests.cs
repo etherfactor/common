@@ -91,7 +91,7 @@ internal class DigestNotificationCollectorTests
             NotificationSubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-30),
             IsDerived = false,
-            StatusType = NotificationStatusType.Pending,
+            Status = NotificationStatusType.Pending,
             AttemptCount = 0,
             PayloadType = typeof(TestEventA).AssemblyQualifiedName!,
             Payload = "{\"value\":\"a\"}",
@@ -103,7 +103,7 @@ internal class DigestNotificationCollectorTests
             NotificationSubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-10),
             IsDerived = false,
-            StatusType = NotificationStatusType.Pending,
+            Status = NotificationStatusType.Pending,
             AttemptCount = 2,
             PayloadType = typeof(TestEventA).AssemblyQualifiedName!,
             Payload = "{\"value\":\"b\"}",
@@ -150,8 +150,8 @@ internal class DigestNotificationCollectorTests
             Assert.That(notification1.AttemptCount, Is.EqualTo(1));
             Assert.That(notification2.AttemptCount, Is.EqualTo(3));
 
-            Assert.That(notification1.StatusType, Is.EqualTo(NotificationStatusType.Sent));
-            Assert.That(notification2.StatusType, Is.EqualTo(NotificationStatusType.Sent));
+            Assert.That(notification1.Status, Is.EqualTo(NotificationStatusType.Sent));
+            Assert.That(notification2.Status, Is.EqualTo(NotificationStatusType.Sent));
 
             Assert.That(notification1.SentAt, Is.Not.Null);
             Assert.That(notification2.SentAt, Is.Not.Null);
@@ -190,7 +190,7 @@ internal class DigestNotificationCollectorTests
             NotificationSubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-40),
             IsDerived = false,
-            StatusType = NotificationStatusType.Pending,
+            Status = NotificationStatusType.Pending,
             AttemptCount = 0,
             PayloadType = typeof(TestEventA).AssemblyQualifiedName!,
             Payload = "payload-a",
@@ -202,7 +202,7 @@ internal class DigestNotificationCollectorTests
             NotificationSubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-20),
             IsDerived = false,
-            StatusType = NotificationStatusType.Pending,
+            Status = NotificationStatusType.Pending,
             AttemptCount = 0,
             PayloadType = typeof(TestEventB).AssemblyQualifiedName!,
             Payload = "payload-b",
@@ -271,7 +271,7 @@ internal class DigestNotificationCollectorTests
             NotificationSubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-10),
             IsDerived = true,
-            StatusType = NotificationStatusType.Pending,
+            Status = NotificationStatusType.Pending,
             AttemptCount = 0,
             PayloadType = typeof(TestEventA).AssemblyQualifiedName!,
             Payload = "payload-1",
@@ -283,7 +283,7 @@ internal class DigestNotificationCollectorTests
             NotificationSubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-10),
             IsDerived = false,
-            StatusType = NotificationStatusType.Failed,
+            Status = NotificationStatusType.Failed,
             AttemptCount = 0,
             PayloadType = typeof(TestEventA).AssemblyQualifiedName!,
             Payload = "payload-2",
@@ -295,7 +295,7 @@ internal class DigestNotificationCollectorTests
             NotificationSubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-10),
             IsDerived = false,
-            StatusType = NotificationStatusType.Pending,
+            Status = NotificationStatusType.Pending,
             AttemptCount = 10,
             PayloadType = typeof(TestEventA).AssemblyQualifiedName!,
             Payload = "payload-3",
@@ -307,7 +307,7 @@ internal class DigestNotificationCollectorTests
             NotificationSubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(10),
             IsDerived = false,
-            StatusType = NotificationStatusType.Pending,
+            Status = NotificationStatusType.Pending,
             AttemptCount = 0,
             PayloadType = typeof(TestEventA).AssemblyQualifiedName!,
             Payload = "payload-4",
@@ -342,10 +342,10 @@ internal class DigestNotificationCollectorTests
             Assert.That(ineligibleTooManyAttempts.AttemptCount, Is.EqualTo(10));
             Assert.That(ineligibleFutureCreatedAt.AttemptCount, Is.EqualTo(0));
 
-            Assert.That(ineligibleDerived.StatusType, Is.EqualTo(NotificationStatusType.Pending));
-            Assert.That(ineligibleFailed.StatusType, Is.EqualTo(NotificationStatusType.Failed));
-            Assert.That(ineligibleTooManyAttempts.StatusType, Is.EqualTo(NotificationStatusType.Pending));
-            Assert.That(ineligibleFutureCreatedAt.StatusType, Is.EqualTo(NotificationStatusType.Pending));
+            Assert.That(ineligibleDerived.Status, Is.EqualTo(NotificationStatusType.Pending));
+            Assert.That(ineligibleFailed.Status, Is.EqualTo(NotificationStatusType.Failed));
+            Assert.That(ineligibleTooManyAttempts.Status, Is.EqualTo(NotificationStatusType.Pending));
+            Assert.That(ineligibleFutureCreatedAt.Status, Is.EqualTo(NotificationStatusType.Pending));
         });
 
         _uow.Verify(e => e.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -384,7 +384,7 @@ internal class DigestNotificationCollectorTests
             NotificationSubscriptionId = goodSubscription.Id,
             CreatedAt = goodSubscription.NextNotificationAt!.Value.AddSeconds(-1),
             IsDerived = false,
-            StatusType = NotificationStatusType.Pending,
+            Status = NotificationStatusType.Pending,
             AttemptCount = 0,
             PayloadType = typeof(TestEventA).AssemblyQualifiedName!,
             Payload = "payload-good",

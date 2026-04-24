@@ -55,7 +55,7 @@ internal class DigestNotificationCollector : NotificationCollector
                 var notifications = await notificationRepo.Data
                     .Where(e => e.NotificationSubscriptionId == subscription.Id
                         && !e.IsDerived
-                        && e.StatusType == NotificationStatusType.Pending
+                        && e.Status == NotificationStatusType.Pending
                         && e.CreatedAt <= subscription.NextNotificationAt
                         && e.AttemptCount < 10)
                     .ToListAsync(cancellationToken: cancellationToken);
@@ -96,7 +96,7 @@ internal class DigestNotificationCollector : NotificationCollector
                 foreach (var notification in notifications)
                 {
                     notification.AttemptCount++;
-                    notification.StatusType = NotificationStatusType.Sent;
+                    notification.Status = NotificationStatusType.Sent;
                     notification.SentAt = DateTimeOffset.UtcNow;
                 }
 

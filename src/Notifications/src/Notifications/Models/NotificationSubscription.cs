@@ -6,25 +6,25 @@ namespace EtherGizmos.Common.Models;
 
 public class NotificationSubscription : IEntity
 {
-    public long Id { get; set; }
+    public virtual long Id { get; set; }
 
-    public string UserId { get; set; } = null!;
+    public virtual string UserId { get; set; } = null!;
 
-    public string EventType { get; set; } = null!;
+    public virtual string EventType { get; set; } = null!;
 
-    public string ChannelKey { get; set; } = null!;
+    public virtual string ChannelKey { get; set; } = null!;
 
-    public string ChannelConfigRaw { get; set; } = null!;
+    public virtual string ChannelConfigRaw { get; set; } = null!;
 
-    public string ScheduleType { get; set; } = null!;
+    public virtual string ScheduleType { get; set; } = null!;
 
-    public string ScheduleConfigRaw { get; set; } = null!;
+    public virtual string ScheduleConfigRaw { get; set; } = null!;
 
-    public bool IsEnabled { get; set; }
+    public virtual bool IsEnabled { get; set; }
 
-    public DateTimeOffset? LastNotificationAt { get; set; }
+    public virtual DateTimeOffset? LastNotificationAt { get; set; }
 
-    public DateTimeOffset? NextNotificationAt { get; set; }
+    public virtual DateTimeOffset? NextNotificationAt { get; set; }
 }
 
 public class NotificationSubscriptionConfiguration : IEntityTypeConfiguration<NotificationSubscription>

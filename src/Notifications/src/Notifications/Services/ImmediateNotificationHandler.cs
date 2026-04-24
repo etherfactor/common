@@ -38,10 +38,10 @@ internal class ImmediateNotificationHandler : INotificationHandler
             return;
         }
 
-        if (notification.StatusType != NotificationStatusType.Pending)
+        if (notification.Status != NotificationStatusType.Pending)
         {
             _logger.LogWarning("The notification {NotificationId} has a status of {StatusType} and is not available for delivery",
-                notificationId, notification.StatusType);
+                notificationId, notification.Status);
             return;
         }
 
@@ -49,10 +49,10 @@ internal class ImmediateNotificationHandler : INotificationHandler
         {
             var count = await notificationRepo.Data
                 .Where(e => e.Id == notification.Id
-                    && e.StatusType == NotificationStatusType.Pending)
+                    && e.Status == NotificationStatusType.Pending)
                 .ExecuteUpdateAsync(e => e
                     .SetProperty(e => e.AttemptCount, e => e.AttemptCount + 1)
-                    .SetProperty(e => e.StatusType, _ => NotificationStatusType.InFlight),
+                    .SetProperty(e => e.Status, _ => NotificationStatusType.InFlight),
                     cancellationToken: cancellationToken);
 
             //Something else may have tried to send the notification
@@ -60,13 +60,13 @@ internal class ImmediateNotificationHandler : INotificationHandler
 
             await _sender.DispatchAsync(notification, cancellationToken);
 
-            notification.StatusType = NotificationStatusType.Sent;
+            notification.Status = NotificationStatusType.Sent;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send notification {NotificationId}", notificationId);
-            if (notification.AttemptCount < 10) notification.StatusType = NotificationStatusType.Pending;
-            else notification.StatusType = NotificationStatusType.Failed;
+            if (notification.AttemptCount < 10) notification.Status = NotificationStatusType.Pending;
+            else notification.Status = NotificationStatusType.Failed;
             throw;
         }
         finally

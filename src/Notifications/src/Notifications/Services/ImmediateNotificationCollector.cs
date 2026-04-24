@@ -30,44 +30,88 @@ internal class ImmediateNotificationCollector : NotificationCollector
         using var uow = _uowFactory.Create();
         var notificationRepo = uow.Repository<Notification>();
 
+        var lockId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+        var lockedUntil = now.Add(TimeSpan.FromSeconds(30));
+
         var immediate = NotificationSchedules.Immediate.Key;
-        var notifications = await notificationRepo.Data
-            .Where(e => e.NotificationSubscription.ScheduleType == immediate
-                && e.StatusType == NotificationStatusType.Pending
+        var candidateIds = await notificationRepo.Data
+            .Where(e =>
+                e.NotificationSubscription.ScheduleType == immediate
+                && (
+                    e.Status == NotificationStatusType.Pending
+                    || (
+                        e.Status == NotificationStatusType.InFlight
+                        && e.LockedUntil < now
+                    )
+                )
                 && e.AttemptCount < 10)
-            .Include(e => e.NotificationSubscription)
+            .OrderBy(e => e.Id)
+            .Select(e => e.Id)
+            .Take(100)
             .ToListAsync(cancellationToken: cancellationToken);
 
-        foreach (var notification in notifications)
+        await notificationRepo.Data
+            .Where(e => 
+                candidateIds.Contains(e.Id)
+                && (e.LockedUntil == null || e.LockedUntil < now)
+                && e.AttemptCount < 10)
+            .ExecuteUpdateAsync(e => e
+                .SetProperty(e => e.Status, _ => NotificationStatusType.InFlight)
+                .SetProperty(e => e.AttemptCount, e => e.AttemptCount + 1)
+                .SetProperty(e => e.LastAttemptAt, _ => now)
+                .SetProperty(e => e.LockId, _ => lockId)
+                .SetProperty(e => e.LockedBy, _ => Environment.MachineName)
+                .SetProperty(e => e.LockedUntil, _ => lockedUntil),
+                cancellationToken: cancellationToken);
+
+        var claimed = await notificationRepo.Data
+            .AsNoTracking()
+            .Where(e => e.LockId == lockId)
+            .ToListAsync(cancellationToken: cancellationToken);
+
+        var exceptions = new List<Exception>();
+        foreach (var notification in claimed)
         {
             try
             {
-                var count = await notificationRepo.Data
-                    .Where(e => e.Id == notification.Id
-                        && e.StatusType == NotificationStatusType.Pending)
-                    .ExecuteUpdateAsync(e => e
-                        .SetProperty(e => e.AttemptCount, e => e.AttemptCount + 1)
-                        .SetProperty(e => e.StatusType, _ => NotificationStatusType.InFlight),
-                        cancellationToken: cancellationToken);
-
-                //Something else may have tried to send the notification
-                if (count == 0) continue;
-
                 await _sender.DispatchAsync(notification, cancellationToken);
 
-                notification.StatusType = NotificationStatusType.Sent;
+                await notificationRepo.Data
+                    .Where(e => e.Id == notification.Id
+                        && e.LockId == lockId)
+                    .ExecuteUpdateAsync(e => e
+                        .SetProperty(e => e.Status, _ => NotificationStatusType.Sent)
+                        .SetProperty(e => e.SentAt, _ => now)
+                        .SetProperty(e => e.LastError, _ => null)
+                        .SetProperty(e => e.LockId, _ => null)
+                        .SetProperty(e => e.LockedBy, _ => null)
+                        .SetProperty(e => e.LockedUntil, _ => null),
+                        cancellationToken: cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to send notification {NotificationId}", notification.Id);
-                if (notification.AttemptCount < 10) notification.StatusType = NotificationStatusType.Pending;
-                else notification.StatusType = NotificationStatusType.Failed;
-                throw;
+                await notificationRepo.Data
+                    .Where(e => e.Id == notification.Id
+                        && e.LockId == lockId)
+                    .ExecuteUpdateAsync(e => e
+                        .SetProperty(e => e.Status, e => e.AttemptCount < 10
+                            ? NotificationStatusType.Pending
+                            : NotificationStatusType.Failed)
+                        .SetProperty(e => e.LastError, _ => ex.ToString())
+                        .SetProperty(e => e.LockId, _ => null)
+                        .SetProperty(e => e.LockedBy, _ => null)
+                        .SetProperty(e => e.LockedUntil, _ => null),
+                        cancellationToken: cancellationToken);
+
+                exceptions.Add(ex);
             }
-            finally
-            {
-                await uow.SaveChangesAsync(cancellationToken);
-            }
+        }
+
+        if (exceptions.Any())
+        {
+            _logger.LogWarning("Failed to send {ErrorCount} notifications", exceptions.Count);
         }
     }
 }

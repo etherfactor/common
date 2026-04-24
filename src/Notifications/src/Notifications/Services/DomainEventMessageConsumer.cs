@@ -82,7 +82,7 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
                     IsDerived = message.IsDerived,
                     PayloadType = message.PayloadType,
                     Payload = message.Payload,
-                    StatusType = NotificationStatusType.Pending,
+                    Status = NotificationStatusType.Pending,
                     AttemptCount = 0,
                 };
 
