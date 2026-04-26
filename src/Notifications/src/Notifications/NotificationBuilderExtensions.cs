@@ -4,8 +4,6 @@ using EtherGizmos.Common.Models;
 using EtherGizmos.Common.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Text.Json;
-using System.Text.Json.Schema;
 
 namespace EtherGizmos.Common;
 
@@ -15,8 +13,7 @@ public static class NotificationBuilderExtensions
     {
         public INotificationBuilder AddChannel<TChannel, TSender>(
             string displayName,
-            Type channelConfigType,
-            Action<INotificationChannelBuilder>? configureChannel = null)
+            Type channelConfigType)
             where TChannel : NotificationChannel
             where TSender : class, INotificationChannelSender<TChannel>
         {
@@ -24,12 +21,6 @@ public static class NotificationBuilderExtensions
             NotificationRegistry.RegisterChannel(method.Key, displayName, channelConfigType);
 
             @this.Services.TryAddKeyedScoped<INotificationChannelSender, TSender>(method.Key);
-
-            if (configureChannel is not null)
-            {
-                var builder = new NotificationChannelBuilder(method.Key, @this.Services);
-                configureChannel(builder);
-            }
 
             return @this;
         }
@@ -54,23 +45,6 @@ public static class NotificationBuilderExtensions
                     }
 
                     opt.EventTypeMap[eventType] = typeof(TNotification);
-                });
-
-            return @this;
-        }
-    }
-
-    extension(INotificationChannelBuilder @this)
-    {
-        public INotificationChannelBuilder HasConfiguration<TModel>()
-            where TModel : class
-        {
-            @this.Services.AddOptions<NotificationChannelUserConfigurationOptions>(@this.ChannelType)
-                .Configure(opt =>
-                {
-                    opt.ConfigurationSchema = JsonSchemaExporter
-                        .GetJsonSchemaAsNode(JsonSerializerOptions.Web, typeof(TModel))
-                        .ToJsonString();
                 });
 
             return @this;
