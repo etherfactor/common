@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EtherGizmos.Common.Services;
 
-internal class NotificationLockingCoordinatorTests
+internal class NotificationLockingCoordinatorTests : IntegrationTestBase
 {
     private NotificationLockingCoordinator _coordinator;
     private TestNotificationDbContext _context;
@@ -149,6 +149,12 @@ internal class NotificationLockingCoordinatorTests
         Assert.That(claims, Has.Count.EqualTo(2));
         Assert.That(claims.Select(e => e.LockId).Distinct().Count(), Is.EqualTo(1));
 
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(claims[0].Notification.NotificationSubscription, Is.Not.Null);
+            Assert.That(claims[1].Notification.NotificationSubscription, Is.Not.Null);
+        }
+
         _context.ChangeTracker.Clear();
 
         var notificationIds = new long[] { notification1.Id, notification2.Id, notification3.Id, notification4.Id };
@@ -156,7 +162,7 @@ internal class NotificationLockingCoordinatorTests
             .Where(e => notificationIds.Contains(e.Id))
             .OrderBy(e => e.Id).ToListAsync();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(notifications.Single(e => e.Id == notification1.Id).Status, Is.EqualTo(NotificationStatusType.InFlight));
             Assert.That(notifications.Single(e => e.Id == notification2.Id).Status, Is.EqualTo(NotificationStatusType.InFlight));
@@ -172,7 +178,7 @@ internal class NotificationLockingCoordinatorTests
             Assert.That(notifications.Single(e => e.Id == notification2.Id).LockId, Is.Not.Null);
             Assert.That(notifications.Single(e => e.Id == notification3.Id).LockId, Is.Null);
             Assert.That(notifications.Single(e => e.Id == notification4.Id).LockId, Is.Null);
-        });
+        }
     }
 
     [Test]
@@ -204,7 +210,7 @@ internal class NotificationLockingCoordinatorTests
         _context.ChangeTracker.Clear();
         var updated = await _context.Notifications.SingleAsync(e => e.Id == expired.Id);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(updated.Status, Is.EqualTo(NotificationStatusType.InFlight));
             Assert.That(updated.AttemptCount, Is.EqualTo(3));
@@ -212,7 +218,7 @@ internal class NotificationLockingCoordinatorTests
             Assert.That(updated.LockedBy, Is.EqualTo(Environment.MachineName));
             Assert.That(updated.LockedUntil, Is.Not.Null);
             Assert.That(updated.LastAttemptAt, Is.Not.Null);
-        });
+        }
     }
 
     [Test]
@@ -245,13 +251,13 @@ internal class NotificationLockingCoordinatorTests
         _context.ChangeTracker.Clear();
         var updated = await _context.Notifications.SingleAsync(e => e.Id == inflight.Id);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(updated.Status, Is.EqualTo(NotificationStatusType.InFlight));
             Assert.That(updated.AttemptCount, Is.EqualTo(2));
             Assert.That(updated.LockId, Is.EqualTo(originalLockId));
             Assert.That(updated.LockedBy, Is.EqualTo("busy-machine"));
-        });
+        }
     }
 
     [Test]
@@ -280,8 +286,11 @@ internal class NotificationLockingCoordinatorTests
         _context.ChangeTracker.Clear();
         var updated = await _context.Notifications.SingleAsync(e => e.Id == maxattempts.Id);
 
-        Assert.That(updated.Status, Is.EqualTo(NotificationStatusType.Pending));
-        Assert.That(updated.AttemptCount, Is.EqualTo(10));
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(updated.Status, Is.EqualTo(NotificationStatusType.Pending));
+            Assert.That(updated.AttemptCount, Is.EqualTo(10));
+        }
     }
 
     [Test]
@@ -306,12 +315,17 @@ internal class NotificationLockingCoordinatorTests
 
         //Assert
         Assert.That(claim, Is.Not.Null);
-        Assert.That(claim!.NotificationId, Is.EqualTo(notification.Id));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(claim!.NotificationId, Is.EqualTo(notification.Id));
+            Assert.That(claim.Notification.NotificationSubscription, Is.Not.Null);
+        }
 
         _context.ChangeTracker.Clear();
         var updated = await _context.Notifications.SingleAsync(e => e.Id == notification.Id);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(updated.Status, Is.EqualTo(NotificationStatusType.InFlight));
             Assert.That(updated.AttemptCount, Is.EqualTo(1));
@@ -319,7 +333,7 @@ internal class NotificationLockingCoordinatorTests
             Assert.That(updated.LockedBy, Is.EqualTo(Environment.MachineName));
             Assert.That(updated.LockedUntil, Is.Not.Null);
             Assert.That(updated.LastAttemptAt, Is.Not.Null);
-        });
+        }
     }
 
     [Test]
@@ -383,7 +397,7 @@ internal class NotificationLockingCoordinatorTests
         _context.ChangeTracker.Clear();
         var updated = await _context.Notifications.SingleAsync(e => e.Id == locked.Id);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(updated.Status, Is.EqualTo(NotificationStatusType.Sent));
             Assert.That(updated.SentAt, Is.Not.Null);
@@ -391,7 +405,7 @@ internal class NotificationLockingCoordinatorTests
             Assert.That(updated.LockId, Is.Null);
             Assert.That(updated.LockedBy, Is.Null);
             Assert.That(updated.LockedUntil, Is.Null);
-        });
+        }
     }
 
     [Test]
@@ -426,14 +440,14 @@ internal class NotificationLockingCoordinatorTests
         _context.ChangeTracker.Clear();
         var updated = await _context.Notifications.SingleAsync(e => e.Id == locked.Id);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(updated.Status, Is.EqualTo(NotificationStatusType.InFlight));
             Assert.That(updated.SentAt, Is.Null);
             Assert.That(updated.LockId, Is.EqualTo(actualLockId));
             Assert.That(updated.LockedBy, Is.EqualTo(Environment.MachineName));
             Assert.That(updated.LockedUntil, Is.Not.Null);
-        });
+        }
     }
 
     [Test]
@@ -469,14 +483,14 @@ internal class NotificationLockingCoordinatorTests
         _context.ChangeTracker.Clear();
         var updated = await _context.Notifications.SingleAsync(e => e.Id == locked.Id);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(updated.Status, Is.EqualTo(NotificationStatusType.Pending));
             Assert.That(updated.LastError, Does.Contain("Dispatch failed."));
             Assert.That(updated.LockId, Is.Null);
             Assert.That(updated.LockedBy, Is.Null);
             Assert.That(updated.LockedUntil, Is.Null);
-        });
+        }
     }
 
     [Test]
@@ -512,14 +526,14 @@ internal class NotificationLockingCoordinatorTests
         _context.ChangeTracker.Clear();
         var updated = await _context.Notifications.SingleAsync(e => e.Id == locked.Id);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(updated.Status, Is.EqualTo(NotificationStatusType.Failed));
             Assert.That(updated.LastError, Does.Contain("Dispatch failed at limit."));
             Assert.That(updated.LockId, Is.Null);
             Assert.That(updated.LockedBy, Is.Null);
             Assert.That(updated.LockedUntil, Is.Null);
-        });
+        }
     }
 
     [Test]
@@ -554,14 +568,14 @@ internal class NotificationLockingCoordinatorTests
         _context.ChangeTracker.Clear();
         var updated = await _context.Notifications.SingleAsync(e => e.Id == locked.Id);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(updated.Status, Is.EqualTo(NotificationStatusType.InFlight));
             Assert.That(updated.LastError, Is.Null);
             Assert.That(updated.LockId, Is.EqualTo(actualLockId));
             Assert.That(updated.LockedBy, Is.EqualTo(Environment.MachineName));
             Assert.That(updated.LockedUntil, Is.Not.Null);
-        });
+        }
     }
 
     private sealed class TestNotificationDbContext : DbContext

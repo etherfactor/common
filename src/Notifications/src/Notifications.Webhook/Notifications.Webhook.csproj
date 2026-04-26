@@ -4,8 +4,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="EtherGizmos.Common.$(MSBuildProjectName).UnitTests" />
-    <InternalsVisibleTo Include="EtherGizmos.Common.$(MSBuildProjectName).IntegrationTests" />
+    <InternalsVisibleTo Include="EtherGizmos.Common.Notifications.IntegrationTests" />
   </ItemGroup>
 
   <ItemGroup>

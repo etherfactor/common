@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace EtherGizmos.Common.Services;
 
-internal class NotificationSaveChangesInterceptorTests
+internal class NotificationSaveChangesInterceptorTests : IntegrationTestBase
 {
     private NotificationSaveChangesInterceptor _interceptor;
     private Mock<IUnitOfWorkFactory> _uowFactoryMock;

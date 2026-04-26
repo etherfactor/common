@@ -12,6 +12,7 @@
     <PackageReference Include="NUnit.Analyzers" Version="4.7.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.11.0" />
+    <PackageReference Include="Testcontainers.RabbitMq" Version="4.11.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
@@ -24,6 +25,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Data\src\Data.PostgreSql\Data.PostgreSql.csproj" />
+    <ProjectReference Include="..\..\..\Messaging\src\Messaging.RabbitMQ\Messaging.RabbitMQ.csproj" />
+    <ProjectReference Include="..\..\src\Notifications.Webhook\Notifications.Webhook.csproj" />
     <ProjectReference Include="..\..\src\Notifications\Notifications.csproj" />
   </ItemGroup>
 

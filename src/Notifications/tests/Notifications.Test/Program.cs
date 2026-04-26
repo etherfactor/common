@@ -43,10 +43,6 @@ builder.Services
     .WithRabbitMQ()
     .WithPostgreSql();
 
-//builder.Services
-//    .AddMessaging("Messaging", (opt, conf) => { })
-//    .UseConnection("NotificationBus");
-
 builder.Services
     .AddNotifications("GeneralDatabase", "NotificationBus", opt =>
     {

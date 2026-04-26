@@ -129,6 +129,7 @@ internal class NotificationLockingCoordinator : INotificationLockingCoordinator
         var claimed = await notificationRepo.Data
             .AsNoTracking()
             .Where(e => e.LockId == lockId)
+            .Include(e => e.NotificationSubscription)
             .ToListAsync(cancellationToken: cancellationToken);
 
         return [.. claimed.Select(e => new NotificationClaim(e.Id, e, lockId))];
