@@ -35,6 +35,7 @@ internal class NotificationCatalogProvider : INotificationCatalogProvider
                 DisplayName = e.DisplayName,
                 ConfigSchema = JsonNode.Parse(e.ConfigSchema)!,
             })
+            .OrderBy(e => e.ChannelKey)
             .ToList();
 
         var schedules = options.Metadata.Values
@@ -46,6 +47,7 @@ internal class NotificationCatalogProvider : INotificationCatalogProvider
                 DisplayName = e.DisplayName,
                 ConfigSchema = JsonNode.Parse(e.ConfigSchema)!,
             })
+            .OrderBy(e => e.ScheduleKey)
             .ToList();
 
         var events = options.Metadata.Values
@@ -57,8 +59,9 @@ internal class NotificationCatalogProvider : INotificationCatalogProvider
                 {
                     ScheduleKey = f.Schedule.ScheduleKey,
                     ChannelKey = f.Channel.ChannelKey,
-                })],
+                }).OrderBy(e => e.ScheduleKey).ThenBy(e => e.ChannelKey)],
             })
+            .OrderBy(e => e.EventKey)
             .ToList();
 
         return new NotificationCatalog()

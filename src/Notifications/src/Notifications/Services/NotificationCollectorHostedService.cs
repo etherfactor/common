@@ -16,9 +16,9 @@ internal class NotificationCollectorHostedService : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _cts.Token);
         foreach (var collector in _collectors)
         {
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _cts.Token);
             _ = collector.CollectAsync(cts.Token);
         }
 

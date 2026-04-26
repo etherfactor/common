@@ -1,7 +1,6 @@
-﻿using EtherGizmos.Common.Abstractions;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
-namespace EtherGizmos.Common.Services;
+namespace EtherGizmos.Common.Abstractions;
 
 public abstract class NotificationCollector : INotificationCollector
 {
