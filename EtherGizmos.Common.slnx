@@ -69,12 +69,12 @@
   </Folder>
   <Folder Name="/src/Notifications/" />
   <Folder Name="/src/Notifications/src/">
-    <File Path="src/Notifications/src/Notifications/Abstractions/IDomainEventExtractor.cs" />
     <Project Path="src/Notifications/src/Notifications.Email/Notifications.Email.csproj" Id="a2dd00c6-46d5-4ff8-ae36-e143acb8af90" />
     <Project Path="src/Notifications/src/Notifications.Webhook/Notifications.Webhook.csproj" Id="6be26326-5132-4173-a833-97198022668e" />
     <Project Path="src/Notifications/src/Notifications/Notifications.csproj" Id="fc093b79-a861-4fbb-8214-b9bb9f3619de" />
   </Folder>
   <Folder Name="/src/Notifications/tests/">
+    <Project Path="src/Notifications/tests/Notifications.IntegrationTests/Notifications.IntegrationTests.csproj" Id="f2cb56bf-e36f-4121-a47e-9b08938acb76" />
     <Project Path="src/Notifications/tests/Notifications.Test/Notifications.Test.csproj" Id="7a44bb32-62df-4e64-b122-f112d631e5a3" />
     <Project Path="src/Notifications/tests/Notifications.UnitTests/Notifications.UnitTests.csproj" Id="8617bd79-38d9-4736-aebb-aedff5d960cc" />
   </Folder>
