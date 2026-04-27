@@ -8,7 +8,7 @@ resources:
   - repository: sharedTemplates
     type: git
     name: 'Projects/PipelineTemplates'
-    ref: 'refs/tags/1.0.0'
+    ref: 'refs/heads/feature/dotnet-library'
 
 stages:
 
