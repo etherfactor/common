@@ -22,7 +22,6 @@
     <Project Path="src/Configuration/src/Configuration.Email/Configuration.Email.csproj" Id="62c027fc-6d9e-4ad3-adab-ba24b4449b8c" />
     <Project Path="src/Configuration/src/Configuration.Keys/Configuration.Keys.csproj" Id="ff09a148-5229-41a3-996a-bf2e420b1c9a" />
     <Project Path="src/Configuration/src/Configuration.Messaging/Configuration.Messaging.csproj" Id="39cd3d6c-0b0b-4244-86a8-1a743491df5c" />
-    <Project Path="src/Configuration/src/Configuration.Notifications/Configuration.Notifications.csproj" Id="038e3aa0-2eb5-4fb8-8397-2c0873bac8f2" />
     <Project Path="src/Configuration/src/Configuration/Configuration.csproj" />
   </Folder>
   <Folder Name="/src/Configuration/tests/">
@@ -77,7 +76,6 @@
   </Folder>
   <Folder Name="/src/Notifications/tests/">
     <Project Path="src/Notifications/tests/Notifications.IntegrationTests/Notifications.IntegrationTests.csproj" Id="f2cb56bf-e36f-4121-a47e-9b08938acb76" />
-    <Project Path="src/Notifications/tests/Notifications.Test/Notifications.Test.csproj" Id="7a44bb32-62df-4e64-b122-f112d631e5a3" />
     <Project Path="src/Notifications/tests/Notifications.UnitTests/Notifications.UnitTests.csproj" Id="8617bd79-38d9-4736-aebb-aedff5d960cc" />
   </Folder>
 </Solution>
