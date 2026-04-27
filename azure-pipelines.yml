@@ -1,0 +1,68 @@
+trigger:
+- main
+- release/*
+- develop
+
+resources:
+  repositories:
+  - repository: sharedTemplates
+    type: git
+    name: 'Projects/PipelineTemplates'
+    ref: 'refs/tags/1.0.0'
+
+stages:
+
+- stage: prep
+  displayName: 'Prepare'
+
+  jobs:
+
+  # Execute gitversion
+  - template: shared/gitversion.yml@sharedTemplates
+    parameters:
+      name: 'prep'
+
+- stage: test
+  displayName: 'Test'
+
+  jobs:
+
+  # Perform dotnet unit tests
+  - template: dotnet/test/test.yml@sharedTemplates
+    parameters:
+      name: 'test_dotnet_unit'
+      vmImage: 'ubuntu-22.04'
+      testPattern: '*UnitTests.csproj'
+      artifactName: 'test-dotnet-unit'
+      
+  # Perform dotnet integration tests
+  - template: dotnet/test/test.yml@sharedTemplates
+    parameters:
+      name: 'test_dotnet_integration'
+      vmImage: 'ubuntu-22.04'
+      testPattern: '*IntegrationTests.csproj'
+      artifactName: 'test-dotnet-integration'
+
+  # Combine code coverage
+  - template: shared/combine-coverage.yml@sharedTemplates
+    parameters:
+      name: 'coverage'
+      artifacts:
+      - 'test-dotnet-unit'
+      - 'test-dotnet-integration'
+      dependsOn:
+      - 'test_dotnet_unit'
+      - 'test_dotnet_integration'
+
+- stage: publish
+  displayName: 'Publish'
+
+  jobs:
+
+  # Publish dotnet library
+  - template: dotnet/publish/library.yml@sharedTemplates
+    parameters:
+      name: 'publish_dotnet'
+      vmImage: 'ubuntu-22.04'
+      publishPattern: '**/*.csproj'
+      artifactName: 'library'
