@@ -5,6 +5,7 @@
     <File Path=".runsettings" />
     <File Path="azure-pipelines.yml" />
     <File Path="Directory.Build.props" />
+    <File Path="gitversion.yml" />
     <File Path="README.md" />
   </Folder>
   <Folder Name="/src/" />

@@ -18,7 +18,7 @@ stages:
   jobs:
 
   # Execute gitversion
-  - template: shared/gitversion.yml@sharedTemplates
+  - template: shared/versioning/gitversion.yml@sharedTemplates
     parameters:
       name: 'prep'
 
