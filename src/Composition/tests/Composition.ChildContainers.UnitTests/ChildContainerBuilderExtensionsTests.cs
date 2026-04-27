@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace EtherGizmos.Common;
 
-internal class IChildContainerBuilderExtensionsTests
+internal class ChildContainerBuilderExtensionsTests
 {
     private IServiceCollection _serviceCollection;
 

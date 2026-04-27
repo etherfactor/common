@@ -306,7 +306,7 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
             PayloadType = _payloadType,
             Payload = _payload,
         };
-        
+
         _context.Notifications.Add(notification);
         await _context.SaveChangesAsync();
 

@@ -1,4 +1,4 @@
-﻿namespace EtherGizmos.Common;
+﻿namespace EtherGizmos.Common.Exceptions;
 
 internal class CircularDependencyExceptionTests
 {

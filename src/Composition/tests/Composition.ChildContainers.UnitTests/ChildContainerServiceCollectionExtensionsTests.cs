@@ -1,8 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using EtherGizmos.Common.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EtherGizmos.Common;
 
-internal class IServiceCollectionExtensionsTests
+internal class ChildContainerServiceCollectionExtensionsTests
 {
     private IServiceCollection _serviceCollection;
 

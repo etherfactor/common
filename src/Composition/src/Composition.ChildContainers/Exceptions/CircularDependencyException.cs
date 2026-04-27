@@ -1,4 +1,4 @@
-﻿namespace EtherGizmos.Common;
+﻿namespace EtherGizmos.Common.Exceptions;
 
 /// <summary>
 /// Thrown when a circular reference is found while resolving services from child containers during runtime.
