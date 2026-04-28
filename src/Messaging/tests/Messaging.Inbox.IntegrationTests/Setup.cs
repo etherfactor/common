@@ -15,16 +15,14 @@ internal static class Setup
     {
         try
         {
-            var rmq = new RabbitMqBuilder()
-                .WithImage("rabbitmq:4")
+            var rmq = new RabbitMqBuilder("rabbitmq:4")
                 .Build();
 
             await rmq.StartAsync();
 
             RmqConnectionString = rmq.GetConnectionString();
 
-            var pgSql = new PostgreSqlBuilder()
-                .WithImage("postgres:18")
+            var pgSql = new PostgreSqlBuilder("postgres:18")
                 .Build();
 
             await pgSql.StartAsync();

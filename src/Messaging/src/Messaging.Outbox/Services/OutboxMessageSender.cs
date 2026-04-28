@@ -26,23 +26,17 @@ internal class OutboxMessageSender : IMessageSender
         SentMessage message,
         CancellationToken cancellationToken = default)
     {
-        //Extract the current activity context
-        var activity = Activity.Current;
-        var headers = new Dictionary<string, string>();
-        if (activity is not null)
-        {
-            DistributedContextPropagator.Current.Inject(activity, headers, (c, key, value) =>
-            {
-                var headers = (Dictionary<string, string>)c!;
-                headers[key] = value;
-            });
-        }
+        using var activity = ActivitySources.Messaging.StartActivityFromCarrier(
+            $"Enqueue {message.Type} for {message.LogicalDestinationName}",
+            ActivityKind.Producer,
+            message.Headers);
 
-        //Add that context to the message
-        message = message with
-        {
-            Headers = message.Headers.AddRange(headers),
-        };
+        activity?.SetTag("messaging.operation.name", "enqueue");
+        activity?.SetTag("messaging.destination.name", message.LogicalDestinationName);
+        activity?.SetTag("messaging.message.type", message.Type);
+        activity?.SetTag("messaging.outbox.enabled", true);
+
+        message = message.AddActivityHeaders(activity);
 
         using var uow = _uowFactory.Create();
         var messageRepo = uow.Repository<OutboxMessage>();

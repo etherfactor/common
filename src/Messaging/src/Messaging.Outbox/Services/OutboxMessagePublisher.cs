@@ -1,6 +1,7 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using EtherGizmos.Common.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Immutable;
 
 namespace EtherGizmos.Common.Services;
 
@@ -91,7 +92,7 @@ internal class OutboxMessagePublisher : IOutboxMessagePublisher
                         MessageId = message.MessageId,
                         Type = message.Type,
                         Body = message.Payload,
-                        Headers = message.Headers.ToDictionary(),
+                        Headers = message.Headers.ToImmutableDictionary(),
                         LogicalDestinationName = message.LogicalDestinationName,
                     };
 

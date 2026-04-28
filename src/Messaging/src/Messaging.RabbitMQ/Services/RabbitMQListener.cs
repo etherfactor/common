@@ -182,7 +182,6 @@ internal class RabbitMQListener : IMessageListener, IDisposable
                 Actions = actions,
             };
 
-            // If backpressure is desired, consider TryWrite with fallback
             await _channel.Writer.WriteAsync(message, @event.CancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)

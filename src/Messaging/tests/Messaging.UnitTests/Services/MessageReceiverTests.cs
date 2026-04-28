@@ -3,6 +3,7 @@ using EtherGizmos.Common.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
+using System.Collections.Immutable;
 using System.Text.Json;
 
 namespace EtherGizmos.Common.Services;
@@ -35,7 +36,7 @@ internal class MessageReceiverTests
                 MessageId = Guid.NewGuid().ToString("N"),
                 Type = "TestMessage",
                 Body = "{}",
-                Headers = new Dictionary<string, string>(),
+                Headers = ImmutableDictionary<string, string>.Empty,
                 LogicalSourceName = "unknown",
                 SubscriptionName = "my.sub",
                 Actions = null!,
@@ -76,7 +77,7 @@ internal class MessageReceiverTests
                 MessageId = Guid.NewGuid().ToString("N"),
                 Type = "TestMessage",
                 Body = "{}",
-                Headers = new Dictionary<string, string>(),
+                Headers = ImmutableDictionary<string, string>.Empty,
                 LogicalSourceName = "unknown",
                 SubscriptionName = "my.sub",
                 Actions = null!,
@@ -119,7 +120,7 @@ internal class MessageReceiverTests
                 MessageId = Guid.NewGuid().ToString("N"),
                 Type = "TestMessage",
                 Body = "{}",
-                Headers = new Dictionary<string, string>(),
+                Headers = ImmutableDictionary<string, string>.Empty,
                 LogicalSourceName = "unknown",
                 SubscriptionName = "my.sub",
                 Actions = null!,

@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Configuration\src\Configuration.Messaging\Configuration.Messaging.csproj" />
+    <ProjectReference Include="..\..\..\Observability\src\Observability\Observability.csproj" />
   </ItemGroup>
 
 </Project>

@@ -79,8 +79,8 @@
     <Project Path="src/Notifications/tests/Notifications.IntegrationTests/Notifications.IntegrationTests.csproj" Id="f2cb56bf-e36f-4121-a47e-9b08938acb76" />
     <Project Path="src/Notifications/tests/Notifications.UnitTests/Notifications.UnitTests.csproj" Id="8617bd79-38d9-4736-aebb-aedff5d960cc" />
   </Folder>
-  <Folder Name="/src/OpenTelemetry/" />
-  <Folder Name="/src/OpenTelemetry/src/">
-    <Project Path="src/OpenTelemetry/src/OpenTelemetry/OpenTelemetry.csproj" Id="389ff8e0-c8f3-43e4-b4df-ef8399768f57" />
+  <Folder Name="/src/Observability/" />
+  <Folder Name="/src/Observability/src/">
+    <Project Path="src/Observability/src/Observability/Observability.csproj" Id="389ff8e0-c8f3-43e4-b4df-ef8399768f57" />
   </Folder>
 </Solution>

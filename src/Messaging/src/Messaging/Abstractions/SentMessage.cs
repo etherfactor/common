@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace EtherGizmos.Common.Abstractions;
 
@@ -13,4 +14,39 @@ public record SentMessage
     public required ImmutableDictionary<string, string> Headers { get; init; }
 
     public required string LogicalDestinationName { get; init; }
+}
+
+public static class SentMessageExtensions
+{
+    extension(SentMessage @this)
+    {
+        /// <summary>
+        /// Adds new headers to the message. If the header already exists, its value will be replaced.
+        /// </summary>
+        /// <param name="headers">The headers to add.</param>
+        /// <returns>A new message instance, with the new headers.</returns>
+        public SentMessage AddHeaders(
+            IReadOnlyDictionary<string, string> headers)
+        {
+            var final = @this.Headers;
+            foreach (var header in headers)
+            {
+                final.SetItem(header.Key, header.Value);
+            }
+
+            return @this with { Headers = final };
+        }
+
+        /// <summary>
+        /// Adds headers from an <see cref="Activity"/> to the message. If the header already exists, its value will be replaced.
+        /// </summary>
+        /// <param name="activity">The activity from which to add headers.</param>
+        /// <returns>A new message instance, with the new headers.</returns>
+        public SentMessage AddActivityHeaders(
+            Activity? activity)
+        {
+            var context = ActivityContextPropagator.Pack(activity);
+            return @this.AddHeaders(context);
+        }
+    }
 }

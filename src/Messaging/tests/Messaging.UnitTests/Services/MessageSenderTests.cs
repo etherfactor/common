@@ -1,6 +1,7 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using System.Collections.Immutable;
 
 namespace EtherGizmos.Common.Services;
 
@@ -27,7 +28,7 @@ internal class MessageSenderTests
                 MessageId = Guid.NewGuid().ToString("N"),
                 Type = "TestMessage",
                 Body = "{}",
-                Headers = new Dictionary<string, string>(),
+                Headers = ImmutableDictionary<string, string>.Empty,
                 LogicalDestinationName = "unknown",
             });
         });
@@ -59,7 +60,7 @@ internal class MessageSenderTests
                 MessageId = Guid.NewGuid().ToString("N"),
                 Type = "TestMessage",
                 Body = "{}",
-                Headers = new Dictionary<string, string>(),
+                Headers = ImmutableDictionary<string, string>.Empty,
                 LogicalDestinationName = "unknown",
             });
         });
@@ -97,7 +98,7 @@ internal class MessageSenderTests
                 MessageId = Guid.NewGuid().ToString("N"),
                 Type = "TestMessage",
                 Body = "{}",
-                Headers = new Dictionary<string, string>(),
+                Headers = ImmutableDictionary<string, string>.Empty,
                 LogicalDestinationName = "unknown",
             });
         });

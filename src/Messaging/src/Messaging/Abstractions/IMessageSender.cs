@@ -1,6 +1,7 @@
 using EtherGizmos.Common.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using System.Collections.Immutable;
 
 namespace EtherGizmos.Common.Abstractions;
 
@@ -36,7 +37,7 @@ public static class IMessageSenderExtensions
             MessageId = Guid.NewGuid().ToString("N"),
             Type = type,
             Body = body,
-            Headers = new Dictionary<string, string>(),
+            Headers = ImmutableDictionary<string, string>.Empty,
             LogicalDestinationName = logicalName,
         }, cancellationToken: cancellationToken);
     }

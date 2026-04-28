@@ -12,8 +12,7 @@ internal static class Setup
     {
         try
         {
-            var rmq = new RabbitMqBuilder()
-                .WithImage("rabbitmq:4")
+            var rmq = new RabbitMqBuilder("rabbitmq:4")
                 .Build();
 
             await rmq.StartAsync();

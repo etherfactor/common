@@ -151,32 +151,22 @@ internal class RabbitMQPublisher : IMessagePublisher, IDisposable
 
             try
             {
-                await foreach (var message in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
+                await foreach (var sentMessage in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
                 {
-                    //Read the activity context from the message
-                    DistributedContextPropagator.Current.ExtractTraceIdAndState(message.Headers, (c, key, out value, out values) =>
-                    {
-                        values = null;
-                        var headers = (IReadOnlyDictionary<string, string>)c!;
-                        headers.TryGetValue(key, out value);
-                    }, out var traceId, out var traceState);
+                    //Capture separate variable
+                    var message = sentMessage;
 
-                    var baggage = DistributedContextPropagator.Current.ExtractBaggage(message.Headers, (c, key, out value, out values) =>
-                    {
-                        values = null;
-                        var headers = (IReadOnlyDictionary<string, string>)c!;
-                        headers.TryGetValue(key, out value);
-                    })?.ToDictionary() ?? [];
+                    using var activity = ActivitySources.Messaging.StartActivityFromCarrier(
+                        $"Publish {message.Type} to {message.LogicalDestinationName}",
+                        ActivityKind.Producer,
+                        message.Headers);
 
-                    using Activity activity = MyActivitySource.StartActivity(
-                        "ProcessMessage",
-                        ActivityKind.Consumer,
-                        parentContext.ActivityContext);
+                    activity?.SetTag("messaging.operation.name", "publish");
+                    activity?.SetTag("messaging.system", "rabbitmq");
+                    activity?.SetTag("messaging.destination.name", message.LogicalDestinationName);
+                    activity?.SetTag("messaging.message.type", message.Type);
 
-                    foreach (var key in baggage.Keys)
-                    {
-                        activity?.SetTag(key, baggage[key]);
-                    }
+                    message = message.AddActivityHeaders(activity);
 
                     var properties = new BasicProperties()
                     {

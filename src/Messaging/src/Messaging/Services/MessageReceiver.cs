@@ -3,6 +3,7 @@ using EtherGizmos.Common.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
@@ -29,6 +30,17 @@ internal class MessageReceiver : IMessageReceiver
         ReceivedMessage message,
         CancellationToken cancellationToken = default)
     {
+        using var activity = ActivitySources.Messaging.StartActivityFromCarrier(
+            $"Receive {message.Type} from {message.LogicalSourceName}",
+            ActivityKind.Consumer,
+            message.Headers);
+
+        activity?.SetTag("messaging.operation.name", "receive");
+        activity?.SetTag("messaging.source.name", message.LogicalSourceName);
+        activity?.SetTag("messaging.message.type", message.Type);
+
+        message = message.AddActivityHeaders(activity);
+
         var logicalName = message.LogicalSourceName;
 
         if (!_registry.TryGetBusId(logicalName, out var busId))
@@ -108,6 +120,16 @@ internal class MessageReceiver : IMessageReceiver
                 //The final pipeline step is to execute the consumer
                 async Task Execute()
                 {
+                    using var activity = ActivitySources.Messaging.StartActivityFromCarrier(
+                        $"Process {useMessage.Type} via {useMessage.ConsumerName}",
+                        ActivityKind.Consumer,
+                        useMessage.Headers);
+
+                    activity?.SetTag("messaging.operation.name", "process");
+                    activity?.SetTag("messaging.source.name", useMessage.LogicalSourceName);
+                    activity?.SetTag("messaging.message.type", useMessage.Type);
+                    activity?.SetTag("messaging.consumer.name", useMessage.ConsumerName);
+
                     await consumer.ConsumeAsync(context).ConfigureAwait(false);
                 }
 
