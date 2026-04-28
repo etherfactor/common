@@ -1,6 +1,7 @@
 using EtherGizmos.Common.Abstractions;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using System.Diagnostics;
 using System.Text;
 using System.Threading.Channels;
 
@@ -152,10 +153,35 @@ internal class RabbitMQPublisher : IMessagePublisher, IDisposable
             {
                 await foreach (var message in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
                 {
+                    //Read the activity context from the message
+                    DistributedContextPropagator.Current.ExtractTraceIdAndState(message.Headers, (c, key, out value, out values) =>
+                    {
+                        values = null;
+                        var headers = (IReadOnlyDictionary<string, string>)c!;
+                        headers.TryGetValue(key, out value);
+                    }, out var traceId, out var traceState);
+
+                    var baggage = DistributedContextPropagator.Current.ExtractBaggage(message.Headers, (c, key, out value, out values) =>
+                    {
+                        values = null;
+                        var headers = (IReadOnlyDictionary<string, string>)c!;
+                        headers.TryGetValue(key, out value);
+                    })?.ToDictionary() ?? [];
+
+                    using Activity activity = MyActivitySource.StartActivity(
+                        "ProcessMessage",
+                        ActivityKind.Consumer,
+                        parentContext.ActivityContext);
+
+                    foreach (var key in baggage.Keys)
+                    {
+                        activity?.SetTag(key, baggage[key]);
+                    }
+
                     var properties = new BasicProperties()
                     {
                         MessageId = message.MessageId,
-                        Headers = message.AllHeaders.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value),
+                        Headers = message.Headers.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value),
                     };
 
                     var bytes = Encoding.UTF8.GetBytes(message.Body);

@@ -1,5 +1,6 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using EtherGizmos.Common.Models;
+using System.Diagnostics;
 
 namespace EtherGizmos.Common.Services;
 
@@ -25,6 +26,24 @@ internal class OutboxMessageSender : IMessageSender
         SentMessage message,
         CancellationToken cancellationToken = default)
     {
+        //Extract the current activity context
+        var activity = Activity.Current;
+        var headers = new Dictionary<string, string>();
+        if (activity is not null)
+        {
+            DistributedContextPropagator.Current.Inject(activity, headers, (c, key, value) =>
+            {
+                var headers = (Dictionary<string, string>)c!;
+                headers[key] = value;
+            });
+        }
+
+        //Add that context to the message
+        message = message with
+        {
+            Headers = message.Headers.AddRange(headers),
+        };
+
         using var uow = _uowFactory.Create();
         var messageRepo = uow.Repository<OutboxMessage>();
 

@@ -58,6 +58,7 @@
   <Folder Name="/src/Messaging/" />
   <Folder Name="/src/Messaging/src/">
     <Project Path="src/Messaging/src/Messaging.Inbox/Messaging.Inbox.csproj" Id="a61ee280-e10e-4fee-ac18-cef8eb0d9c4b" />
+    <Project Path="src/Messaging/src/Messaging.OpenTelemetry/Messaging.OpenTelemetry.csproj" Id="83164e55-2481-45e5-a639-d041c9a057a7" />
     <Project Path="src/Messaging/src/Messaging.Outbox/Messaging.Outbox.csproj" Id="ab07c0fa-ee31-447f-9e88-0db95db999e5" />
     <Project Path="src/Messaging/src/Messaging.RabbitMQ/Messaging.RabbitMQ.csproj" Id="91ad851d-01cf-48e3-a4ef-08514e59d66f" />
     <Project Path="src/Messaging/src/Messaging/Messaging.csproj" Id="bf1e846a-cfbd-4c2a-95fa-c77a0b6788b0" />
@@ -77,5 +78,9 @@
   <Folder Name="/src/Notifications/tests/">
     <Project Path="src/Notifications/tests/Notifications.IntegrationTests/Notifications.IntegrationTests.csproj" Id="f2cb56bf-e36f-4121-a47e-9b08938acb76" />
     <Project Path="src/Notifications/tests/Notifications.UnitTests/Notifications.UnitTests.csproj" Id="8617bd79-38d9-4736-aebb-aedff5d960cc" />
+  </Folder>
+  <Folder Name="/src/OpenTelemetry/" />
+  <Folder Name="/src/OpenTelemetry/src/">
+    <Project Path="src/OpenTelemetry/src/OpenTelemetry/OpenTelemetry.csproj" Id="389ff8e0-c8f3-43e4-b4df-ef8399768f57" />
   </Folder>
 </Solution>
