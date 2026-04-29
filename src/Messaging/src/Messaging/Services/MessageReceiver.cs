@@ -115,7 +115,7 @@ internal class MessageReceiver : IMessageReceiver
 
                 //Deserialize the message payload
                 var deserialized = serializer.Deserialize<TMessage>(useMessage.Body);
-                var context = new MessageContext<TMessage>(deserialized, useMessage.Actions, cancellationToken);
+                var context = new MessageContext<TMessage>(deserialized, useMessage, useMessage.Actions, cancellationToken);
 
                 //The final pipeline step is to execute the consumer
                 async Task Execute()

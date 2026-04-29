@@ -26,6 +26,8 @@ public class Notification : IEntity
 
     public virtual NotificationStatusType Status { get; set; }
 
+    public virtual IDictionary<string, string> Headers { get; set; } = new Dictionary<string, string>();
+
     public virtual int AttemptCount { get; set; }
 
     public virtual DateTimeOffset? LastAttemptAt { get; set; }
@@ -74,6 +76,9 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
 
         entity.Property(e => e.Status)
             .HasColumnName("notification_status_type_id");
+
+        entity.Property(e => e.Headers)
+            .HasColumnName("headers");
 
         entity.Property(e => e.AttemptCount)
             .HasColumnName("attempt_count");

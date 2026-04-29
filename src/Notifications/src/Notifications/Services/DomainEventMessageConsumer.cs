@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace EtherGizmos.Common.Services;
@@ -35,6 +36,11 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
     public async Task ConsumeAsync(
         IMessageContext<DomainEventMessage> context)
     {
+        using var activity = ActivitySources.Notifications.StartActivityFromCarrier(
+            $"Fan out domain event to subscriptions",
+            ActivityKind.Producer,
+            context.RawMessage.Headers);
+
         var message = context.Message;
         var @event = _serializer.Deserialize(message.PayloadType, message.Payload);
 
@@ -83,6 +89,7 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
                     PayloadType = message.PayloadType,
                     Payload = message.Payload,
                     Status = NotificationStatusType.Pending,
+                    Headers = ActivityContextPropagator.Pack(Activity.Current).ToDictionary(), 
                     AttemptCount = 0,
                 };
 

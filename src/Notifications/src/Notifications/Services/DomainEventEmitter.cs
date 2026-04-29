@@ -2,6 +2,8 @@
 using EtherGizmos.Common.Configuration;
 using EtherGizmos.Common.Models;
 using Microsoft.Extensions.Options;
+using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace EtherGizmos.Common.Services;
 
@@ -29,6 +31,10 @@ internal class DomainEventEmitter : IDomainEventEmitter
     {
         ArgumentNullException.ThrowIfNull(@event);
 
+        using var activity = ActivitySources.Notifications.StartActivity(
+            $"Emit domain event of type {@event.GetType().FullName}",
+            ActivityKind.Producer);
+
         var lookupType = @event.GetType();
         if (lookupType.IsGenericType
             && lookupType.GetGenericTypeDefinition() == typeof(Digest<>))
@@ -53,9 +59,14 @@ internal class DomainEventEmitter : IDomainEventEmitter
             Payload = serialized.Payload,
         };
 
+        var context = ActivityContextPropagator.Pack(Activity.Current);
         await _messageSender.SendAsync(
             NotificationConstants.DomainEventsLogicalName,
             message,
+            options: new MessageSendOptions()
+            {
+                Headers = context.ToImmutableDictionary(),
+            },
             cancellationToken: cancellationToken);
     }
 }

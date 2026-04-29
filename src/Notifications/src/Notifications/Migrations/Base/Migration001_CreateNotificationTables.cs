@@ -44,6 +44,7 @@ public class Migration001_CreateNotificationTables : AutoReversingMigration
             .WithColumn("payload_type").AsString(int.MaxValue).NotNullable()
             .WithColumn("payload").AsString(int.MaxValue).NotNullable()
             .WithColumn("notification_status_type_id").AsInt32().NotNullable()
+            .WithColumn("headers").AsString(int.MaxValue).NotNullable()
             .WithColumn("attempt_count").AsInt32().NotNullable()
             .WithColumn("last_attempt_at_utc").AsDateTime2().Nullable()
             .WithColumn("last_error").AsString(int.MaxValue).Nullable()

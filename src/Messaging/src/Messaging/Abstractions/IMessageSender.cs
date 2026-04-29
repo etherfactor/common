@@ -18,14 +18,15 @@ public static class IMessageSenderExtensions
         this IMessageSender @this,
         string logicalName,
         TMessage message,
+        MessageSendOptions? options = null,
         CancellationToken cancellationToken = default)
         where TMessage : class, new()
     {
-        var options = @this.Services
+        var messagingOptions = @this.Services
             .GetRequiredService<IOptions<MessagingOptions>>()
             .Value;
 
-        var type = options.ConvertType(typeof(TMessage));
+        var type = messagingOptions.ConvertType(typeof(TMessage));
 
         var serializer = @this.Services.GetKeyedService<IMessageSerializer>(logicalName)
             ?? @this.Services.GetRequiredService<IMessageSerializer>();
@@ -37,7 +38,7 @@ public static class IMessageSenderExtensions
             MessageId = Guid.NewGuid().ToString("N"),
             Type = type,
             Body = body,
-            Headers = ImmutableDictionary<string, string>.Empty,
+            Headers = options?.Headers?.ToImmutableDictionary() ?? ImmutableDictionary<string, string>.Empty,
             LogicalDestinationName = logicalName,
         }, cancellationToken: cancellationToken);
     }

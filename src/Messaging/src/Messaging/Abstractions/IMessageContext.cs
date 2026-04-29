@@ -5,6 +5,8 @@ public interface IMessageContext<TMessage>
 {
     TMessage Message { get; }
 
+    ReceivedMessage RawMessage { get; }
+
     IMessageActions Actions { get; }
 
     CancellationToken CancellationToken { get; }

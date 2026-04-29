@@ -17,6 +17,7 @@
     <ProjectReference Include="..\..\..\Data\src\Data.Migrations\Data.Migrations.csproj" />
     <ProjectReference Include="..\..\..\Data\src\Data.UnitOfWork\Data.UnitOfWork.csproj" />
     <ProjectReference Include="..\..\..\Messaging\src\Messaging\Messaging.csproj" />
+    <ProjectReference Include="..\..\..\Observability\src\Observability\Observability.csproj" />
   </ItemGroup>
 
 </Project>

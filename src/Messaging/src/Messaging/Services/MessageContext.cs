@@ -7,16 +7,20 @@ internal class MessageContext<TMessage> : IMessageContext<TMessage>
 {
     public TMessage Message { get; }
 
+    public ReceivedMessage RawMessage { get; }
+
     public IMessageActions Actions { get; }
 
     public CancellationToken CancellationToken { get; }
 
     public MessageContext(
         TMessage message,
+        ReceivedMessage rawMessage,
         IMessageActions actions,
         CancellationToken cancellationToken)
     {
         Message = message;
+        RawMessage = rawMessage;
         Actions = actions;
         CancellationToken = cancellationToken;
     }
