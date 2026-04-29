@@ -1,5 +1,6 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace EtherGizmos.Common.Services;
 
@@ -30,6 +31,11 @@ internal class ImmediateNotificationCollector : NotificationCollector
         var exceptions = new List<Exception>();
         foreach (var claim in claims)
         {
+            using var activity = ActivitySources.Notifications.StartActivityFromCarrier(
+                $"Send notification {claim.NotificationId} via {claim.Notification.NotificationSubscription.ChannelKey}",
+                ActivityKind.Consumer,
+                claim.Notification.Headers.AsReadOnly());
+
             try
             {
                 await _sender.DispatchAsync(claim.Notification, cancellationToken);

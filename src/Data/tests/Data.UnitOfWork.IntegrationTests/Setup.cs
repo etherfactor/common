@@ -12,8 +12,7 @@ internal static class Setup
     {
         try
         {
-            var pgSql = new PostgreSqlBuilder()
-                .WithImage("postgres:18")
+            var pgSql = new PostgreSqlBuilder("postgres:18")
                 .Build();
 
             await pgSql.StartAsync();

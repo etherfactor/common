@@ -59,7 +59,7 @@ internal class DomainEventEmitter : IDomainEventEmitter
             Payload = serialized.Payload,
         };
 
-        var context = ActivityContextPropagator.Pack(Activity.Current);
+        var context = ActivityContextPropagator.Pack(activity);
         await _messageSender.SendAsync(
             NotificationConstants.DomainEventsLogicalName,
             message,

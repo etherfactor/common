@@ -50,6 +50,12 @@ internal class DigestNotificationCollector : NotificationCollector
 
         foreach (var subscription in subscriptions)
         {
+            //ActivitySources.Notifications.StartActivity();
+            //using var activity = ActivitySources.Notifications.StartActivityFromCarrier(
+            //    $"Send notification {claim.NotificationId} via {claim.Notification.NotificationSubscription.ChannelKey}",
+            //    ActivityKind.Consumer,
+            //    claim.Notification.Headers.AsReadOnly());
+
             try
             {
                 var notifications = await notificationRepo.Data
