@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MockQueryable;
 using Moq;
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 
 namespace EtherGizmos.Common.Services;
@@ -76,6 +77,19 @@ internal class DomainEventMessageConsumerTests
         _contextMock.Setup(@interface =>
             @interface.Message)
             .Returns(() => _message);
+
+        _contextMock.Setup(@interface =>
+            @interface.RawMessage)
+            .Returns(() => new ReceivedMessage()
+            {
+                MessageId = "",
+                Type = "type",
+                Body = "{}",
+                Headers = ImmutableDictionary<string, string>.Empty,
+                LogicalSourceName = "source",
+                SubscriptionName = "sub",
+                Actions = null!,
+            });
 
         _message = new()
         {

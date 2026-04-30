@@ -171,7 +171,7 @@ internal class RabbitMQPublisher : IMessagePublisher, IDisposable
                     var properties = new BasicProperties()
                     {
                         MessageId = message.MessageId,
-                        Headers = message.Headers.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value),
+                        Headers = message.AllHeaders.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value),
                     };
 
                     var bytes = Encoding.UTF8.GetBytes(message.Body);

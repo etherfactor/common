@@ -51,7 +51,7 @@ internal class ImmediateNotificationHandlerTests
     public async Task HandleAsync_WhenDispatchSucceeds_ShouldMarkSent()
     {
         //Arrange
-        var notification = new Notification { Id = 123 };
+        var notification = new Notification { Id = 123, NotificationSubscription = new() { } };
         var claim = new NotificationClaim(123, notification, Guid.NewGuid());
 
         _coordinatorMock
@@ -81,7 +81,7 @@ internal class ImmediateNotificationHandlerTests
     public void HandleAsync_WhenDispatchThrows_ShouldMarkFailedAndRethrow()
     {
         //Arrange
-        var notification = new Notification { Id = 123 };
+        var notification = new Notification { Id = 123, NotificationSubscription = new() { } };
         var claim = new NotificationClaim(123, notification, Guid.NewGuid());
         var exception = new InvalidOperationException("Boom");
 

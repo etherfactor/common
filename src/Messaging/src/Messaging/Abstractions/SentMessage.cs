@@ -21,6 +21,13 @@ public static class SentMessageExtensions
     extension(SentMessage @this)
     {
         /// <summary>
+        /// All headers, including metadata headers.
+        /// </summary>
+        public ImmutableDictionary<string, string> AllHeaders => @this.Headers
+            .SetItem("$type", @this.Type)
+            .SetItem("$logical", @this.LogicalDestinationName);
+
+        /// <summary>
         /// Adds new headers to the message. If the header already exists, its value will be replaced.
         /// </summary>
         /// <param name="headers">The headers to add.</param>

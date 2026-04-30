@@ -36,6 +36,10 @@ internal class ImmediateNotificationCollector : NotificationCollector
                 ActivityKind.Consumer,
                 claim.Notification.Headers.AsReadOnly());
 
+            activity?.SetTag("notification.schedule", NotificationSchedules.Immediate.Key);
+            activity?.SetTag("notification.subscription.id", claim.Notification.NotificationSubscriptionId);
+            activity?.SetTag("notification.channel", claim.Notification.NotificationSubscription.ChannelKey);
+
             try
             {
                 await _sender.DispatchAsync(claim.Notification, cancellationToken);

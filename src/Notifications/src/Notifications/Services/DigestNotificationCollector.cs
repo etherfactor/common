@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NCrontab;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 
@@ -50,11 +51,13 @@ internal class DigestNotificationCollector : NotificationCollector
 
         foreach (var subscription in subscriptions)
         {
-            //ActivitySources.Notifications.StartActivity();
-            //using var activity = ActivitySources.Notifications.StartActivityFromCarrier(
-            //    $"Send notification {claim.NotificationId} via {claim.Notification.NotificationSubscription.ChannelKey}",
-            //    ActivityKind.Consumer,
-            //    claim.Notification.Headers.AsReadOnly());
+            using var activity = ActivitySources.Notifications.StartActivity(
+                $"Pack notifications into digest",
+                ActivityKind.Consumer);
+
+            activity?.SetTag("notification.schedule", NotificationSchedules.Immediate.Key);
+            activity?.SetTag("notification.subscription.id", subscription.Id);
+            activity?.SetTag("notification.channel", subscription.ChannelKey);
 
             try
             {
@@ -66,9 +69,14 @@ internal class DigestNotificationCollector : NotificationCollector
                         && e.AttemptCount < 10)
                     .ToListAsync(cancellationToken: cancellationToken);
 
+                activity?.SetTag("notification.digest.source_count", notifications.Count);
+
                 var events = new List<object>();
                 foreach (var notification in notifications)
                 {
+                    var link = ActivityContextPropagator.UnpackContext(notification.Headers.AsReadOnly());
+                    activity?.AddLink(new(link));
+
                     var @event = _serializer.Deserialize(notification.PayloadType, notification.Payload);
                     events.Add(@event);
                 }
