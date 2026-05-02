@@ -72,6 +72,7 @@
   <Folder Name="/src/Notifications/" />
   <Folder Name="/src/Notifications/src/">
     <Project Path="src/Notifications/src/Notifications.Email/Notifications.Email.csproj" Id="a2dd00c6-46d5-4ff8-ae36-e143acb8af90" />
+    <Project Path="src/Notifications/src/Notifications.OpenTelemetry/Notifications.OpenTelemetry.csproj" Id="61af4d7e-6f97-4bfd-8cb5-b802bfbf9282" />
     <Project Path="src/Notifications/src/Notifications.Webhook/Notifications.Webhook.csproj" Id="6be26326-5132-4173-a833-97198022668e" />
     <Project Path="src/Notifications/src/Notifications/Notifications.csproj" Id="fc093b79-a861-4fbb-8214-b9bb9f3619de" />
   </Folder>

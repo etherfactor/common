@@ -6,7 +6,7 @@ A suite of .NET libraries used by my other projects, centralized for convenience
 
 ### Composition
 
-- **Child Containers** - Support for nested child containers for complex DI scenarios
+- **ChildContainers** - Support for nested child containers for complex DI scenarios
 
 Registering child containers:
 ```csharp
@@ -24,11 +24,11 @@ builder.Services
 
 ### Configuration
 
-- **Core Configuration** - Base configuration framework
-- **Data Configuration** - Configuration abstractions for data layer
-- **Email Configuration** - Email service configuration and setup
-- **Keys Configuration** - Secure key management and configuration
-- **Messaging Configuration** - Message queue and broker configuration
+- **Base** - Base configuration framework
+- **Data** - Configuration abstractions for data layer
+- **Email** - Email service configuration and setup
+- **Keys** - Secure key management and configuration
+- **Messaging** - Message queue and broker configuration
 
 Registering the connection resolver:
 ```csharp
@@ -78,9 +78,22 @@ resolver.LoadCertificate("MyCertificate");
 
 ### Data Access
 
-- **Unit of Work** - Repository and unit of work patterns for data access
-- **PostgreSQL Support** - PostgreSQL-specific implementations and extensions
-- **Database Migrations** - Database schema versioning and migrations
+- **Migrations** - Database schema versioning and migrations
+- **PostgreSQL** - PostgreSQL-specific implementations and extensions
+- **UnitOfWork** - Repository and unit of work patterns for data access
+
+Adding migrations:
+```csharp
+builder.Services
+    .AddMigrations(typeof(Program).Assembly);
+```
+
+Adding PostgreSQL:
+```csharp
+builder.Services
+    .AddConnectionResolver()
+    .WithPostgreSql();
+```
 
 Registering unit of work:
 ```csharp
@@ -91,22 +104,9 @@ builder.Services
     });
 ```
 
-Adding PostgreSQL:
-```csharp
-builder.Services
-    .AddConnectionResolver()
-    .WithPostgreSql();
-```
-
-Adding migrations:
-```csharp
-builder.Services
-    .AddMigrations(typeof(Program).Assembly);
-```
-
 ### Email
 
-- **SMTP Integration** - SMTP-based email delivery service
+- **Smtp** - SMTP-based email delivery service
 
 Adding SMTP:
 ```csharp
@@ -117,10 +117,10 @@ builder.Services
 
 ### Messaging
 
-- **Core Messaging** - Base messaging abstractions and utilities
-- **Message Inbox** - Incoming message handling and processing
-- **Message Outbox** - Outgoing message queue and delivery
-- **RabbitMQ Support** - RabbitMQ broker integration
+- **Base** - Base messaging abstractions and utilities
+- **Inbox** - Incoming message handling and processing
+- **Outbox** - Outgoing message queue and delivery
+- **RabbitMQ** - RabbitMQ broker integration
 
 Registering messaging:
 ```csharp
@@ -136,9 +136,9 @@ builder.Services
 
 ### Notifications
 
-- **Core Notifications** - Notification framework and abstractions
-- **Email Notifications** - Email-based notification delivery
-- **Webhook Notifications** - HTTP webhook-based notifications
+- **Base** - Notification framework and abstractions
+- **Email** - Email-based notification delivery
+- **Webhook** - HTTP webhook-based notifications
 
 Registering notifications:
 ```csharp
