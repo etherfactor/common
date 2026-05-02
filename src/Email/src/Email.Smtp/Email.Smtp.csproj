@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="EtherGizmos.Common.$(MSBuildProjectName).UnitTests" />
+    <InternalsVisibleTo Include="EtherGizmos.Common.$(MSBuildProjectName).IntegrationTests" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.16.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Configuration\src\Configuration.Email\Configuration.Email.csproj" />
+  </ItemGroup>
+
+</Project>

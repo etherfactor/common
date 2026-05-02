@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="EtherGizmos.Common.Notifications.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Notifications\Notifications.csproj" />
+  </ItemGroup>
+
+</Project>

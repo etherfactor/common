@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RabbitMQ.Client" Version="7.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="$(MSBuildProjectName).UnitTests" />
+    <InternalsVisibleTo Include="$(MSBuildProjectName).IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Configuration\src\Configuration.Messaging\Configuration.Messaging.csproj" />
+    <ProjectReference Include="..\Messaging\Messaging.csproj" />
+  </ItemGroup>
+
+</Project>

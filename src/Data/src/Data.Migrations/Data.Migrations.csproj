@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="EtherGizmos.Common.$(MSBuildProjectName).UnitTests" />
+    <InternalsVisibleTo Include="EtherGizmos.Common.$(MSBuildProjectName).IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentMigrator" Version="8.0.1" />
+    <PackageReference Include="FluentMigrator.Runner.Core" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Composition\src\Composition.ChildContainers\Composition.ChildContainers.csproj" />
+    <ProjectReference Include="..\..\..\Configuration\src\Configuration.Data\Configuration.Data.csproj" />
+  </ItemGroup>
+
+</Project>

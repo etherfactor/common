@@ -1,0 +1,66 @@
+using EtherGizmos.Common.Abstractions;
+using EtherGizmos.Common.Configuration;
+using EtherGizmos.Common.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace EtherGizmos.Common;
+
+public static class MessagingServiceCollectionExtensions
+{
+    extension(IServiceCollection @this)
+    {
+        public IMessagingBuilder AddMessaging(
+            Action<MessagingOptions, IConfiguration> configureOptions)
+        {
+            return @this.AddMessaging(string.Empty, configureOptions);
+        }
+
+        public IMessagingBuilder AddMessaging(
+            string busId,
+            Action<MessagingOptions, IConfiguration> configureOptions)
+        {
+            @this.AddMessagingCore();
+
+            @this.AddOptions<MessagingOptions>(busId)
+                .Configure(configureOptions)
+                .Configure(opt => opt.Build());
+
+            var key = new BusKey(busId);
+            @this.TryAddKeyedSingleton<IMessageBus, MessageBus>(key);
+
+            @this.TryAddEnumerable(new ServiceDescriptor(typeof(IHostedService), typeof(MessagePumpHostedService), ServiceLifetime.Singleton));
+            @this.AddOptions<MessageBusOptions>()
+                .Configure(opt =>
+                {
+                    opt.Buses.Add(busId);
+                });
+
+            return new MessagingBuilder(busId, @this);
+        }
+
+        internal IServiceCollection AddMessagingCore()
+        {
+            @this.TryAddSingleton<IMessageBusRegistry, MessageBusRegistry>();
+
+            @this.TryAddSingleton<IMessageReceiver, MessageReceiver>();
+            @this.TryAddSingleton<IMessageSender, MessageSender>();
+            @this.TryAddSingleton<ITransportMessageSender, MessageSender>();
+
+            @this.TryAddSingleton<IMessageSerializer, JsonMessageSerializer>();
+
+            @this.AddOptions<JsonSerializerOptions>(MessagingConstants.OptionsName)
+                .Configure(opt =>
+                {
+                    opt.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                    opt.Converters.Add(new JsonStringEnumConverter());
+                });
+
+            return @this;
+        }
+    }
+}
