@@ -32,6 +32,7 @@ stages:
     parameters:
       name: 'test_dotnet_unit'
       vmImage: 'ubuntu-22.04'
+      testType: 'Unit'
       testPattern: '*UnitTests.csproj'
       artifactName: 'test-dotnet-unit'
       
@@ -40,6 +41,7 @@ stages:
     parameters:
       name: 'test_dotnet_integration'
       vmImage: 'ubuntu-22.04'
+      testType: 'Integration'
       testPattern: '*IntegrationTests.csproj'
       artifactName: 'test-dotnet-integration'
 
