@@ -34,7 +34,11 @@ internal class UnitOfWorkFactory : IUnitOfWorkFactory
                 if (options.AmbientMode == UnitOfWorkAmbientMode.RequireAmbient && ambient is null)
                     throw new InvalidOperationException("An ambient unit of work scope was required, but no ambient scope is available.");
 
-                ambient ??= Create(options with { AmbientMode = UnitOfWorkAmbientMode.CreateNewAndSetAmbient });
+                ambient = ambient switch
+                {
+                    { } => new UnitOfWorkReference(ambient),
+                    _ => Create(options with { AmbientMode = UnitOfWorkAmbientMode.CreateNewAndSetAmbient })
+                };
                 return ambient;
         }
 
@@ -65,8 +69,11 @@ internal class UnitOfWorkFactory : IUnitOfWorkFactory
                 throw new InvalidOperationException("Invalid options object.");
         }
 
-        var disposable = accessor.Enter(uow);
-        uow.AmbientDisposable = disposable;
+        if (options.AmbientMode != UnitOfWorkAmbientMode.SuppressAmbient)
+        {
+            var disposable = accessor.Enter(uow);
+            uow.AmbientDisposable = disposable;
+        }
 
         return uow;
     }

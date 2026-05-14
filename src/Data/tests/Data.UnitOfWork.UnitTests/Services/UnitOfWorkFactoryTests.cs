@@ -11,6 +11,7 @@ internal class UnitOfWorkFactoryTests
 {
     private IServiceProvider _serviceProvider;
     private UnitOfWorkFactory _uowFactory;
+    private UnitOfWorkAccessor _uowAccessor;
 
     [SetUp]
     public void SetUp()
@@ -27,9 +28,8 @@ internal class UnitOfWorkFactoryTests
 
         services.AddSingleton(httpAccessorMock.Object);
 
-        var uowAccessorMock = new Mock<IUnitOfWorkAccessor>();
-
-        services.AddSingleton(uowAccessorMock.Object);
+        _uowAccessor = new();
+        services.AddSingleton<IUnitOfWorkAccessor>(_uowAccessor);
 
         _serviceProvider = services.BuildServiceProvider();
         _uowFactory = new(new Mock<IOptions<UnitOfWorkOptions>>().Object, _serviceProvider);
@@ -63,22 +63,133 @@ internal class UnitOfWorkFactoryTests
     }
 
     [Test]
-    public void Create_WithRequestTrue_ShouldUseRequestScope()
+    public void Create_WithScopeModeRequestScope_ShouldUseRequestScope()
     {
         //Arrange & Act
-        using var uow = _uowFactory.Create(new() { SccopeMode = UnitOfWorkScopeMode.RequestScope });
+        using var uow = _uowFactory.Create(new()
+        {
+            SccopeMode = UnitOfWorkScopeMode.RequestScope,
+        });
 
         //Assert
         Assert.That(uow.Services, Is.EqualTo(_serviceProvider));
     }
 
     [Test]
-    public void Create_WithRequestFalse_ShouldUseNewScope()
+    public void Create_WithScopeModeNewScope_ShouldUseNewScope()
     {
         //Arrange & Act
-        using var uow = _uowFactory.Create(new() { SccopeMode = UnitOfWorkScopeMode.NewScope });
+        using var uow = _uowFactory.Create(new()
+        {
+            SccopeMode = UnitOfWorkScopeMode.NewScope,
+        });
 
         //Assert
         Assert.That(uow.Services, Is.Not.EqualTo(_serviceProvider));
+    }
+
+    [Test]
+    public void Create_WithAmbientModeCreateNewAndSetAmbient_ShouldSetAmbient()
+    {
+        //Arrange & Act
+        using var uow = _uowFactory.Create(new()
+        {
+            AmbientMode = UnitOfWorkAmbientMode.CreateNewAndSetAmbient,
+        });
+
+        //Assert
+        Assert.That(_uowAccessor.Current, Is.EqualTo(uow));
+    }
+
+    [Test]
+    public void Create_WithAmbientModeJoinOrCreateAmbientWithAmbient_ShouldWrapAmbient()
+    {
+        //Arrange & Act
+        using var ambient = _uowFactory.Create();
+        using var uow = _uowFactory.Create(new()
+        {
+            AmbientMode = UnitOfWorkAmbientMode.JoinAmbientOrCreate,
+        });
+
+        //Assert
+        var current = _uowAccessor.Current;
+        Assert.That(current, Is.Not.EqualTo(uow));
+        Assert.That((uow as UnitOfWorkReference)?.Inner, Is.EqualTo(ambient));
+    }
+
+    [Test]
+    public void Create_WithAmbientModeJoinOrCreateAmbientWithoutAmbient_ShouldSetAmbient()
+    {
+        //Arrange & Act
+        using var uow = _uowFactory.Create(new()
+        {
+            AmbientMode = UnitOfWorkAmbientMode.CreateNewAndSetAmbient,
+        });
+
+        //Assert
+        Assert.That(_uowAccessor.Current, Is.EqualTo(uow));
+    }
+
+    [Test]
+    public void Create_WithAmbientModeRequireAmbientWithAmbient_ShouldWrapAmbient()
+    {
+        //Arrange & Act
+        using var ambient = _uowFactory.Create();
+        using var uow = _uowFactory.Create(new()
+        {
+            AmbientMode = UnitOfWorkAmbientMode.RequireAmbient,
+        });
+
+        //Assert
+        var current = _uowAccessor.Current;
+        Assert.That(current, Is.Not.EqualTo(uow));
+        Assert.That((uow as UnitOfWorkReference)?.Inner, Is.EqualTo(ambient));
+    }
+
+    [Test]
+    public void Create_WithAmbientModeRequireAmbientWithoutAmbient_ShouldThrowInvalidOperationException()
+    {
+        //Act & Assert
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            using var uow = _uowFactory.Create(new()
+            {
+                AmbientMode = UnitOfWorkAmbientMode.RequireAmbient,
+            });
+        });
+    }
+
+    [Test]
+    public void Create_WithAmbientModeSuppressAmbient_ShouldNotSetAmbient()
+    {
+        //Arrange & Act
+        using var uow = _uowFactory.Create(new()
+        {
+            AmbientMode = UnitOfWorkAmbientMode.SuppressAmbient,
+        });
+
+        //Assert
+        Assert.That(_uowAccessor.Current, Is.Null);
+    }
+
+    [Test]
+    public void Create_WithAmbientAndDispose_ShouldNotDisposeAmbient()
+    {
+        //Arrange
+        using var ambient = _uowFactory.Create();
+        using var uow = _uowFactory.Create(new()
+        {
+            AmbientMode = UnitOfWorkAmbientMode.RequireAmbient,
+        });
+
+        //Act
+        uow.Dispose();
+
+        //Assert
+        var current = _uowAccessor.Current!;
+        Assert.DoesNotThrow(() =>
+        {
+            current.SaveChanges();
+        });
     }
 }

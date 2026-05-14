@@ -41,6 +41,8 @@ internal class UnitOfWork : IUnitOfWork
     public IRepository<TEntity> Repository<TEntity>()
         where TEntity : class, IEntity
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
         LoadContext<TEntity>();
 
         var repository = _serviceProvider.GetRequiredService<IRepository<TEntity>>();
@@ -63,6 +65,8 @@ internal class UnitOfWork : IUnitOfWork
 
     public int SaveChanges()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
         var scopes = new ConcurrentBag<TransactionScope>();
         var contexts = _contexts.Values.ToList();
 
@@ -146,6 +150,8 @@ internal class UnitOfWork : IUnitOfWork
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
         var scopes = new ConcurrentBag<TransactionScope>();
         var contexts = _contexts.Values.ToList();
 
@@ -236,6 +242,7 @@ internal class UnitOfWork : IUnitOfWork
         {
             if (disposing)
             {
+                //AmbientDisposable?.Dispose();
                 _serviceScope?.Dispose();
             }
 
