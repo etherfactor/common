@@ -242,7 +242,7 @@ internal class UnitOfWork : IUnitOfWork
         {
             if (disposing)
             {
-                //AmbientDisposable?.Dispose();
+                AmbientDisposable?.Dispose();
                 _serviceScope?.Dispose();
             }
 
