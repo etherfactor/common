@@ -192,4 +192,24 @@ internal class UnitOfWorkFactoryTests
             current.SaveChanges();
         });
     }
+
+    [Test]
+    public void Create_WithFirstAndDisposeThenNewAmbient_ShouldReturnNewAmbient()
+    {
+        //Arrange
+        using var first = _uowFactory.Create();
+        var firstAccessor = _uowAccessor.Current;
+        first.Dispose();
+
+        //Act
+        using var ambient = _uowFactory.Create();
+        using var uow = _uowFactory.Create(new()
+        {
+            AmbientMode = UnitOfWorkAmbientMode.RequireAmbient,
+        });
+        var secondAccessor = _uowAccessor.Current;
+
+        //Assert
+        Assert.That(secondAccessor, Is.Not.EqualTo(firstAccessor));
+    }
 }
