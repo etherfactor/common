@@ -34,7 +34,7 @@ internal class NotificationSaveChangesInterceptorTests : IntegrationTestBase
         _extractor = new();
 
         _uowFactoryMock
-            .Setup(e => e.Create())
+            .Setup(e => e.Create(It.IsAny<UnitOfWorkCreateOptions>()))
             .Returns(_ownedUowMock.Object);
 
         _uowAccessorMock
@@ -136,35 +136,9 @@ internal class NotificationSaveChangesInterceptorTests : IntegrationTestBase
         await _context.SaveChangesAsync();
 
         //Assert
-        _uowFactoryMock.Verify(e => e.Create(), Times.Once);
+        _uowFactoryMock.Verify(e => e.Create(It.IsAny<UnitOfWorkCreateOptions>()), Times.Once);
         _ownedUowMock.Verify(e => e.SaveChanges(), Times.Once);
         _ownedUowMock.Verify(e => e.Dispose(), Times.Once);
-    }
-
-    [Test]
-    public async Task SaveChangesAsync_WhenAmbientUnitOfWorkExists_ShouldUseAmbientUnitOfWorkWithoutCreatingOrDisposingOwnedUnitOfWork()
-    {
-        //Arrange
-        var ambientUowMock = new Mock<IUnitOfWork>();
-
-        _uowAccessorMock
-            .SetupGet(e => e.Current)
-            .Returns(ambientUowMock.Object);
-
-        _context.Entities.Add(new TestTrackedEntity
-        {
-            Name = "abc",
-        });
-
-        //Act
-        await _context.SaveChangesAsync();
-
-        //Assert
-        _uowFactoryMock.Verify(e => e.Create(), Times.Never);
-        ambientUowMock.Verify(e => e.SaveChanges(), Times.Never);
-        ambientUowMock.Verify(e => e.Dispose(), Times.Never);
-        _ownedUowMock.Verify(e => e.SaveChanges(), Times.Never);
-        _ownedUowMock.Verify(e => e.Dispose(), Times.Never);
     }
 
     [Test]

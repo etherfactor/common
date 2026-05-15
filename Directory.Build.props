@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
     <RootNamespace>EtherGizmos.Common</RootNamespace>
     <AssemblyName>EtherGizmos.Common.$(MSBuildProjectName)</AssemblyName>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
