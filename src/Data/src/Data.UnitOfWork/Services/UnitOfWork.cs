@@ -10,9 +10,12 @@ namespace EtherGizmos.Common.Services;
 
 internal class UnitOfWork : IUnitOfWork
 {
+    private const int MAX_ROUNDS = 16;
+
     private readonly IOptions<UnitOfWorkOptions> _options;
     private readonly IServiceScope? _serviceScope;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IUnitOfWorkAccessor _uowAccessor;
 
     private readonly ConcurrentDictionary<Type, DbContext> _contexts = [];
 
@@ -28,6 +31,7 @@ internal class UnitOfWork : IUnitOfWork
         : this(options, serviceScope.ServiceProvider)
     {
         _serviceScope = serviceScope;
+        _uowAccessor = _serviceProvider.GetRequiredService<IUnitOfWorkAccessor>();
     }
 
     public UnitOfWork(
@@ -36,6 +40,7 @@ internal class UnitOfWork : IUnitOfWork
     {
         _options = options;
         _serviceProvider = serviceProvider;
+        _uowAccessor = _serviceProvider.GetRequiredService<IUnitOfWorkAccessor>();
     }
 
     public IRepository<TEntity> Repository<TEntity>()
@@ -67,173 +72,234 @@ internal class UnitOfWork : IUnitOfWork
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        var scopes = new ConcurrentBag<TransactionScope>();
-        var contexts = _contexts.Values.ToList();
-
-        try
+        Task<int> task;
+        using (ExecutionContext.SuppressFlow())
         {
-            var total = 0;
-            var exceptions = new ConcurrentBag<Exception>();
-
-            var parallelOptions = new ParallelOptions()
+            task = Task.Run(() =>
             {
-                MaxDegreeOfParallelism = 8,
-            };
+                using var d = _uowAccessor.Enter(this);
 
-            foreach (var context in contexts)
-            {
-                context.Database.OpenConnection();
-            }
+                var scopes = new ConcurrentBag<TransactionScope>();
+                var opened = new HashSet<DbContext>();
 
-            Parallel.ForEach(contexts, parallelOptions, (context) =>
-            {
                 try
                 {
-                    var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+                    var total = 0;
+                    var exceptions = new ConcurrentBag<Exception>();
 
-                    var count = context.SaveChanges();
-                    Interlocked.Add(ref total, count);
+                    var parallelOptions = new ParallelOptions()
+                    {
+                        MaxDegreeOfParallelism = 8,
+                    };
 
-                    scopes.Add(scope);
+                    for (var round = 0; round < MAX_ROUNDS; round++)
+                    {
+                        var contexts = _contexts.Values
+                            .Where(context => context.ChangeTracker.HasChanges())
+                            .ToList();
+
+                        if (contexts.Count == 0)
+                            break;
+
+                        foreach (var context in contexts)
+                        {
+                            if (opened.Add(context))
+                                context.Database.OpenConnection();
+                        }
+
+                        Parallel.ForEach(contexts, parallelOptions, (context) =>
+                        {
+                            try
+                            {
+                                var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
+                                var count = context.SaveChanges();
+                                Interlocked.Add(ref total, count);
+
+                                scopes.Add(scope);
+                            }
+                            catch (Exception ex)
+                            {
+                                exceptions.Add(ex);
+                            }
+                        });
+
+                        if (exceptions.Any())
+                        {
+                            throw new AggregateException(
+                                "Encountered an exception while saving database changes.",
+                                exceptions);
+                        }
+                    }
+
+                    if (_contexts.Values.Any(context => context.ChangeTracker.HasChanges()))
+                    {
+                        throw new InvalidOperationException(
+                            "Unit of work save did not converge. Saving changes kept producing additional changes.");
+                    }
+
+                    Parallel.ForEach(scopes, parallelOptions, (scope) =>
+                    {
+                        try
+                        {
+                            scope.Complete();
+                        }
+                        catch (Exception ex)
+                        {
+                            exceptions.Add(ex);
+                        }
+                    });
+
+                    if (exceptions.Any())
+                    {
+                        throw new AggregateException(
+                            "Encountered an exception while committing database changes. Data may be in an unexpected state.",
+                            exceptions);
+                    }
+
+                    return total;
                 }
-                catch (Exception ex)
+                finally
                 {
-                    exceptions.Add(ex);
+                    foreach (var scope in scopes)
+                    {
+                        scope.Dispose();
+                    }
+
+                    foreach (var context in opened)
+                    {
+                        try
+                        {
+                            context.Database.CloseConnection();
+                        }
+                        catch { }
+                    }
                 }
             });
-
-            if (exceptions.Any())
-            {
-                throw new AggregateException(
-                    "Encountered an exception while saving database changes.",
-                    exceptions);
-            }
-
-            Parallel.ForEach(scopes, parallelOptions, (scope) =>
-            {
-                try
-                {
-                    scope.Complete();
-                }
-                catch (Exception ex)
-                {
-                    exceptions.Add(ex);
-                }
-            });
-
-            if (exceptions.Any())
-            {
-                throw new AggregateException(
-                    "Encountered an exception while committing database changes. Data may be in an unexpected state.",
-                    exceptions);
-            }
-
-            return total;
         }
-        finally
-        {
-            foreach (var scope in scopes)
-            {
-                scope.Dispose();
-            }
 
-            foreach (var context in contexts)
-            {
-                try
-                {
-                    context.Database.CloseConnection();
-                }
-                catch { }
-            }
-        }
+        return task.Result;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        var scopes = new ConcurrentBag<TransactionScope>();
-        var contexts = _contexts.Values.ToList();
-
-        try
+        Task<int> task;
+        using (ExecutionContext.SuppressFlow())
         {
-            var total = 0;
-            var exceptions = new ConcurrentBag<Exception>();
-
-            var parallelOptions = new ParallelOptions()
+            task = Task.Run(async () =>
             {
-                MaxDegreeOfParallelism = 8,
-                CancellationToken = cancellationToken,
-            };
+                using var d = _uowAccessor.Enter(this);
 
-            foreach (var context in contexts)
-            {
-                await context.Database.OpenConnectionAsync(cancellationToken: cancellationToken);
-            }
+                var scopes = new ConcurrentBag<TransactionScope>();
+                var opened = new HashSet<DbContext>();
 
-            await Parallel.ForEachAsync(contexts, parallelOptions, async (context, cancellationToken) =>
-            {
                 try
                 {
-                    var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+                    var total = 0;
+                    var exceptions = new ConcurrentBag<Exception>();
 
-                    var count = await context.SaveChangesAsync(cancellationToken: cancellationToken);
-                    Interlocked.Add(ref total, count);
+                    var saveOptions = new ParallelOptions()
+                    {
+                        MaxDegreeOfParallelism = 8,
+                        CancellationToken = cancellationToken,
+                    };
 
-                    scopes.Add(scope);
+                    var commitOptions = new ParallelOptions()
+                    {
+                        MaxDegreeOfParallelism = 8,
+                    };
+
+                    for (var round = 0; round < MAX_ROUNDS; round++)
+                    {
+                        var contexts = _contexts.Values
+                            .Where(e => e.ChangeTracker.HasChanges())
+                            .ToList();
+
+                        if (contexts.Count == 0)
+                            break;
+
+                        foreach (var context in contexts)
+                        {
+                            if (opened.Add(context))
+                                await context.Database.OpenConnectionAsync(cancellationToken: cancellationToken);
+                        }
+
+                        await Parallel.ForEachAsync(contexts, saveOptions, async (context, cancellationToken) =>
+                        {
+                            try
+                            {
+                                var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
+                                var count = await context.SaveChangesAsync(cancellationToken: cancellationToken);
+                                Interlocked.Add(ref total, count);
+
+                                scopes.Add(scope);
+                            }
+                            catch (Exception ex)
+                            {
+                                exceptions.Add(ex);
+                            }
+                        });
+
+                        if (exceptions.Any())
+                        {
+                            throw new AggregateException(
+                                "Encountered an exception while saving database changes.",
+                                exceptions);
+                        }
+                    }
+
+                    if (_contexts.Values.Any(context => context.ChangeTracker.HasChanges()))
+                    {
+                        throw new InvalidOperationException(
+                            "Unit of work save did not converge. Saving changes kept producing additional changes.");
+                    }
+
+                    await Parallel.ForEachAsync(scopes, commitOptions, (scope, cancellationToken) =>
+                    {
+                        try
+                        {
+                            scope.Complete();
+                        }
+                        catch (Exception ex)
+                        {
+                            exceptions.Add(ex);
+                        }
+
+                        return ValueTask.CompletedTask;
+                    });
+
+                    if (exceptions.Any())
+                    {
+                        throw new AggregateException(
+                            "Encountered an exception while committing database changes. Data may be in an unexpected state.",
+                            exceptions);
+                    }
+
+                    return total;
                 }
-                catch (Exception ex)
+                finally
                 {
-                    exceptions.Add(ex);
+                    foreach (var scope in scopes)
+                    {
+                        scope.Dispose();
+                    }
+
+                    foreach (var context in opened)
+                    {
+                        try
+                        {
+                            await context.Database.CloseConnectionAsync();
+                        }
+                        catch { }
+                    }
                 }
             });
-
-            if (exceptions.Any())
-            {
-                throw new AggregateException(
-                    "Encountered an exception while saving database changes.",
-                    exceptions);
-            }
-
-            await Parallel.ForEachAsync(scopes, parallelOptions, (scope, cancellationToken) =>
-            {
-                try
-                {
-                    scope.Complete();
-                }
-                catch (Exception ex)
-                {
-                    exceptions.Add(ex);
-                }
-
-                return ValueTask.CompletedTask;
-            });
-
-            if (exceptions.Any())
-            {
-                throw new AggregateException(
-                    "Encountered an exception while committing database changes. Data may be in an unexpected state.",
-                    exceptions);
-            }
-
-            return total;
         }
-        finally
-        {
-            foreach (var scope in scopes)
-            {
-                scope.Dispose();
-            }
 
-            foreach (var context in contexts)
-            {
-                try
-                {
-                    await context.Database.CloseConnectionAsync();
-                }
-                catch { }
-            }
-        }
+        return await task;
     }
 
     protected virtual void Dispose(bool disposing)

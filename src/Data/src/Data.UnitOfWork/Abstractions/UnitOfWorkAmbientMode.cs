@@ -5,12 +5,12 @@ public enum UnitOfWorkAmbientMode
     /// <summary>
     /// Always create a new UoW and set it ambient.
     /// </summary>
-    CreateNewAndSetAmbient,
+    CreateAmbient,
 
     /// <summary>
     /// If an ambient UoW exists, return it. Otherwise, create a new one and set it ambient.
     /// </summary>
-    JoinAmbientOrCreate,
+    JoinOrCreateAmbient,
 
     /// <summary>
     /// Require that an ambient UoW exists; throw if not.

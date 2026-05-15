@@ -94,7 +94,7 @@ internal class UnitOfWorkFactoryTests
         //Arrange & Act
         using var uow = _uowFactory.Create(new()
         {
-            AmbientMode = UnitOfWorkAmbientMode.CreateNewAndSetAmbient,
+            AmbientMode = UnitOfWorkAmbientMode.CreateAmbient,
         });
 
         //Assert
@@ -108,7 +108,7 @@ internal class UnitOfWorkFactoryTests
         using var ambient = _uowFactory.Create();
         using var uow = _uowFactory.Create(new()
         {
-            AmbientMode = UnitOfWorkAmbientMode.JoinAmbientOrCreate,
+            AmbientMode = UnitOfWorkAmbientMode.JoinOrCreateAmbient,
         });
 
         //Assert
@@ -123,7 +123,7 @@ internal class UnitOfWorkFactoryTests
         //Arrange & Act
         using var uow = _uowFactory.Create(new()
         {
-            AmbientMode = UnitOfWorkAmbientMode.CreateNewAndSetAmbient,
+            AmbientMode = UnitOfWorkAmbientMode.CreateAmbient,
         });
 
         //Assert
