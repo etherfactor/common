@@ -6,17 +6,44 @@ internal class UnitOfWorkAccessor : IUnitOfWorkAccessor
 {
     private static readonly AsyncLocal<HashSet<IUnitOfWork>> _current = new();
 
-    public IUnitOfWork? Current => _current.Value?.Count > 1
-        ? throw new InvalidOperationException("More than one ambient unit of work scope is active. Attempting to join the " +
-            "ambient scope is ambiguous.")
-        : _current.Value?.SingleOrDefault();
+    public IUnitOfWork? Current
+    {
+        get
+        {
+            var set = _current.Value;
+            if (set is null)
+                return null;
+
+            lock (set)
+            {
+                return set.Count switch
+                {
+                    0 => null,
+                    1 => set.Single(),
+                    _ => throw new InvalidOperationException(
+                        "More than one ambient unit of work scope is active. Attempting to join the ambient scope is ambiguous.")
+                };
+            }
+        }
+    }
 
     public IDisposable Enter(IUnitOfWork uow)
     {
         _current.Value ??= [];
-        if (!_current.Value.Add(uow))
-            throw new InvalidOperationException("Already in an ambient scope for this unit of work.");
+        var set = _current.Value;
 
-        return new DelegateDisposable(() => _current.Value.Remove(uow));
+        lock (set)
+        {
+            if (!set.Add(uow))
+                throw new InvalidOperationException("Already in an ambient scope for this unit of work.");
+        }
+
+        return new DelegateDisposable(() =>
+        {
+            lock (set)
+            {
+                set.Remove(uow);
+            }
+        });
     }
 }

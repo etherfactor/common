@@ -25,17 +25,9 @@ internal class NotificationSaveChangesInterceptor : SaveChangesInterceptor
 
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
-        var owned = false;
-        var uow = _uowAccessor.Current;
-
+        using var uow = _uowFactory.Create(new() { AmbientMode = UnitOfWorkAmbientMode.JoinOrCreateAmbient });
         try
         {
-            if (uow is null)
-            {
-                uow = _uowFactory.Create();
-                owned = true;
-            }
-
             var events = ExtractAsync(eventData, uow);
 
             foreach (var @event in events.ToBlockingEnumerable())
@@ -47,18 +39,13 @@ internal class NotificationSaveChangesInterceptor : SaveChangesInterceptor
         }
         finally
         {
-            if (owned && uow is not null)
-            {
-                uow.SaveChanges();
-                uow.Dispose();
-            }
+            uow.SaveChanges();
         }
     }
 
     public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
     {
-        using var uow = _uowFactory.Create(new() { AmbientMode = UnitOfWorkAmbientMode.CreateNewAndSetAmbient });
-
+        using var uow = _uowFactory.Create(new() { AmbientMode = UnitOfWorkAmbientMode.JoinOrCreateAmbient });
         try
         {
             var events = ExtractAsync(eventData, uow, cancellationToken);

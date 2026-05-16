@@ -28,7 +28,7 @@ internal class UnitOfWorkFactory : IUnitOfWorkFactory
 
         switch (options.AmbientMode)
         {
-            case UnitOfWorkAmbientMode.JoinAmbientOrCreate:
+            case UnitOfWorkAmbientMode.JoinOrCreateAmbient:
             case UnitOfWorkAmbientMode.RequireAmbient:
                 var ambient = accessor.Current;
                 if (options.AmbientMode == UnitOfWorkAmbientMode.RequireAmbient && ambient is null)
@@ -37,7 +37,7 @@ internal class UnitOfWorkFactory : IUnitOfWorkFactory
                 ambient = ambient switch
                 {
                     { } => new UnitOfWorkReference(ambient),
-                    _ => Create(options with { AmbientMode = UnitOfWorkAmbientMode.CreateNewAndSetAmbient })
+                    _ => Create(options with { AmbientMode = UnitOfWorkAmbientMode.CreateAmbient })
                 };
                 return ambient;
         }

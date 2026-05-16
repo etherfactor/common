@@ -2,7 +2,7 @@
 
 public sealed record UnitOfWorkCreateOptions
 {
-    public UnitOfWorkAmbientMode AmbientMode { get; init; } = UnitOfWorkAmbientMode.CreateNewAndSetAmbient;
+    public UnitOfWorkAmbientMode AmbientMode { get; init; } = UnitOfWorkAmbientMode.CreateAmbient;
 
     public UnitOfWorkScopeMode SccopeMode { get; init; } = UnitOfWorkScopeMode.NewScope;
 
