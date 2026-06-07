@@ -15,7 +15,7 @@ internal class ChildContainerBuilderExtensionsTests
     }
 
     [Test]
-    public void ImportLogging_WithTransientService_ResolvesLogger()
+    public void ImportLogging_WithTransientService_ShouldResolveLogger()
     {
         //Arrange
         var logger = new TestLogger();
@@ -35,18 +35,18 @@ internal class ChildContainerBuilderExtensionsTests
         var wrapper = provider.GetRequiredService<Wrapper>();
 
         //Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(wrapper, Is.Not.Null);
             Assert.That(wrapper.Logger, Is.Not.Null);
             Assert.That(wrapper.Logger.GetType(), Is.EqualTo(typeof(LoggerForward<Wrapper>)));
-        });
+        }
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(factory, Is.Not.Null);
             Assert.That(factory.GetType(), Is.EqualTo(typeof(TestLoggerFactory)));
-        });
+        }
 
         Assert.That(logger.IsLogged, Is.False);
         wrapper.Logger.Log(LogLevel.Information, "");
@@ -54,7 +54,7 @@ internal class ChildContainerBuilderExtensionsTests
     }
 
     [Test]
-    public void ImportLogging_WithScopedService_ResolvesLogger()
+    public void ImportLogging_WithScopedService_ShouldResolveLogger()
     {
         //Arrange
         var logger = new TestLogger();
@@ -75,26 +75,26 @@ internal class ChildContainerBuilderExtensionsTests
         var factory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
         var wrapper = scope.ServiceProvider.GetRequiredService<Wrapper>();
 
-        // Assert
-        Assert.Multiple(() =>
+        //Assert
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(wrapper, Is.Not.Null);
             Assert.That(wrapper.Logger, Is.Not.Null);
             Assert.That(wrapper.Logger.GetType(), Is.EqualTo(typeof(LoggerForward<Wrapper>)));
-        });
+        }
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(factory, Is.Not.Null);
             Assert.That(factory.GetType(), Is.EqualTo(typeof(TestLoggerFactory)));
-        });
+        }
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(logger.IsLogged, Is.False);
             wrapper.Logger.Log(LogLevel.Information, "");
             Assert.That(logger.IsLogged, Is.True);
-        });
+        }
     }
 
     private class TestLoggerFactory : ILoggerFactory

@@ -12,10 +12,10 @@ public class MigrationManagerTests
         var runner = new Mock<IMigrationRunner>();
 
         var services = new ServiceCollection();
-        services.AddScoped(_ => runner.Object);
+        services.AddKeyedScoped("key", (_, _) => runner.Object);
 
         var provider = services.BuildServiceProvider();
-        var manager = new MigrationManager(provider);
+        var manager = new MigrationManager("key", provider);
 
         await manager.EnsureMigratedAsync();
         await manager.EnsureMigratedAsync();
@@ -29,10 +29,10 @@ public class MigrationManagerTests
         var runner = new Mock<IMigrationRunner>();
 
         var services = new ServiceCollection();
-        services.AddScoped(_ => runner.Object);
+        services.AddKeyedScoped("key", (_, _) => runner.Object);
 
         var provider = services.BuildServiceProvider();
-        var manager = new MigrationManager(provider);
+        var manager = new MigrationManager("key", provider);
 
         var tasks = Enumerable.Range(0, 20)
             .Select(_ => Task.Run(() => manager.EnsureMigratedAsync()))
@@ -47,7 +47,7 @@ public class MigrationManagerTests
     public void EnsureMigratedAsync_WhenRunnerMissing_ShouldThrowInvalidOperationException()
     {
         var provider = new ServiceCollection().BuildServiceProvider();
-        var manager = new MigrationManager(provider);
+        var manager = new MigrationManager("key", provider);
 
         Assert.ThrowsAsync<InvalidOperationException>(async () => await manager.EnsureMigratedAsync());
     }
