@@ -48,7 +48,7 @@ public static class MigrationServiceCollectionExtensions
                         });
                 })
                 .ImportLogging()
-                .ForwardScoped<IMigrationRunner>();
+                .ForwardKeyedScoped<IMigrationRunner>(childServiceKey: null, parentServiceKey: @this.MigrationId);
 
             return @this;
         }

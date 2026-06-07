@@ -14,7 +14,7 @@ internal class ChildContainerBuilder : IChildContainerBuilder
     private readonly IServiceCollection _parentServices;
     private readonly IServiceCollection _childServices;
     private readonly Action<IServiceCollection, IServiceProvider> _configureChild;
-    private readonly List<(Type ServiceType, ServiceLifetime Lifetime)> _childImports = new();
+    private readonly List<ChildServiceRegistration> _childImports = new();
 
     /// <summary>
     /// Keep track of dependency chains on a per-thread basis. If we end up back in this container, resolving the same
@@ -66,6 +66,43 @@ internal class ChildContainerBuilder : IChildContainerBuilder
     }
 
     /// <inheritdoc/>
+    public IChildContainerBuilder ForwardKeyedScoped<TService>(
+        object? serviceKey)
+        where TService : class
+        => ForwardKeyedScoped<TService>(serviceKey, serviceKey);
+
+    /// <inheritdoc/>
+    public IChildContainerBuilder ForwardKeyedScoped<TService>(
+        object? childServiceKey,
+        object? parentServiceKey)
+        where TService : class
+    {
+        _parentServices.AddKeyedScoped(parentServiceKey, (services, _) =>
+        {
+            AssertNoCycle<TService>();
+            AddToStack<TService>();
+
+            try
+            {
+                var factory = services.GetRequiredService<ChildServiceProviderFactory>();
+
+                factory.TryAddServiceCollection(_childContainerId, _childServices, _configureChild, _childImports);
+                var thisServiceProvider = factory.GetScopedServiceProvider(_childContainerId, services);
+
+                var service = thisServiceProvider.GetRequiredKeyedService<TService>(childServiceKey);
+
+                return service;
+            }
+            finally
+            {
+                RemoveFromStack<TService>();
+            }
+        });
+
+        return this;
+    }
+
+    /// <inheritdoc/>
     public IChildContainerBuilder ForwardSingleton<TService>()
         where TService : class
     {
@@ -82,6 +119,43 @@ internal class ChildContainerBuilder : IChildContainerBuilder
                 var thisServiceProvider = factory.GetSingletonServiceProvider(_childContainerId, services);
 
                 var service = thisServiceProvider.GetRequiredService<TService>();
+
+                return service;
+            }
+            finally
+            {
+                RemoveFromStack<TService>();
+            }
+        });
+
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public IChildContainerBuilder ForwardKeyedSingleton<TService>(
+        object? serviceKey)
+        where TService : class
+        => ForwardKeyedSingleton<TService>(serviceKey, serviceKey);
+
+    /// <inheritdoc/>
+    public IChildContainerBuilder ForwardKeyedSingleton<TService>(
+        object? childServiceKey,
+        object? parentServiceKey)
+        where TService : class
+    {
+        _parentServices.AddKeyedSingleton(parentServiceKey, (services, _) =>
+        {
+            AssertNoCycle<TService>();
+            AddToStack<TService>();
+
+            try
+            {
+                var factory = services.GetRequiredService<ChildServiceProviderFactory>();
+
+                factory.TryAddServiceCollection(_childContainerId, _childServices, _configureChild, _childImports);
+                var thisServiceProvider = factory.GetSingletonServiceProvider(_childContainerId, services);
+
+                var service = thisServiceProvider.GetRequiredKeyedService<TService>(childServiceKey);
 
                 return service;
             }
@@ -124,11 +198,63 @@ internal class ChildContainerBuilder : IChildContainerBuilder
     }
 
     /// <inheritdoc/>
+    public IChildContainerBuilder ForwardKeyedTransient<TService>(
+        object? serviceKey)
+        where TService : class
+        => ForwardKeyedTransient<TService>(serviceKey, serviceKey);
+
+    /// <inheritdoc/>
+    public IChildContainerBuilder ForwardKeyedTransient<TService>(
+        object? childServiceKey,
+        object? parentServiceKey)
+        where TService : class
+    {
+        _parentServices.AddKeyedTransient(parentServiceKey, (services, _) =>
+        {
+            AssertNoCycle<TService>();
+            AddToStack<TService>();
+
+            try
+            {
+                var factory = services.GetRequiredService<ChildServiceProviderFactory>();
+
+                factory.TryAddServiceCollection(_childContainerId, _childServices, _configureChild, _childImports);
+                var thisServiceProvider = factory.GetSingletonServiceProvider(_childContainerId, services);
+
+                var service = thisServiceProvider.GetRequiredKeyedService<TService>(childServiceKey);
+
+                return service;
+            }
+            finally
+            {
+                RemoveFromStack<TService>();
+            }
+        });
+
+        return this;
+    }
+
+    /// <inheritdoc/>
     public IChildContainerBuilder ImportScoped<TService>()
         where TService : class
     {
-        _childImports.Add((typeof(TService), ServiceLifetime.Scoped));
+        _childImports.Add(new(typeof(TService), ServiceLifetime.Scoped));
+        return this;
+    }
 
+    /// <inheritdoc/>
+    public IChildContainerBuilder ImportKeyedScoped<TService>(
+        object? serviceKey)
+        where TService : class
+        => ImportKeyedScoped<TService>(serviceKey, serviceKey);
+
+    /// <inheritdoc/>
+    public IChildContainerBuilder ImportKeyedScoped<TService>(
+        object? parentServiceKey,
+        object? childServiceKey)
+        where TService : class
+    {
+        _childImports.Add(new(typeof(TService), ServiceLifetime.Scoped, parentServiceKey, childServiceKey));
         return this;
     }
 
@@ -136,8 +262,23 @@ internal class ChildContainerBuilder : IChildContainerBuilder
     public IChildContainerBuilder ImportSingleton<TService>()
         where TService : class
     {
-        _childImports.Add((typeof(TService), ServiceLifetime.Singleton));
+        _childImports.Add(new(typeof(TService), ServiceLifetime.Singleton));
+        return this;
+    }
 
+    ///<inheritdoc/>
+    public IChildContainerBuilder ImportKeyedSingleton<TService>(
+        object? serviceKey)
+        where TService : class
+        => ImportKeyedSingleton<TService>(serviceKey, serviceKey);
+
+    /// <inheritdoc/>
+    public IChildContainerBuilder ImportKeyedSingleton<TService>(
+        object? parentServiceKey,
+        object? childServiceKey)
+        where TService : class
+    {
+        _childImports.Add(new(typeof(TService), ServiceLifetime.Singleton, parentServiceKey, childServiceKey));
         return this;
     }
 
@@ -145,8 +286,23 @@ internal class ChildContainerBuilder : IChildContainerBuilder
     public IChildContainerBuilder ImportTransient<TService>()
         where TService : class
     {
-        _childImports.Add((typeof(TService), ServiceLifetime.Transient));
+        _childImports.Add(new(typeof(TService), ServiceLifetime.Transient));
+        return this;
+    }
 
+    /// <inheritdoc/>
+    public IChildContainerBuilder ImportKeyedTransient<TService>(
+        object? serviceKey)
+        where TService : class
+        => ImportKeyedTransient<TService>(serviceKey, serviceKey);
+
+    /// <inheritdoc/>
+    public IChildContainerBuilder ImportKeyedTransient<TService>(
+        object? parentServiceKey,
+        object? childServiceKey)
+        where TService : class
+    {
+        _childImports.Add(new(typeof(TService), ServiceLifetime.Transient, parentServiceKey, childServiceKey));
         return this;
     }
 
