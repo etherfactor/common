@@ -17,7 +17,7 @@ public static class EmailNotificationBuilderExtensions
             @this.Services.TryAddKeyedTransient(NotificationChannels.Email.Key, (provider, _) =>
             {
                 var resolver = provider.GetRequiredService<IConnectionResolver>();
-                return resolver.GetEmailConnection(connectionId);
+                return resolver.CreateEmailSender(connectionId);
             });
 
             return @this;
