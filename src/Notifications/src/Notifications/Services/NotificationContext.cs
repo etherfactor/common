@@ -14,6 +14,12 @@ public class NotificationContext : DbContext
 {
     public virtual DbSet<Notification> Notifications { get; set; }
 
+    public virtual DbSet<NotificationChannel> NotificationChannels { get; set; }
+
+    public virtual DbSet<NotificationEvent> NotificationEvents { get; set; }
+
+    public virtual DbSet<NotificationSchedule> NotificationSchedules { get; set; }
+
     public virtual DbSet<NotificationSubscription> NotificationSubscriptions { get; set; }
 
     public NotificationContext(

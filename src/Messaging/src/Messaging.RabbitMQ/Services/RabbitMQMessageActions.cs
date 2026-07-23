@@ -9,6 +9,7 @@ internal class RabbitMQMessageActions : IMessageActions
     private readonly ILogger _logger;
     private readonly IChannel _channel;
     private readonly ulong _messageId;
+    private readonly bool _redelivered;
 
     public bool Invoked { get; private set; }
 
@@ -17,11 +18,13 @@ internal class RabbitMQMessageActions : IMessageActions
     public RabbitMQMessageActions(
         ILogger logger,
         IChannel channel,
-        ulong messageId)
+        ulong messageId,
+        bool redelivered)
     {
         _logger = logger;
         _channel = channel;
         _messageId = messageId;
+        _redelivered = redelivered;
     }
 
     public async Task AbandonAsync(CancellationToken cancellationToken = default)
@@ -34,7 +37,7 @@ internal class RabbitMQMessageActions : IMessageActions
 
         _logger.LogInformation("Abandoning message {MessageId}", _messageId);
 
-        await _channel.BasicNackAsync(_messageId, false, true, cancellationToken);
+        await _channel.BasicNackAsync(_messageId, false, !_redelivered, cancellationToken);
     }
 
     public async Task CompleteAsync(CancellationToken cancellationToken = default)

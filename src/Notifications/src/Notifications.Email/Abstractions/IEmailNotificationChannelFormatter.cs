@@ -2,5 +2,5 @@
 
 public interface IEmailNotificationChannelFormatter<TMode, TModel>
     : INotificationChannelFormatter<TMode, EmailChannel, TModel>
-    where TMode : NotificationSchedule
+    where TMode : NotificationScheduleRef
     where TModel : class;

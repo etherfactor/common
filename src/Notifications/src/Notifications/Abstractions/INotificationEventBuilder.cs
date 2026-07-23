@@ -7,5 +7,8 @@ public interface INotificationEventBuilder<TModel>
 {
     string EventType { get; }
 
+    Type ConfigType { get; }
+
     IServiceCollection Services { get; }
+    string ConfigSchema { get; }
 }

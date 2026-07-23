@@ -76,11 +76,11 @@ internal class DigestNotificationCollectorTests
         {
             Id = 123,
             UserId = "user-1",
-            ScheduleType = NotificationSchedules.Digest.Key,
-            ScheduleConfigRaw = JsonSerializer.Serialize(new DigestScheduleConfig
+            ScheduleId = NotificationSchedules.Digest.Id,
+            ScheduleConfig = new Dictionary<string, object?>()
             {
-                CronExpression = "* * * * *",
-            }, JsonSerializerOptions.Web),
+                ["CronExpression"] = "* * * * *",
+            },
             LastNotificationAt = lastNotificationAt,
             NextNotificationAt = nextNotificationAt,
         };
@@ -88,7 +88,7 @@ internal class DigestNotificationCollectorTests
         var notification1 = new Notification
         {
             Id = 1,
-            NotificationSubscriptionId = subscription.Id,
+            SubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-30),
             IsDerived = false,
             Status = NotificationStatusType.Pending,
@@ -100,7 +100,7 @@ internal class DigestNotificationCollectorTests
         var notification2 = new Notification
         {
             Id = 2,
-            NotificationSubscriptionId = subscription.Id,
+            SubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-10),
             IsDerived = false,
             Status = NotificationStatusType.Pending,
@@ -175,11 +175,11 @@ internal class DigestNotificationCollectorTests
         {
             Id = 456,
             UserId = "user-2",
-            ScheduleType = NotificationSchedules.Digest.Key,
-            ScheduleConfigRaw = JsonSerializer.Serialize(new DigestScheduleConfig
+            ScheduleId = NotificationSchedules.Digest.Id,
+            ScheduleConfig = new Dictionary<string, object?>()
             {
-                CronExpression = "* * * * *",
-            }, JsonSerializerOptions.Web),
+                ["CronExpression"] = "* * * * *",
+            },
             LastNotificationAt = DateTimeOffset.UtcNow.AddMinutes(-15),
             NextNotificationAt = nextNotificationAt,
         };
@@ -187,7 +187,7 @@ internal class DigestNotificationCollectorTests
         var notification1 = new Notification
         {
             Id = 1,
-            NotificationSubscriptionId = subscription.Id,
+            SubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-40),
             IsDerived = false,
             Status = NotificationStatusType.Pending,
@@ -199,7 +199,7 @@ internal class DigestNotificationCollectorTests
         var notification2 = new Notification
         {
             Id = 2,
-            NotificationSubscriptionId = subscription.Id,
+            SubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-20),
             IsDerived = false,
             Status = NotificationStatusType.Pending,
@@ -256,11 +256,11 @@ internal class DigestNotificationCollectorTests
         {
             Id = 789,
             UserId = "user-3",
-            ScheduleType = NotificationSchedules.Digest.Key,
-            ScheduleConfigRaw = JsonSerializer.Serialize(new DigestScheduleConfig
+            ScheduleId = NotificationSchedules.Digest.Id,
+            ScheduleConfig = new Dictionary<string, object?>()
             {
-                CronExpression = "* * * * *",
-            }, JsonSerializerOptions.Web),
+                ["CronExpression"] = "* * * * *",
+            },
             LastNotificationAt = DateTimeOffset.UtcNow.AddMinutes(-10),
             NextNotificationAt = nextNotificationAt,
         };
@@ -268,7 +268,7 @@ internal class DigestNotificationCollectorTests
         var ineligibleDerived = new Notification
         {
             Id = 1,
-            NotificationSubscriptionId = subscription.Id,
+            SubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-10),
             IsDerived = true,
             Status = NotificationStatusType.Pending,
@@ -280,7 +280,7 @@ internal class DigestNotificationCollectorTests
         var ineligibleFailed = new Notification
         {
             Id = 2,
-            NotificationSubscriptionId = subscription.Id,
+            SubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-10),
             IsDerived = false,
             Status = NotificationStatusType.Failed,
@@ -292,7 +292,7 @@ internal class DigestNotificationCollectorTests
         var ineligibleTooManyAttempts = new Notification
         {
             Id = 3,
-            NotificationSubscriptionId = subscription.Id,
+            SubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(-10),
             IsDerived = false,
             Status = NotificationStatusType.Pending,
@@ -304,7 +304,7 @@ internal class DigestNotificationCollectorTests
         var ineligibleFutureCreatedAt = new Notification
         {
             Id = 4,
-            NotificationSubscriptionId = subscription.Id,
+            SubscriptionId = subscription.Id,
             CreatedAt = nextNotificationAt.AddSeconds(10),
             IsDerived = false,
             Status = NotificationStatusType.Pending,
@@ -359,8 +359,8 @@ internal class DigestNotificationCollectorTests
         {
             Id = 100,
             UserId = "bad-user",
-            ScheduleType = NotificationSchedules.Digest.Key,
-            ScheduleConfigRaw = null!,
+            ScheduleId = NotificationSchedules.Digest.Id,
+            ScheduleConfig = null!,
             LastNotificationAt = DateTimeOffset.UtcNow.AddMinutes(-10),
             NextNotificationAt = DateTimeOffset.UtcNow.AddMinutes(-1),
         };
@@ -369,11 +369,11 @@ internal class DigestNotificationCollectorTests
         {
             Id = 200,
             UserId = "good-user",
-            ScheduleType = NotificationSchedules.Digest.Key,
-            ScheduleConfigRaw = JsonSerializer.Serialize(new DigestScheduleConfig
+            ScheduleId = NotificationSchedules.Digest.Id,
+            ScheduleConfig = new Dictionary<string, object?>()
             {
-                CronExpression = "* * * * *",
-            }, JsonSerializerOptions.Web),
+                ["CronExpression"] = "* * * * *",
+            },
             LastNotificationAt = DateTimeOffset.UtcNow.AddMinutes(-10),
             NextNotificationAt = DateTimeOffset.UtcNow.AddMinutes(-1),
         };
@@ -381,7 +381,7 @@ internal class DigestNotificationCollectorTests
         var goodNotification = new Notification
         {
             Id = 1,
-            NotificationSubscriptionId = goodSubscription.Id,
+            SubscriptionId = goodSubscription.Id,
             CreatedAt = goodSubscription.NextNotificationAt!.Value.AddSeconds(-1),
             IsDerived = false,
             Status = NotificationStatusType.Pending,

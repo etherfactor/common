@@ -11,6 +11,6 @@ public interface INotificationChannelFormatter
 
 public interface INotificationChannelFormatter<TSchedule, TChannel, TModel>
     : INotificationChannelFormatter
-    where TSchedule : NotificationSchedule
-    where TChannel : NotificationChannel
+    where TSchedule : NotificationScheduleRef
+    where TChannel : NotificationChannelRef
     where TModel : class;

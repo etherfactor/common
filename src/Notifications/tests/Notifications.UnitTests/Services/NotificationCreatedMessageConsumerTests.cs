@@ -18,7 +18,7 @@ internal class NotificationCreatedMessageConsumerTests
         _serviceProviderMock = new();
 
         _serviceProviderMock.Setup(@interface =>
-            @interface.GetRequiredKeyedService(typeof(INotificationHandler), ImmediateSchedule.Instance.Key))
+            @interface.GetRequiredKeyedService(typeof(INotificationHandler), ImmediateSchedule.Instance.Id))
             .Returns(() => _handlerMock.Object);
 
         _handlerMock = new();
@@ -30,7 +30,7 @@ internal class NotificationCreatedMessageConsumerTests
             .Returns(new NotificationCreatedMessage()
             {
                 NotificationId = 123,
-                ScheduleType = ImmediateSchedule.Instance.Key,
+                ScheduleType = ImmediateSchedule.Instance.Id,
             });
 
         _consumer = new(() => new(
@@ -47,7 +47,7 @@ internal class NotificationCreatedMessageConsumerTests
         await consumer.ConsumeAsync(_contextMock.Object);
 
         //Assert
-        _serviceProviderMock.Verify(e => e.GetRequiredKeyedService(typeof(INotificationHandler), ImmediateSchedule.Instance.Key), Times.Once());
+        _serviceProviderMock.Verify(e => e.GetRequiredKeyedService(typeof(INotificationHandler), ImmediateSchedule.Instance.Id), Times.Once());
         _handlerMock.Verify(e => e.HandleAsync(123, It.IsAny<CancellationToken>()), Times.Once());
     }
 }

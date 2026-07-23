@@ -1,10 +1,12 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using EtherGizmos.Common.Converters;
+using EtherGizmos.Common.Extensions;
 using EtherGizmos.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using System.Text.Json;
 
 namespace EtherGizmos.Common.Services;
@@ -12,7 +14,7 @@ namespace EtherGizmos.Common.Services;
 internal class NotificationLockingCoordinatorTests : IntegrationTestBase
 {
     private NotificationLockingCoordinator _coordinator;
-    private TestNotificationDbContext _context;
+    private NotificationContext _context;
     private IServiceProvider _serviceProvider;
     private List<NotificationSubscription> _subscriptions;
     private string _payload;
@@ -23,6 +25,77 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
     public async Task OneTimeSetUp()
     {
         _connectionString = await Setup.CreateDatabase("locking_coordinator");
+
+        var services = new ServiceCollection();
+
+        services
+            .AddDbContext<NotificationContext>(opt =>
+            {
+                opt.UseNpgsql(_connectionString)
+                    .EnableSensitiveDataLogging();
+            });
+
+        services.AddKeyedSingleton("Notification", new Mock<IMigrationManager>().Object);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var scope = serviceProvider.CreateScope();
+
+        using var context = scope.ServiceProvider.GetRequiredService<NotificationContext>();
+        await context.Database.EnsureCreatedAsync();
+
+        var @event = new NotificationEvent()
+        {
+            Id = "test.domain.event",
+            Name = "Test Domain Event",
+            IsAvailable = true,
+            LastSeenAt = DateTimeOffset.UtcNow,
+            ConfigSchema = new Dictionary<string, object?>(),
+            Supports = [],
+        };
+        context.NotificationEvents.Add(@event);
+
+        var channel = new NotificationChannel()
+        {
+            Id = "test.domain.event",
+            Name = "Test Domain Event",
+            IsAvailable = true,
+            LastSeenAt = DateTimeOffset.UtcNow,
+            ConfigSchema = new Dictionary<string, object?>(),
+        };
+        context.NotificationChannels.Add(channel);
+
+        var immSchedule = new NotificationSchedule()
+        {
+            Id = NotificationSchedules.Immediate.Id,
+            Name = "Immediate",
+            IsAvailable = true,
+            LastSeenAt = DateTimeOffset.UtcNow,
+            ConfigSchema = new Dictionary<string, object?>(),
+        };
+        context.NotificationSchedules.Add(immSchedule);
+
+        var digSchedule = new NotificationSchedule()
+        {
+            Id = NotificationSchedules.Digest.Id,
+            Name = "Digest",
+            IsAvailable = true,
+            LastSeenAt = DateTimeOffset.UtcNow,
+            ConfigSchema = new Dictionary<string, object?>(),
+        };
+        context.NotificationSchedules.Add(digSchedule);
+
+        var tstChannel = new NotificationChannel()
+        {
+            Id = "test",
+            Name = "Test",
+            IsAvailable = true,
+            LastSeenAt = DateTimeOffset.UtcNow,
+            ConfigSchema = new Dictionary<string, object?>(),
+        };
+        context.NotificationChannels.Add(tstChannel);
+
+        await context.SaveChangesAsync();
     }
 
     [SetUp]
@@ -31,7 +104,7 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
         var services = new ServiceCollection();
 
         services
-            .AddDbContext<TestNotificationDbContext>(opt =>
+            .AddDbContext<NotificationContext>(opt =>
             {
                 opt.UseNpgsql(_connectionString)
                     .EnableSensitiveDataLogging();
@@ -40,16 +113,18 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
         services
             .AddUnitOfWork(opt =>
             {
-                opt.BindDbContext<TestNotificationDbContext>();
+                opt.BindDbContext<NotificationContext>();
             });
 
         services.AddSingleton<INotificationLockingCoordinator, NotificationLockingCoordinator>();
+
+        services.AddKeyedSingleton("Notification", new Mock<IMigrationManager>().Object);
 
         _serviceProvider = services.BuildServiceProvider();
 
         var scope = _serviceProvider.CreateScope();
 
-        _context = scope.ServiceProvider.GetRequiredService<TestNotificationDbContext>();
+        _context = scope.ServiceProvider.GetRequiredService<NotificationContext>();
         await _context.Database.EnsureCreatedAsync();
 
         _coordinator = (NotificationLockingCoordinator)scope.ServiceProvider.GetRequiredService<INotificationLockingCoordinator>();
@@ -57,21 +132,21 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
         var immediate = new NotificationSubscription
         {
             UserId = "123",
-            EventType = "test.domain.event",
-            ScheduleType = NotificationSchedules.Immediate.Key,
-            ScheduleConfigRaw = "{}",
-            ChannelKey = "test",
-            ChannelConfigRaw = "{}",
+            EventId = "test.domain.event",
+            ScheduleId = NotificationSchedules.Immediate.Id,
+            ScheduleConfig = new Dictionary<string, object?>(),
+            ChannelId = "test",
+            ChannelConfig = new Dictionary<string, object?>(),
         };
 
         var digest = new NotificationSubscription
         {
             UserId = "123",
-            EventType = "test.domain.event",
-            ScheduleType = NotificationSchedules.Digest.Key,
-            ScheduleConfigRaw = "{}",
-            ChannelKey = "test",
-            ChannelConfigRaw = "{}",
+            EventId = "test.domain.event",
+            ScheduleId = NotificationSchedules.Digest.Id,
+            ScheduleConfig = new Dictionary<string, object?>(),
+            ChannelId = "test",
+            ChannelConfig = new Dictionary<string, object?>(),
         };
 
         _subscriptions =
@@ -105,8 +180,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
         //Arrange
         var notification1 = new Notification
         {
-            NotificationSubscriptionId = _subscriptions[0].Id,
-            NotificationSubscription = _subscriptions[0],
+            SubscriptionId = _subscriptions[0].Id,
+            Subscription = _subscriptions[0],
+            EventId = _subscriptions[0].EventId,
+            ChannelId = _subscriptions[0].ChannelId,
+            ScheduleId = _subscriptions[0].ScheduleId,
             Status = NotificationStatusType.Pending,
             AttemptCount = 0,
             PayloadType = _payloadType,
@@ -115,8 +193,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
 
         var notification2 = new Notification
         {
-            NotificationSubscriptionId = _subscriptions[0].Id,
-            NotificationSubscription = _subscriptions[0],
+            SubscriptionId = _subscriptions[0].Id,
+            Subscription = _subscriptions[0],
+            EventId = _subscriptions[0].EventId,
+            ChannelId = _subscriptions[0].ChannelId,
+            ScheduleId = _subscriptions[0].ScheduleId,
             Status = NotificationStatusType.Pending,
             AttemptCount = 0,
             PayloadType = _payloadType,
@@ -125,8 +206,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
 
         var notification3 = new Notification
         {
-            NotificationSubscriptionId = _subscriptions[0].Id,
-            NotificationSubscription = _subscriptions[0],
+            SubscriptionId = _subscriptions[0].Id,
+            Subscription = _subscriptions[0],
+            EventId = _subscriptions[0].EventId,
+            ChannelId = _subscriptions[0].ChannelId,
+            ScheduleId = _subscriptions[0].ScheduleId,
             Status = NotificationStatusType.Pending,
             AttemptCount = 0,
             PayloadType = _payloadType,
@@ -135,8 +219,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
 
         var notification4 = new Notification
         {
-            NotificationSubscriptionId = _subscriptions[1].Id,
-            NotificationSubscription = _subscriptions[1],
+            SubscriptionId = _subscriptions[1].Id,
+            Subscription = _subscriptions[1],
+            EventId = _subscriptions[1].EventId,
+            ChannelId = _subscriptions[1].ChannelId,
+            ScheduleId = _subscriptions[1].ScheduleId,
             Status = NotificationStatusType.Pending,
             AttemptCount = 0,
             PayloadType = _payloadType,
@@ -155,8 +242,8 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(claims[0].Notification.NotificationSubscription, Is.Not.Null);
-            Assert.That(claims[1].Notification.NotificationSubscription, Is.Not.Null);
+            Assert.That(claims[0].Notification.Subscription, Is.Not.Null);
+            Assert.That(claims[1].Notification.Subscription, Is.Not.Null);
         }
 
         _context.ChangeTracker.Clear();
@@ -191,8 +278,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
         //Arrange
         var expired = new Notification
         {
-            NotificationSubscriptionId = _subscriptions[0].Id,
-            NotificationSubscription = _subscriptions[0],
+            SubscriptionId = _subscriptions[0].Id,
+            Subscription = _subscriptions[0],
+            EventId = _subscriptions[0].EventId,
+            ChannelId = _subscriptions[0].ChannelId,
+            ScheduleId = _subscriptions[0].ScheduleId,
             Status = NotificationStatusType.InFlight,
             AttemptCount = 2,
             PayloadType = _payloadType,
@@ -232,8 +322,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
         var originalLockId = Guid.NewGuid();
         var inflight = new Notification
         {
-            NotificationSubscriptionId = _subscriptions[0].Id,
-            NotificationSubscription = _subscriptions[0],
+            SubscriptionId = _subscriptions[0].Id,
+            Subscription = _subscriptions[0],
+            EventId = _subscriptions[0].EventId,
+            ChannelId = _subscriptions[0].ChannelId,
+            ScheduleId = _subscriptions[0].ScheduleId,
             Status = NotificationStatusType.InFlight,
             AttemptCount = 2,
             PayloadType = _payloadType,
@@ -270,8 +363,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
         //Arrange
         var maxattempts = new Notification
         {
-            NotificationSubscriptionId = _subscriptions[0].Id,
-            NotificationSubscription = _subscriptions[0],
+            SubscriptionId = _subscriptions[0].Id,
+            Subscription = _subscriptions[0],
+            EventId = _subscriptions[0].EventId,
+            ChannelId = _subscriptions[0].ChannelId,
+            ScheduleId = _subscriptions[0].ScheduleId,
             Status = NotificationStatusType.Pending,
             AttemptCount = 10,
             PayloadType = _payloadType,
@@ -303,8 +399,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
         //Arrange
         var notification = new Notification
         {
-            NotificationSubscriptionId = _subscriptions[0].Id,
-            NotificationSubscription = _subscriptions[0],
+            SubscriptionId = _subscriptions[0].Id,
+            Subscription = _subscriptions[0],
+            EventId = _subscriptions[0].EventId,
+            ChannelId = _subscriptions[0].ChannelId,
+            ScheduleId = _subscriptions[0].ScheduleId,
             Status = NotificationStatusType.Pending,
             AttemptCount = 0,
             PayloadType = _payloadType,
@@ -323,7 +422,7 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
         using (Assert.EnterMultipleScope())
         {
             Assert.That(claim!.NotificationId, Is.EqualTo(notification.Id));
-            Assert.That(claim.Notification.NotificationSubscription, Is.Not.Null);
+            Assert.That(claim.Notification.Subscription, Is.Not.Null);
         }
 
         _context.ChangeTracker.Clear();
@@ -347,8 +446,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
         var inflight = new Notification
         {
             Id = 50,
-            NotificationSubscriptionId = _subscriptions[0].Id,
-            NotificationSubscription = _subscriptions[0],
+            SubscriptionId = _subscriptions[0].Id,
+            Subscription = _subscriptions[0],
+            EventId = _subscriptions[0].EventId,
+            ChannelId = _subscriptions[0].ChannelId,
+            ScheduleId = _subscriptions[0].ScheduleId,
             Status = NotificationStatusType.InFlight,
             AttemptCount = 2,
             PayloadType = _payloadType,
@@ -376,8 +478,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
 
         var locked = new Notification
         {
-            NotificationSubscriptionId = _subscriptions[0].Id,
-            NotificationSubscription = _subscriptions[0],
+            SubscriptionId = _subscriptions[0].Id,
+            Subscription = _subscriptions[0],
+            EventId = _subscriptions[0].EventId,
+            ChannelId = _subscriptions[0].ChannelId,
+            ScheduleId = _subscriptions[0].ScheduleId,
             Status = NotificationStatusType.InFlight,
             AttemptCount = 1,
             PayloadType = _payloadType,
@@ -420,8 +525,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
 
         var locked = new Notification
         {
-            NotificationSubscriptionId = _subscriptions[0].Id,
-            NotificationSubscription = _subscriptions[0],
+            SubscriptionId = _subscriptions[0].Id,
+            Subscription = _subscriptions[0],
+            EventId = _subscriptions[0].EventId,
+            ChannelId = _subscriptions[0].ChannelId,
+            ScheduleId = _subscriptions[0].ScheduleId,
             Status = NotificationStatusType.InFlight,
             AttemptCount = 1,
             PayloadType = _payloadType,
@@ -462,8 +570,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
 
         var locked = new Notification
         {
-            NotificationSubscriptionId = _subscriptions[0].Id,
-            NotificationSubscription = _subscriptions[0],
+            SubscriptionId = _subscriptions[0].Id,
+            Subscription = _subscriptions[0],
+            EventId = _subscriptions[0].EventId,
+            ChannelId = _subscriptions[0].ChannelId,
+            ScheduleId = _subscriptions[0].ScheduleId,
             Status = NotificationStatusType.InFlight,
             AttemptCount = 3,
             PayloadType = _payloadType,
@@ -505,8 +616,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
 
         var locked = new Notification
         {
-            NotificationSubscriptionId = _subscriptions[0].Id,
-            NotificationSubscription = _subscriptions[0],
+            SubscriptionId = _subscriptions[0].Id,
+            Subscription = _subscriptions[0],
+            EventId = _subscriptions[0].EventId,
+            ChannelId = _subscriptions[0].ChannelId,
+            ScheduleId = _subscriptions[0].ScheduleId,
             Status = NotificationStatusType.InFlight,
             AttemptCount = 10,
             PayloadType = _payloadType,
@@ -548,8 +662,11 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
 
         var locked = new Notification
         {
-            NotificationSubscriptionId = _subscriptions[0].Id,
-            NotificationSubscription = _subscriptions[0],
+            SubscriptionId = _subscriptions[0].Id,
+            Subscription = _subscriptions[0],
+            EventId = _subscriptions[0].EventId,
+            ChannelId = _subscriptions[0].ChannelId,
+            ScheduleId = _subscriptions[0].ScheduleId,
             Status = NotificationStatusType.InFlight,
             AttemptCount = 2,
             PayloadType = _payloadType,
@@ -599,29 +716,36 @@ internal class NotificationLockingCoordinatorTests : IntegrationTestBase
             {
                 entity.HasKey(e => e.Id);
 
-                entity.HasOne(e => e.NotificationSubscription)
+                entity.HasOne(e => e.Subscription)
                     .WithMany()
-                    .HasForeignKey(e => e.NotificationSubscriptionId);
+                    .HasForeignKey(e => e.SubscriptionId);
 
-                entity.Property(e => e.Status).HasConversion<int>();
-
-                var jsonOptions = new JsonSerializerOptions();
-                jsonOptions.Converters.Add(new ObjectToInferredTypesConverter());
-
-                entity.Property(e => e.Headers)
-                    .HasConversion(new ValueConverter<IDictionary<string, string>, string>(
-                        app => JsonSerializer.Serialize(app, jsonOptions),
-                        db => JsonSerializer.Deserialize<IDictionary<string, string>>(db, jsonOptions)!),
-                        new ValueComparer<IDictionary<string, string>>(
-                            (a, b) => JsonSerializer.Serialize(a, jsonOptions) == JsonSerializer.Serialize(b, jsonOptions),
-                            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                            c => new Dictionary<string, string>(c)));
+                entity.Property(e => e.Status);
             });
 
             modelBuilder.Entity<NotificationSubscription>(entity =>
             {
                 entity.HasKey(e => e.Id);
             });
+
+            var jsonOptions = new JsonSerializerOptions();
+            jsonOptions.Converters.Add(new ObjectToInferredTypesConverter());
+
+            modelBuilder.AddGlobalValueConverter(new ValueConverter<IDictionary<string, object?>, string>(
+                app => JsonSerializer.Serialize(app, jsonOptions),
+                db => JsonSerializer.Deserialize<IDictionary<string, object?>>(db, jsonOptions)!),
+                new ValueComparer<IDictionary<string, object?>>(
+                    (a, b) => JsonSerializer.Serialize(a, jsonOptions) == JsonSerializer.Serialize(b, jsonOptions),
+                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                    c => new Dictionary<string, object?>(c)));
+
+            modelBuilder.AddGlobalValueConverter(new ValueConverter<IDictionary<string, string?>, string>(
+                app => JsonSerializer.Serialize(app, jsonOptions),
+                db => JsonSerializer.Deserialize<IDictionary<string, string?>>(db, jsonOptions)!),
+                new ValueComparer<IDictionary<string, string?>>(
+                    (a, b) => JsonSerializer.Serialize(a, jsonOptions) == JsonSerializer.Serialize(b, jsonOptions),
+                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                    c => new Dictionary<string, string?>(c)));
         }
     }
 

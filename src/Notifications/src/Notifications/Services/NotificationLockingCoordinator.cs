@@ -15,7 +15,7 @@ internal class NotificationLockingCoordinator : INotificationLockingCoordinator
     }
 
     public async Task<IReadOnlyList<NotificationClaim>> ClaimBatchAsync(
-        NotificationSchedule schedule,
+        NotificationScheduleRef schedule,
         int maxCount = 100,
         CancellationToken cancellationToken = default)
     {
@@ -26,10 +26,10 @@ internal class NotificationLockingCoordinator : INotificationLockingCoordinator
         var now = DateTimeOffset.UtcNow;
         var lockedUntil = now.Add(TimeSpan.FromSeconds(30));
 
-        var immediate = NotificationSchedules.Immediate.Key;
+        var immediate = NotificationSchedules.Immediate.Id;
         var candidateIds = await notificationRepo.Data
             .Where(e =>
-                e.NotificationSubscription.ScheduleType == schedule.Key
+                e.Subscription.ScheduleId == schedule.Id
                 && (
                     e.Status == NotificationStatusType.Pending
                     || (
@@ -129,7 +129,7 @@ internal class NotificationLockingCoordinator : INotificationLockingCoordinator
         var claimed = await notificationRepo.Data
             .AsNoTracking()
             .Where(e => e.LockId == lockId)
-            .Include(e => e.NotificationSubscription)
+            .Include(e => e.Subscription)
             .ToListAsync(cancellationToken: cancellationToken);
 
         return [.. claimed.Select(e => new NotificationClaim(e.Id, e, lockId))];

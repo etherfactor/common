@@ -3,7 +3,7 @@
 public interface INotificationLockingCoordinator
 {
     Task<IReadOnlyList<NotificationClaim>> ClaimBatchAsync(
-        NotificationSchedule schedule,
+        NotificationScheduleRef schedule,
         int maxCount = 100,
         CancellationToken cancellationToken = default);
 

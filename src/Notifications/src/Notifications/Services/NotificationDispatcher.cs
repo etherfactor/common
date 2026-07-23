@@ -24,7 +24,7 @@ internal class NotificationDispatcher : INotificationDispatcher
         using var scope = _serviceProvider.CreateScope();
         var provider = scope.ServiceProvider;
 
-        var channelKey = notification.NotificationSubscription.ChannelKey;
+        var channelKey = notification.Subscription.ChannelId;
 
         var model = _serializer.Deserialize(notification.PayloadType, notification.Payload);
 

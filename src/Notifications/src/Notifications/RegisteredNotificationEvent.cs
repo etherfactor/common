@@ -3,8 +3,10 @@
 namespace EtherGizmos.Common;
 
 public record RegisteredNotificationEvent(
-    string EventType,
+    string EventKey,
     string DisplayName,
+    Type ConfigType,
+    string ConfigSchema,
     ImmutableHashSet<RegisteredNotificationEventDelivery> Supports);
 
 public record RegisteredNotificationEventDelivery(

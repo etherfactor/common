@@ -60,9 +60,9 @@ internal class NotificationDispatcherTests
         {
             PayloadType = serialized.Type,
             Payload = serialized.Payload,
-            NotificationSubscription = new()
+            Subscription = new()
             {
-                ChannelKey = "test",
+                ChannelId = "test",
             },
         };
 
