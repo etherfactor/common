@@ -39,6 +39,8 @@ internal class DigestNotificationCollector : NotificationCollector
     protected override async Task CollectBatchAsync(
         CancellationToken cancellationToken = default)
     {
+        var now = DateTimeOffset.UtcNow;
+
         using var uow = _uowFactory.Create();
         var subscriptionRepo = uow.Repository<NotificationSubscription>();
         var notificationRepo = uow.Repository<Notification>();
@@ -89,7 +91,9 @@ internal class DigestNotificationCollector : NotificationCollector
 
                 var previous = subscription.LastNotificationAt ?? DateTimeOffset.MinValue;
                 var current = subscription.NextNotificationAt ?? DateTimeOffset.UtcNow;
-                var next = schedule.GetNextOccurrence(current.DateTime);
+
+                var scheduleFrom = current < now ? now : current;
+                var next = schedule.GetNextOccurrence(scheduleFrom.DateTime);
 
                 var types = events.GroupBy(e => e.GetType());
                 foreach (var type in types)
