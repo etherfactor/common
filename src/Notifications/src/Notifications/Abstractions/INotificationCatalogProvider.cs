@@ -1,4 +1,6 @@
-﻿namespace EtherGizmos.Common.Abstractions;
+﻿using EtherGizmos.Common.Models;
+
+namespace EtherGizmos.Common.Abstractions;
 
 public interface INotificationCatalogProvider
 {

@@ -112,11 +112,10 @@ internal class UnitOfWork : IUnitOfWork
                             try
                             {
                                 var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+                                scopes.Add(scope);
 
                                 var count = context.SaveChanges();
                                 Interlocked.Add(ref total, count);
-
-                                scopes.Add(scope);
                             }
                             catch (Exception ex)
                             {
@@ -231,11 +230,10 @@ internal class UnitOfWork : IUnitOfWork
                             try
                             {
                                 var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+                                scopes.Add(scope);
 
                                 var count = await context.SaveChangesAsync(cancellationToken: cancellationToken);
                                 Interlocked.Add(ref total, count);
-
-                                scopes.Add(scope);
                             }
                             catch (Exception ex)
                             {

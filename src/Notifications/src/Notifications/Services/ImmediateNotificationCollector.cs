@@ -32,13 +32,13 @@ internal class ImmediateNotificationCollector : NotificationCollector
         foreach (var claim in claims)
         {
             using var activity = ActivitySources.Notifications.StartActivityFromCarrier(
-                $"Send notification {claim.NotificationId} via {claim.Notification.NotificationSubscription.ChannelKey}",
+                $"Send notification {claim.NotificationId} via {claim.Notification.Subscription.ChannelId}",
                 ActivityKind.Consumer,
                 claim.Notification.Headers.AsReadOnly());
 
-            activity?.SetTag("notification.schedule", NotificationSchedules.Immediate.Key);
-            activity?.SetTag("notification.subscription.id", claim.Notification.NotificationSubscriptionId);
-            activity?.SetTag("notification.channel", claim.Notification.NotificationSubscription.ChannelKey);
+            activity?.SetTag("notification.schedule", NotificationSchedules.Immediate.Id);
+            activity?.SetTag("notification.subscription.id", claim.Notification.SubscriptionId);
+            activity?.SetTag("notification.channel", claim.Notification.Subscription.ChannelId);
 
             try
             {

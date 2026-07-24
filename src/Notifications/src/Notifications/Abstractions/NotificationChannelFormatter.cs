@@ -4,8 +4,8 @@ namespace EtherGizmos.Common.Abstractions;
 
 public abstract class NotificationChannelFormatter<TSchedule, TChannel, TEnvelope, TModel>
     : INotificationChannelFormatter<TSchedule, TChannel, TModel>
-    where TSchedule : NotificationSchedule
-    where TChannel : NotificationChannel
+    where TSchedule : NotificationScheduleRef
+    where TChannel : NotificationChannelRef
     where TEnvelope : class, INotificationEnvelope<TChannel>
     where TModel : class
 {

@@ -45,8 +45,8 @@ public static class NotificationsServiceCollectionExtensions
         internal IServiceCollection AddNotificationsCore(
             string databaseConnectionId)
         {
-            NotificationRegistry.RegisterSchedule(NotificationSchedules.Immediate.Key, "Immediate", typeof(ImmediateScheduleConfig));
-            NotificationRegistry.RegisterSchedule(NotificationSchedules.Digest.Key, "Digest", typeof(DigestScheduleConfig));
+            NotificationRegistry.RegisterSchedule(NotificationSchedules.Immediate.Id, "Immediate", typeof(ImmediateScheduleConfig));
+            NotificationRegistry.RegisterSchedule(NotificationSchedules.Digest.Id, "Digest", typeof(DigestScheduleConfig));
 
             @this.TryAddSingleton<IDomainEventEmitter, DomainEventEmitter>();
             @this.TryAddSingleton<IDomainEventSerializer, DomainEventSerializer>();
@@ -54,12 +54,13 @@ public static class NotificationsServiceCollectionExtensions
             @this.TryAddSingleton<INotificationCatalogProvider, NotificationCatalogProvider>();
             @this.TryAddSingleton<INotificationLockingCoordinator, NotificationLockingCoordinator>();
 
-            @this.TryAddKeyedSingleton<INotificationHandler, DigestNotificationHandler>(DigestSchedule.Instance.Key);
-            @this.TryAddKeyedSingleton<INotificationHandler, ImmediateNotificationHandler>(ImmediateSchedule.Instance.Key);
+            @this.TryAddKeyedSingleton<INotificationHandler, DigestNotificationHandler>(DigestSchedule.Instance.Id);
+            @this.TryAddKeyedSingleton<INotificationHandler, ImmediateNotificationHandler>(ImmediateSchedule.Instance.Id);
 
             @this.TryAddEnumerable(new ServiceDescriptor(typeof(INotificationCollector), typeof(DigestNotificationCollector), ServiceLifetime.Singleton));
             @this.TryAddEnumerable(new ServiceDescriptor(typeof(INotificationCollector), typeof(ImmediateNotificationCollector), ServiceLifetime.Singleton));
 
+            @this.AddHostedService<NotificationSeederHostedService>();
             @this.AddHostedService<NotificationCollectorHostedService>();
 
             @this

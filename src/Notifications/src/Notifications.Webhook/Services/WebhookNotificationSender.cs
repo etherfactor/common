@@ -19,7 +19,7 @@ internal class WebhookNotificationSender : NotificationChannelSender<WebhookChan
         var content = new StringContent(envelope.Payload);
         content.Headers.ContentType = new(envelope.ContentType);
 
-        using var client = _httpClientFactory.CreateClient(WebhookChannel.Instance.Key);
+        using var client = _httpClientFactory.CreateClient(WebhookChannel.Instance.Id);
 
         var request = new HttpRequestMessage(new HttpMethod(envelope.Method), envelope.Endpoint) { Content = content };
         await client.SendAsync(request, cancellationToken);

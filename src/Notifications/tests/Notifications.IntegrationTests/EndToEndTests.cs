@@ -11,7 +11,6 @@ using Microsoft.Extensions.Hosting;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using System.Threading.Channels;
 
 namespace EtherGizmos.Common;
@@ -34,93 +33,104 @@ internal class NotificationEndToEndTests : IntegrationTestBase
     [TearDown]
     public async Task TearDown()
     {
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         if (_app is not null)
         {
-            await _app.StopAsync();
-            await _app.DisposeAsync();
+            await Task.Run(async () =>
+            {
+                await _app.StopAsync();
+                await _app.DisposeAsync();
+            }).WaitAsync(cts.Token);
         }
     }
 
     [Test]
     public async Task EmitAsync_WithMatchingImmediateSubscription_ShouldDeliverWebhookAndMarkNotificationSent()
     {
-        //Arrange
-        await using (var scope = _app!.Services.CreateAsyncScope())
+        try
         {
-            var context = scope.ServiceProvider.GetRequiredService<NotificationContext>();
-
-            context.NotificationSubscriptions.Add(new NotificationSubscription
+            //Arrange
+            await using (var scope = _app!.Services.CreateAsyncScope())
             {
-                UserId = "user-1",
-                EventType = "test.domain.event",
-                ChannelKey = "webhook",
-                ChannelConfigRaw = JsonSerializer.Serialize(new WebhookChannelConfig
-                {
-                    Method = "POST",
-                    Endpoint = $"{_baseUrl}/test/webhooks/notifications",
-                    Headers = [],
-                }, JsonSerializerOptions.Web),
-                ScheduleType = NotificationSchedules.Immediate.Key,
-                ScheduleConfigRaw = "{}",
-                IsEnabled = true,
-            });
-
-            await context.SaveChangesAsync();
-        }
-
-        await using (var scope = _app.Services.CreateAsyncScope())
-        {
-            var emitter = scope.ServiceProvider.GetRequiredService<IDomainEventEmitter>();
-
-            await emitter.EmitAsync(
-                new TestDomainEvent
-                {
-                    Value = "hello",
-                },
-                [new AudienceKey("$self", "user-1")]);
-        }
-
-        //Act
-        var receipt = await _webhookInbox.WaitAsync(TimeSpan.FromSeconds(15));
-
-        //Assert
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(receipt.Body, Does.Contain("hello"));
-            Assert.That(receipt.ContentType, Does.StartWith("application/json"));
-        }
-
-        await WaitUntilAsync(
-            async () =>
-            {
-                await using var scope = _app.Services.CreateAsyncScope();
                 var context = scope.ServiceProvider.GetRequiredService<NotificationContext>();
 
-                return await context.Notifications
-                    .Include(e => e.NotificationSubscription)
-                    .AnyAsync(e =>
-                        e.NotificationSubscription.UserId == "user-1"
-                        && e.NotificationSubscription.ScheduleType == ImmediateSchedule.Instance.Key
-                        && e.Status == NotificationStatusType.Sent);
-            },
-            TimeSpan.FromSeconds(15));
+                context.NotificationSubscriptions.Add(new NotificationSubscription
+                {
+                    UserId = "user-1",
+                    EventId = "test.domain.event",
+                    ChannelId = "webhook",
+                    ChannelConfig = new Dictionary<string, object?>()
+                    {
+                        ["Method"] = "POST",
+                        ["Endpoint"] = $"{_baseUrl}/test/webhooks/notifications",
+                        ["Headers"] = new Dictionary<string, string>(),
+                    },
+                    ScheduleId = NotificationSchedules.Immediate.Id,
+                    ScheduleConfig = new Dictionary<string, object?>(),
+                    IsEnabled = true,
+                });
 
-        await using (var scope = _app.Services.CreateAsyncScope())
-        {
-            var context = scope.ServiceProvider.GetRequiredService<NotificationContext>();
+                await context.SaveChangesAsync();
+            }
 
-            var notification = await context.Notifications
-                .Include(e => e.NotificationSubscription)
-                .SingleAsync();
+            await using (var scope = _app.Services.CreateAsyncScope())
+            {
+                var emitter = scope.ServiceProvider.GetRequiredService<IDomainEventEmitter>();
 
+                await emitter.EmitAsync(
+                    new TestDomainEvent
+                    {
+                        Value = "hello",
+                    },
+                    [new AudienceKey("$self", "user-1")]);
+            }
+
+            //Act
+            var receipt = await _webhookInbox.WaitAsync(TimeSpan.FromSeconds(15));
+
+            //Assert
             using (Assert.EnterMultipleScope())
             {
-                Assert.That(notification.NotificationSubscription.UserId, Is.EqualTo("user-1"));
-                Assert.That(notification.NotificationSubscription.ScheduleType, Is.EqualTo(NotificationSchedules.Immediate.Key));
-                Assert.That(notification.Status, Is.EqualTo(NotificationStatusType.Sent));
-                Assert.That(notification.SentAt, Is.Not.Null);
-                Assert.That(notification.AttemptCount, Is.GreaterThanOrEqualTo(1));
+                Assert.That(receipt.Body, Does.Contain("hello"));
+                Assert.That(receipt.ContentType, Does.StartWith("application/json"));
             }
+
+            await WaitUntilAsync(
+                async () =>
+                {
+                    await using var scope = _app.Services.CreateAsyncScope();
+                    var context = scope.ServiceProvider.GetRequiredService<NotificationContext>();
+
+                    return await context.Notifications
+                        .Include(e => e.Subscription)
+                        .AnyAsync(e =>
+                            e.Subscription.UserId == "user-1"
+                            && e.Subscription.ScheduleId == ImmediateSchedule.Instance.Id
+                            && e.Status == NotificationStatusType.Sent);
+                },
+                TimeSpan.FromSeconds(15));
+
+            await using (var scope = _app.Services.CreateAsyncScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<NotificationContext>();
+
+                var notification = await context.Notifications
+                    .Include(e => e.Subscription)
+                    .SingleAsync();
+
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(notification.Subscription.UserId, Is.EqualTo("user-1"));
+                    Assert.That(notification.Subscription.ScheduleId, Is.EqualTo(NotificationSchedules.Immediate.Id));
+                    Assert.That(notification.Status, Is.EqualTo(NotificationStatusType.Sent));
+                    Assert.That(notification.SentAt, Is.Not.Null);
+                    Assert.That(notification.AttemptCount, Is.GreaterThanOrEqualTo(1));
+                }
+            }
+        }
+        finally
+        {
+            Console.Out.WriteLine("Done");
         }
     }
 
@@ -135,16 +145,16 @@ internal class NotificationEndToEndTests : IntegrationTestBase
             context.NotificationSubscriptions.Add(new NotificationSubscription
             {
                 UserId = "user-1",
-                EventType = "test.domain.event",
-                ChannelKey = "webhook",
-                ChannelConfigRaw = JsonSerializer.Serialize(new WebhookChannelConfig
+                EventId = "test.domain.event",
+                ChannelId = "webhook",
+                ChannelConfig = new Dictionary<string, object?>()
                 {
-                    Method = "POST",
-                    Endpoint = $"{_baseUrl}/test/webhooks/notifications",
-                    Headers = [],
-                }, JsonSerializerOptions.Web),
-                ScheduleType = NotificationSchedules.Immediate.Key,
-                ScheduleConfigRaw = "{}",
+                    ["Method"] = "POST",
+                    ["Endpoint"] = $"{_baseUrl}/test/webhooks/notifications",
+                    ["Headers"] = new Dictionary<string, string>(),
+                },
+                ScheduleId = NotificationSchedules.Immediate.Id,
+                ScheduleConfig = new Dictionary<string, object?>(),
                 IsEnabled = true,
             });
 
@@ -206,7 +216,7 @@ internal class NotificationEndToEndTests : IntegrationTestBase
         builder.Services
             .AddNotifications("GeneralDatabase", "NotificationBus", opt =>
             {
-                opt.AddNotification<TestDomainEvent, TestDomainEventRouter>("test.domain.event", type =>
+                opt.AddNotification<TestDomainEvent, TestDomainEventRouter>("test.domain.event", typeof(TestDomainEventConfig), type =>
                 {
                     type.HasDisplayName("Test Domain Event");
                     type.Supports<TestDomainEvent, WebhookChannel, TestDomainEventWebhookFormatter>();
@@ -278,6 +288,8 @@ internal class NotificationEndToEndTests : IntegrationTestBase
     {
         public string Value { get; set; } = null!;
     }
+
+    public sealed class TestDomainEventConfig;
 
     internal sealed class TestDomainEventRouter : IDomainEventRouter<TestDomainEvent>
     {

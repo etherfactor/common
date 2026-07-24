@@ -43,9 +43,9 @@ internal class DigestNotificationCollector : NotificationCollector
         var subscriptionRepo = uow.Repository<NotificationSubscription>();
         var notificationRepo = uow.Repository<Notification>();
 
-        var digest = NotificationSchedules.Digest.Key;
+        var digest = NotificationSchedules.Digest.Id;
         var subscriptions = await subscriptionRepo.Data
-            .Where(e => e.ScheduleType == digest
+            .Where(e => e.ScheduleId == digest
                 && (e.NextNotificationAt ?? DateTimeOffset.MinValue) <= DateTimeOffset.UtcNow)
             .ToListAsync(cancellationToken: cancellationToken);
 
@@ -55,14 +55,14 @@ internal class DigestNotificationCollector : NotificationCollector
                 $"Pack notifications into digest",
                 ActivityKind.Consumer);
 
-            activity?.SetTag("notification.schedule", NotificationSchedules.Immediate.Key);
+            activity?.SetTag("notification.schedule", NotificationSchedules.Immediate.Id);
             activity?.SetTag("notification.subscription.id", subscription.Id);
-            activity?.SetTag("notification.channel", subscription.ChannelKey);
+            activity?.SetTag("notification.channel", subscription.ChannelId);
 
             try
             {
                 var notifications = await notificationRepo.Data
-                    .Where(e => e.NotificationSubscriptionId == subscription.Id
+                    .Where(e => e.SubscriptionId == subscription.Id
                         && !e.IsDerived
                         && e.Status == NotificationStatusType.Pending
                         && e.CreatedAt <= subscription.NextNotificationAt
@@ -81,8 +81,7 @@ internal class DigestNotificationCollector : NotificationCollector
                     events.Add(@event);
                 }
 
-                var configStr = subscription.ScheduleConfigRaw
-                    ?? throw new InvalidOperationException($"The subscription {subscription.Id} does not have a configuration");
+                var configStr = JsonSerializer.Serialize(subscription.ScheduleConfig, JsonSerializerOptions.Web);
 
                 var config = JsonSerializer.Deserialize<DigestScheduleConfig>(configStr, JsonSerializerOptions.Web)!;
 

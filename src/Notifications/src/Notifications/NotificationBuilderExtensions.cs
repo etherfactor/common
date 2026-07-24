@@ -4,6 +4,8 @@ using EtherGizmos.Common.Models;
 using EtherGizmos.Common.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Text.Json;
+using System.Text.Json.Schema;
 
 namespace EtherGizmos.Common;
 
@@ -14,24 +16,32 @@ public static class NotificationBuilderExtensions
         public INotificationBuilder AddChannel<TChannel, TSender>(
             string displayName,
             Type channelConfigType)
-            where TChannel : NotificationChannel
+            where TChannel : NotificationChannelRef
             where TSender : class, INotificationChannelSender<TChannel>
         {
             var method = Activator.CreateInstance<TChannel>()!;
-            NotificationRegistry.RegisterChannel(method.Key, displayName, channelConfigType);
+            NotificationRegistry.RegisterChannel(method.Id, displayName, channelConfigType);
 
-            @this.Services.TryAddKeyedScoped<INotificationChannelSender, TSender>(method.Key);
+            @this.Services.TryAddKeyedScoped<INotificationChannelSender, TSender>(method.Id);
 
             return @this;
         }
 
         public INotificationBuilder AddNotification<TNotification, TRouter>(
             string eventType,
+            Type eventConfigType,
             Action<INotificationEventBuilder<TNotification>> configureType)
             where TNotification : class, IDomainEvent
             where TRouter : class, IDomainEventRouter<TNotification>
         {
-            var builder = new NotificationEventBuilder<TNotification>(eventType, @this.Services);
+            var schema = JsonSchemaExporter
+                .GetJsonSchemaAsNode(JsonSerializerOptions.Web, eventConfigType, new()
+                {
+                    TreatNullObliviousAsNonNullable = true,
+                })
+                .ToJsonString(JsonSerializerOptions.Web);
+
+            var builder = new NotificationEventBuilder<TNotification>(eventType, eventConfigType, schema, @this.Services);
             configureType(builder);
 
             @this.Services.TryAddSingleton<IDomainEventRouter<TNotification>, TRouter>();
@@ -45,6 +55,7 @@ public static class NotificationBuilderExtensions
                     }
 
                     opt.EventTypeMap[eventType] = typeof(TNotification);
+                    opt.EventConfigMap[eventType] = eventConfigType;
                 });
 
             return @this;
@@ -63,7 +74,7 @@ public static class NotificationBuilderExtensions
                 {
                     opt.Metadata.AddOrUpdate(
                         @this.EventType,
-                        _ => new(@this.EventType, displayName, []),
+                        _ => new(@this.EventType, displayName, @this.ConfigType, @this.ConfigSchema, []),
                         (_, current) => current with { DisplayName = displayName });
                 });
 
@@ -71,12 +82,12 @@ public static class NotificationBuilderExtensions
         }
 
         public INotificationEventBuilder<TModel> Supports<TChannel, TFormatter>()
-            where TChannel : NotificationChannel
+            where TChannel : NotificationChannelRef
             where TFormatter : class, INotificationChannelFormatter<ImmediateSchedule, TChannel, TModel>
         {
             var method = Activator.CreateInstance<TChannel>()!;
 
-            @this.Services.AddKeyedSingleton<INotificationChannelFormatter, TFormatter>((method.Key, typeof(TModel)));
+            @this.Services.AddKeyedSingleton<INotificationChannelFormatter, TFormatter>((method.Id, typeof(TModel)));
 
             @this.Services.AddOptions<NotificationTypeOptions>(@this.EventType)
                 .Configure(opt =>
@@ -89,11 +100,11 @@ public static class NotificationBuilderExtensions
                 .AddOptions<NotificationEventOptions>()
                 .Configure(opt =>
                 {
-                    var schedule = NotificationRegistry.GetSchedule(NotificationSchedules.Immediate.Key);
-                    var channel = NotificationRegistry.GetChannel(method.Key);
+                    var schedule = NotificationRegistry.GetSchedule(NotificationSchedules.Immediate.Id);
+                    var channel = NotificationRegistry.GetChannel(method.Id);
                     opt.Metadata.AddOrUpdate(
                         @this.EventType,
-                        _ => new(@this.EventType, @this.EventType, [new(schedule, channel)]),
+                        _ => new(@this.EventType, @this.EventType, @this.ConfigType, @this.ConfigSchema, [new(schedule, channel)]),
                         (_, current) => current with { Supports = current.Supports.Add(new(schedule, channel)) });
                 });
 
@@ -101,12 +112,12 @@ public static class NotificationBuilderExtensions
         }
 
         public INotificationEventBuilder<TModel> SupportsDigest<TChannel, TFormatter>()
-            where TChannel : NotificationChannel
+            where TChannel : NotificationChannelRef
             where TFormatter : class, INotificationChannelFormatter<DigestSchedule, TChannel, Digest<TModel>>
         {
             var method = Activator.CreateInstance<TChannel>()!;
 
-            @this.Services.AddKeyedSingleton<INotificationChannelFormatter, TFormatter>((method.Key, typeof(Digest<TModel>)));
+            @this.Services.AddKeyedSingleton<INotificationChannelFormatter, TFormatter>((method.Id, typeof(Digest<TModel>)));
 
             @this.Services.AddOptions<NotificationTypeOptions>(@this.EventType)
                 .Configure(opt =>
@@ -126,11 +137,11 @@ public static class NotificationBuilderExtensions
                 .AddOptions<NotificationEventOptions>()
                 .Configure(opt =>
                 {
-                    var schedule = NotificationRegistry.GetSchedule(NotificationSchedules.Digest.Key);
-                    var channel = NotificationRegistry.GetChannel(method.Key);
+                    var schedule = NotificationRegistry.GetSchedule(NotificationSchedules.Digest.Id);
+                    var channel = NotificationRegistry.GetChannel(method.Id);
                     opt.Metadata.AddOrUpdate(
                         @this.EventType,
-                        _ => new(@this.EventType, @this.EventType, [new(schedule, channel)]),
+                        _ => new(@this.EventType, @this.EventType, @this.ConfigType, @this.ConfigSchema, [new(schedule, channel)]),
                         (_, current) => current with { Supports = current.Supports.Add(new(schedule, channel)) });
                 });
 

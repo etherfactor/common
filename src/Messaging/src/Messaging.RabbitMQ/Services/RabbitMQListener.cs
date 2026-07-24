@@ -165,7 +165,7 @@ internal class RabbitMQListener : IMessageListener, IDisposable
                 .Where(e => e.Key != "$type" && e.Key != "$logical")
                 .ToImmutableDictionary();
 
-            var actions = new RabbitMQMessageActions(_logger, _rmqChannel, @event.DeliveryTag);
+            var actions = new RabbitMQMessageActions(_logger, _rmqChannel, @event.DeliveryTag, @event.Redelivered);
 
             var subscription = _subscription is not null
                 ? $"{logicalHeader}/{_subscription}"
@@ -192,7 +192,7 @@ internal class RabbitMQListener : IMessageListener, IDisposable
             {
                 try
                 {
-                    await _rmqChannel.BasicNackAsync(@event.DeliveryTag, multiple: false, requeue: true, @event.CancellationToken).ConfigureAwait(false);
+                    await _rmqChannel.BasicNackAsync(@event.DeliveryTag, multiple: false, requeue: !@event.Redelivered, @event.CancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex2)
                 {

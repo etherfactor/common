@@ -66,7 +66,7 @@ internal class ImmediateNotificationCollectorTests
     public async Task CollectBatchAsync_WhenDispatchSucceeds_ShouldMarkSent()
     {
         //Arrange
-        var notification = new Notification { Id = 123, NotificationSubscription = new() { } };
+        var notification = new Notification { Id = 123, Subscription = new() { } };
         var claim = new NotificationClaim(123, notification, Guid.NewGuid());
 
         _coordinatorMock
@@ -99,7 +99,7 @@ internal class ImmediateNotificationCollectorTests
     public async Task CollectBatchAsync_WhenDispatchThrows_ShouldMarkFailed()
     {
         //Arrange
-        var notification = new Notification { Id = 123, NotificationSubscription = new() { } };
+        var notification = new Notification { Id = 123, Subscription = new() { } };
         var claim = new NotificationClaim(123, notification, Guid.NewGuid());
         var exception = new InvalidOperationException("Boom");
 
@@ -134,8 +134,8 @@ internal class ImmediateNotificationCollectorTests
     public async Task CollectBatchAsync_WhenMultipleDispatchesFail_ShouldLogWarningWithFailureCount()
     {
         //Arrange
-        var notification1 = new Notification { Id = 1, NotificationSubscription = new() { } };
-        var notification2 = new Notification { Id = 2, NotificationSubscription = new() { } };
+        var notification1 = new Notification { Id = 1, Subscription = new() { } };
+        var notification2 = new Notification { Id = 2, Subscription = new() { } };
         var claim1 = new NotificationClaim(1, notification1, Guid.NewGuid());
         var claim2 = new NotificationClaim(2, notification2, Guid.NewGuid());
 

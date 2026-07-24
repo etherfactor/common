@@ -108,11 +108,11 @@ internal class DomainEventMessageConsumerTests
             {
                 Id = 1,
                 UserId = "user-1",
-                EventType = "test.domain.event",
-                ChannelKey = "email",
-                ChannelConfigRaw = "{}",
-                ScheduleType = NotificationSchedules.Immediate.Key,
-                ScheduleConfigRaw = "{}",
+                EventId = "test.domain.event",
+                ChannelId = "email",
+                ChannelConfig = new Dictionary<string, object?>(),
+                ScheduleId = NotificationSchedules.Immediate.Id,
+                ScheduleConfig = new Dictionary<string, object?>(),
                 IsEnabled = true,
                 LastNotificationAt = null,
                 NextNotificationAt = null,
@@ -150,7 +150,7 @@ internal class DomainEventMessageConsumerTests
         _notificationRepoMock.Verify(@interface =>
             @interface.Add(
                 It.Is<Notification>(e =>
-                    e.NotificationSubscriptionId == _subscriptions.Single().Id)),
+                    e.SubscriptionId == _subscriptions.Single().Id)),
             Times.Once());
 
         _uowMock.Verify(@interface =>

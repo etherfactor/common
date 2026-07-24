@@ -1,7 +1,7 @@
 ﻿namespace EtherGizmos.Common.Abstractions;
 
 public abstract class NotificationChannelSender<TChannel, TEnvelope> : INotificationChannelSender<TChannel>
-    where TChannel : NotificationChannel
+    where TChannel : NotificationChannelRef
     where TEnvelope : class, INotificationEnvelope<TChannel>
 {
     public abstract Task SendAsync(

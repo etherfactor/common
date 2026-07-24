@@ -9,4 +9,4 @@ public interface INotificationChannelSender
 
 public interface INotificationChannelSender<TChannel>
     : INotificationChannelSender
-    where TChannel : NotificationChannel;
+    where TChannel : NotificationChannelRef;

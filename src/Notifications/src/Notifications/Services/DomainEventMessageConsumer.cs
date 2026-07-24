@@ -64,7 +64,7 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
 
         var router = _serviceProvider.GetRequiredService<IDomainEventRouter<TEvent>>();
 
-        var subscriptions = await subscriptionRepo.Data.Where(e => e.IsEnabled && e.EventType == message.EventType)
+        var subscriptions = await subscriptionRepo.Data.Where(e => e.IsEnabled && e.EventId == message.EventType)
             .ToListAsync(cancellationToken: cancellationToken);
         var subsByUser = subscriptions.ToLookup(e => e.UserId, StringComparer.OrdinalIgnoreCase);
 
@@ -82,9 +82,12 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
             {
                 var notification = new Notification()
                 {
-                    EventId = message.EventId,
+                    OccurrenceId = message.EventId,
                     CreatedAt = DateTimeOffset.UtcNow,
-                    NotificationSubscriptionId = subscription.Id,
+                    SubscriptionId = subscription.Id,
+                    EventId = subscription.EventId,
+                    ChannelId = subscription.ChannelId,
+                    ScheduleId = subscription.ScheduleId,
                     IsDerived = message.IsDerived,
                     PayloadType = message.PayloadType,
                     Payload = message.Payload,
@@ -109,7 +112,7 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
                     new NotificationCreatedMessage()
                     {
                         NotificationId = entry.Notification.Id,
-                        ScheduleType = entry.Subscription.ScheduleType,
+                        ScheduleType = entry.Subscription.ScheduleId,
                     },
                     cancellationToken: cancellationToken);
             }

@@ -8,15 +8,27 @@ public class Notification : IEntity
 {
     public virtual long Id { get; set; }
 
-    public virtual Guid EventId { get; set; }
+    public virtual Guid OccurrenceId { get; set; }
 
     public virtual DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public virtual DateTimeOffset? SentAt { get; set; }
 
-    public virtual long NotificationSubscriptionId { get; set; }
+    public virtual long SubscriptionId { get; set; }
 
-    public virtual NotificationSubscription NotificationSubscription { get; set; } = null!;
+    public virtual NotificationSubscription Subscription { get; set; } = null!;
+
+    public virtual string EventId { get; set; } = null!;
+
+    public virtual NotificationEvent Event { get; set; } = null!;
+
+    public virtual string ChannelId { get; set; } = null!;
+
+    public virtual NotificationChannel Channel { get; set; } = null!;
+
+    public virtual string ScheduleId { get; set; } = null!;
+
+    public virtual NotificationSchedule Schedule { get; set; } = null!;
 
     public virtual bool IsDerived { get; set; }
 
@@ -46,24 +58,49 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
     public void Configure(
         EntityTypeBuilder<Notification> entity)
     {
-        entity.ToTable("notifications");
+        entity.ToTable("instances", schema: "notification");
 
         entity.HasKey(e => e.Id);
+
+        entity.Property(e => e.Id)
+            .HasColumnName("instance_id");
+
+        entity.Property(e => e.OccurrenceId)
+            .HasColumnName("occurrence_id");
+
+        entity.Property(e => e.CreatedAt)
+            .HasColumnName("created_at_utc");
+
+        entity.Property(e => e.SentAt)
+            .HasColumnName("sent_at_utc");
+
+        entity.Property(e => e.SubscriptionId)
+            .HasColumnName("subscription_id");
+
+        entity.HasOne(e => e.Subscription)
+            .WithMany()
+            .HasForeignKey(e => e.SubscriptionId);
 
         entity.Property(e => e.EventId)
             .HasColumnName("event_id");
 
-        entity.Property(e => e.CreatedAt)
-            .HasColumnName("created_at");
+        entity.HasOne(e => e.Event)
+            .WithMany()
+            .HasForeignKey(e => e.EventId);
 
-        entity.Property(e => e.SentAt)
-            .HasColumnName("sent_at");
+        entity.Property(e => e.ChannelId)
+            .HasColumnName("channel_id");
 
-        entity.Property(e => e.Id)
-            .HasColumnName("notification_id");
+        entity.HasOne(e => e.Channel)
+            .WithMany()
+            .HasForeignKey(e => e.ChannelId);
 
-        entity.Property(e => e.NotificationSubscriptionId)
-            .HasColumnName("notification_subscription_id");
+        entity.Property(e => e.ScheduleId)
+            .HasColumnName("schedule_id");
+
+        entity.HasOne(e => e.Schedule)
+            .WithMany()
+            .HasForeignKey(e => e.ScheduleId);
 
         entity.Property(e => e.IsDerived)
             .HasColumnName("is_derived");
@@ -75,7 +112,7 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
             .HasColumnName("payload");
 
         entity.Property(e => e.Status)
-            .HasColumnName("notification_status_type_id");
+            .HasColumnName("status_type_id");
 
         entity.Property(e => e.Headers)
             .HasColumnName("headers");
