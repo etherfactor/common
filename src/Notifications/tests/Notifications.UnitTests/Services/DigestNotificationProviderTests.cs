@@ -4,13 +4,12 @@ using EtherGizmos.Common.Models;
 using Microsoft.Extensions.Logging;
 using MockQueryable;
 using Moq;
-using System.Text.Json;
 
 namespace EtherGizmos.Common.Services;
 
-internal class DigestNotificationCollectorTests
+internal class DigestRollupNotificationCollectorTests
 {
-    private Mock<ILogger<DigestNotificationCollector>> _logger = null!;
+    private Mock<ILogger<DigestRollupNotificationCollector>> _logger = null!;
     private Mock<IUnitOfWorkFactory> _uowFactory = null!;
     private Mock<IUnitOfWork> _uow = null!;
     private Mock<IRepository<NotificationSubscription>> _subscriptionRepository = null!;
@@ -22,7 +21,7 @@ internal class DigestNotificationCollectorTests
     [SetUp]
     public void SetUp()
     {
-        _logger = new Mock<ILogger<DigestNotificationCollector>>();
+        _logger = new Mock<ILogger<DigestRollupNotificationCollector>>();
         _uowFactory = new Mock<IUnitOfWorkFactory>();
         _uow = new Mock<IUnitOfWork>();
         _subscriptionRepository = new Mock<IRepository<NotificationSubscription>>();
@@ -139,8 +138,8 @@ internal class DigestNotificationCollectorTests
                     && d.Notifications.Any(x => x.Value == "b")),
                 It.Is<IEnumerable<AudienceKey>>(a =>
                     a.Count() == 1
-                    && a.Single().Kind == "$self"
-                    && a.Single().Id == subscription.UserId),
+                    && a.Single().Kind == "$sub"
+                    && a.Single().Id == subscription.Id.ToString()),
                 It.Is<DomainEventEmissionOptions>(o => o.IsDerived),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -413,7 +412,7 @@ internal class DigestNotificationCollectorTests
                 It.Is<Digest<TestEventA>>(d =>
                     d.Notifications.Count == 1
                     && d.Notifications[0].Value == "good"),
-                It.Is<IEnumerable<AudienceKey>>(a => a.Single().Id == goodSubscription.UserId),
+                It.Is<IEnumerable<AudienceKey>>(a => a.Single().Id == goodSubscription.Id.ToString()),
                 It.Is<DomainEventEmissionOptions>(o => o.IsDerived),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -438,7 +437,7 @@ internal class DigestNotificationCollectorTests
     }
 
     private static void VerifyLoggedError(
-        Mock<ILogger<DigestNotificationCollector>> logger,
+        Mock<ILogger<DigestRollupNotificationCollector>> logger,
         LogLevel logLevel,
         string containsMessage)
     {
@@ -452,10 +451,10 @@ internal class DigestNotificationCollectorTests
             Times.AtLeastOnce);
     }
 
-    private sealed class TestableDigestNotificationCollector : DigestNotificationCollector
+    private sealed class TestableDigestNotificationCollector : DigestRollupNotificationCollector
     {
         public TestableDigestNotificationCollector(
-            ILogger<DigestNotificationCollector> logger,
+            ILogger<DigestRollupNotificationCollector> logger,
             IUnitOfWorkFactory uowFactory,
             IDomainEventSerializer serializer,
             IDomainEventEmitter emitter)

@@ -1,6 +1,7 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using EtherGizmos.Common.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace EtherGizmos.Common.Services;
 
@@ -17,6 +18,7 @@ internal class NotificationLockingCoordinator : INotificationLockingCoordinator
     public async Task<IReadOnlyList<NotificationClaim>> ClaimBatchAsync(
         NotificationScheduleRef schedule,
         int maxCount = 100,
+        Expression<Func<Notification, bool>>? additionalCondition = null,
         CancellationToken cancellationToken = default)
     {
         using var uow = _uowFactory.Create();
@@ -27,7 +29,7 @@ internal class NotificationLockingCoordinator : INotificationLockingCoordinator
         var lockedUntil = now.Add(TimeSpan.FromSeconds(30));
 
         var immediate = NotificationSchedules.Immediate.Id;
-        var candidateIds = await notificationRepo.Data
+        var candidateQueryable = notificationRepo.Data
             .Where(e =>
                 e.Subscription.ScheduleId == schedule.Id
                 && (
@@ -37,7 +39,14 @@ internal class NotificationLockingCoordinator : INotificationLockingCoordinator
                         && e.LockedUntil < now
                     )
                 )
-                && e.AttemptCount < 10)
+                && e.AttemptCount < 10);
+
+        if (additionalCondition is not null)
+        {
+            candidateQueryable = candidateQueryable.Where(additionalCondition);
+        }
+
+        var candidateIds = await candidateQueryable
             .OrderBy(e => e.Id)
             .Select(e => e.Id)
             .Take(maxCount)
@@ -60,6 +69,25 @@ internal class NotificationLockingCoordinator : INotificationLockingCoordinator
 
         var claimed = await TryLockAsync(notificationRepo, [notificationId], lockId, now, lockedUntil, cancellationToken);
         return claimed.SingleOrDefault();
+    }
+
+    public async Task MarkReleasedAsync(
+        NotificationClaim claim,
+        CancellationToken cancellationToken = default)
+    {
+        using var uow = _uowFactory.Create();
+        var notificationRepo = uow.Repository<Notification>();
+
+        await notificationRepo.Data
+            .Where(e => e.Id == claim.NotificationId
+                && e.LockId == claim.LockId)
+            .ExecuteUpdateAsync(e => e
+                .SetProperty(e => e.Status, _ => NotificationStatusType.Pending)
+                .SetProperty(e => e.AttemptCount, e => e.AttemptCount > 0 ? e.AttemptCount - 1 : 0) //We didn't do anything with the lock, so we can give it another attempt
+                .SetProperty(e => e.LockId, _ => null)
+                .SetProperty(e => e.LockedBy, _ => null)
+                .SetProperty(e => e.LockedUntil, _ => null),
+                cancellationToken: cancellationToken);
     }
 
     public async Task MarkFailedAsync(

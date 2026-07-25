@@ -126,13 +126,6 @@ public static class NotificationBuilderExtensions
                     opt.FormatterMap[NotificationSchedules.Digest][method] = typeof(TFormatter);
                 });
 
-            //If we support digests, we need to be able to route them to the user that owns them. This service is
-            //effectively a no-op, returning the user already listed on the notification
-            @this.Services.TryAddEnumerable(new ServiceDescriptor(
-                typeof(IDomainEventRouter<Digest<TModel>>),
-                typeof(DigestRouter<TModel>),
-                ServiceLifetime.Singleton));
-
             @this.Services
                 .AddOptions<NotificationEventOptions>()
                 .Configure(opt =>
