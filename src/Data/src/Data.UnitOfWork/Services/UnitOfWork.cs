@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Transactions;
 
 namespace EtherGizmos.Common.Services;
@@ -72,11 +73,18 @@ internal class UnitOfWork : IUnitOfWork
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
+        var carrier = ActivityContextPropagator.Pack(Activity.Current);
+
         Task<int> task;
         using (ExecutionContext.SuppressFlow())
         {
             task = Task.Run(() =>
             {
+                using var activity = ActivitySources.UnitOfWork.StartActivityFromCarrier(
+                    "Save unit of work",
+                    ActivityKind.Internal,
+                    carrier);
+
                 using var d = _uowAccessor.Enter(this);
 
                 var scopes = new ConcurrentBag<TransactionScope>();
@@ -184,11 +192,18 @@ internal class UnitOfWork : IUnitOfWork
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
+        var carrier = ActivityContextPropagator.Pack(Activity.Current);
+
         Task<int> task;
         using (ExecutionContext.SuppressFlow())
         {
             task = Task.Run(async () =>
             {
+                using var activity = ActivitySources.UnitOfWork.StartActivityFromCarrier(
+                    "Save unit of work",
+                    ActivityKind.Internal,
+                    carrier);
+
                 using var d = _uowAccessor.Enter(this);
 
                 var scopes = new ConcurrentBag<TransactionScope>();
