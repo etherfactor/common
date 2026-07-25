@@ -6,10 +6,10 @@ using System.Linq.Expressions;
 
 namespace EtherGizmos.Common.Services;
 
-internal class ImmediateNotificationCollectorTests
+internal class DigestNotificationCollectorTests
 {
-    private Lazy<TestableImmediateNotificationCollector> _collector;
-    private Mock<ILogger<ImmediateNotificationCollector>> _loggerMock;
+    private Lazy<TestableDigestNotificationCollector> _collector;
+    private Mock<ILogger<DigestNotificationCollector>> _loggerMock;
     private Mock<INotificationDispatcher> _dispatcherMock;
     private Mock<INotificationLockingCoordinator> _coordinatorMock;
 
@@ -47,7 +47,7 @@ internal class ImmediateNotificationCollectorTests
         // Arrange
         _coordinatorMock
             .Setup(e => e.ClaimBatchAsync(
-                ImmediateSchedule.Instance,
+                DigestSchedule.Instance,
                 100,
                 It.IsAny<Expression<Func<Notification, bool>>>(),
                 It.IsAny<CancellationToken>()))
@@ -73,7 +73,7 @@ internal class ImmediateNotificationCollectorTests
 
         _coordinatorMock
             .Setup(e => e.ClaimBatchAsync(
-                ImmediateSchedule.Instance,
+                DigestSchedule.Instance,
                 100,
                 It.IsAny<Expression<Func<Notification, bool>>>(),
                 It.IsAny<CancellationToken>()))
@@ -108,7 +108,7 @@ internal class ImmediateNotificationCollectorTests
 
         _coordinatorMock
             .Setup(e => e.ClaimBatchAsync(
-                ImmediateSchedule.Instance,
+                DigestSchedule.Instance,
                 100,
                 It.IsAny<Expression<Func<Notification, bool>>>(),
                 It.IsAny<CancellationToken>()))
@@ -145,7 +145,7 @@ internal class ImmediateNotificationCollectorTests
 
         _coordinatorMock
             .Setup(e => e.ClaimBatchAsync(
-                ImmediateSchedule.Instance,
+                DigestSchedule.Instance,
                 100,
                 It.IsAny<Expression<Func<Notification, bool>>>(),
                 It.IsAny<CancellationToken>()))
@@ -169,7 +169,7 @@ internal class ImmediateNotificationCollectorTests
     }
 
     private static void VerifyLogged(
-        Mock<ILogger<ImmediateNotificationCollector>> logger,
+        Mock<ILogger<DigestNotificationCollector>> logger,
         LogLevel level,
         string containsMessage)
     {
@@ -183,10 +183,10 @@ internal class ImmediateNotificationCollectorTests
             Times.AtLeastOnce());
     }
 
-    private sealed class TestableImmediateNotificationCollector : ImmediateNotificationCollector
+    private sealed class TestableDigestNotificationCollector : DigestNotificationCollector
     {
-        public TestableImmediateNotificationCollector(
-            ILogger<ImmediateNotificationCollector> logger,
+        public TestableDigestNotificationCollector(
+            ILogger<DigestNotificationCollector> logger,
             INotificationDispatcher sender,
             INotificationLockingCoordinator coordinator)
             : base(logger, sender, coordinator)

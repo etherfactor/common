@@ -26,7 +26,9 @@ internal class ImmediateNotificationCollector : NotificationCollector
     protected override async Task CollectBatchAsync(
         CancellationToken cancellationToken = default)
     {
-        var claims = await _coordinator.ClaimBatchAsync(NotificationSchedules.Immediate, cancellationToken: cancellationToken);
+        var claims = await _coordinator.ClaimBatchAsync(
+            NotificationSchedules.Immediate,
+            cancellationToken: cancellationToken);
 
         var exceptions = new List<Exception>();
         foreach (var claim in claims)

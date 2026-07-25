@@ -193,6 +193,38 @@ internal class DomainEventMessageConsumerTests
     }
 
     [Test]
+    public async Task ConsumeAsync_WhenSubscriptionSpecified_ShouldProduceOneNotification()
+    {
+        //Arrange
+        _message.Audiences = [new("$sub", "1")];
+
+        var consumer = _consumer.Value;
+        var context = _contextMock.Object;
+
+        //Act
+        await consumer.ConsumeAsync(context);
+
+        //Assert
+        _notificationRepoMock.Verify(@interface =>
+            @interface.Add(
+                It.Is<Notification>(e =>
+                    e.SubscriptionId == _subscriptions.Single().Id)),
+            Times.Once());
+
+        _uowMock.Verify(@interface =>
+            @interface.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once());
+
+        _messageSenderMock.Verify(@interface =>
+            @interface.SendAsync(
+                It.Is<SentMessage>(e =>
+                    e.Body == "{\"notificationId\":0,\"scheduleType\":\"immediate\"}"
+                    && e.LogicalDestinationName == NotificationConstants.NotificationsLogicalName),
+                It.IsAny<CancellationToken>()),
+            Times.Once());
+    }
+
+    [Test]
     public void ConsumeAsync_WhenSendingException_ShouldNotThrow()
     {
         //Arrange
