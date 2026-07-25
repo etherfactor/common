@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Configuration\src\Configuration.Data\Configuration.Data.csproj" />
+    <ProjectReference Include="..\..\..\Observability\src\Observability\Observability.csproj" />
   </ItemGroup>
 
 </Project>
