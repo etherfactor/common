@@ -7,7 +7,7 @@ public static class UnitOfWorkOpenTelemetryExtensions
 {
     extension(TracerProviderBuilder @this)
     {
-        public TracerProviderBuilder AddMessagingInstrumentation()
+        public TracerProviderBuilder AddUnitOfWorkInstrumentation()
         {
             return @this.AddSource(ActivitySources.UnitOfWork.Name);
         }
@@ -15,7 +15,7 @@ public static class UnitOfWorkOpenTelemetryExtensions
 
     extension(MeterProviderBuilder @this)
     {
-        public MeterProviderBuilder AddMessagingInstrumentation()
+        public MeterProviderBuilder AddUnitOfWorkInstrumentation()
         {
             return @this; //No-op for now; no custom metrics
         }
