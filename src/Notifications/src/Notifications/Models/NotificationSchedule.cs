@@ -4,17 +4,17 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace EtherGizmos.Common.Models;
 
-public record NotificationSchedule : IEntity
+public class NotificationSchedule : IEntity
 {
-    public required string Id { get; init; }
+    public virtual string Id { get; set; } = null!;
 
-    public required string Name { get; init; }
+    public virtual string Name { get; set; } = null!;
 
-    public required bool IsAvailable { get; init; }
+    public virtual bool IsAvailable { get; set; }
 
-    public required DateTimeOffset LastSeenAt { get; init; }
+    public virtual DateTimeOffset LastSeenAt { get; set; }
 
-    public required IDictionary<string, object?> ConfigSchema { get; init; }
+    public virtual IDictionary<string, object?> ConfigSchema { get; set; } = new Dictionary<string, object?>();
 }
 
 public class NotificationScheduleConfiguration : IEntityTypeConfiguration<NotificationSchedule>

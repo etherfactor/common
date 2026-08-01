@@ -16,6 +16,8 @@ public class NotificationContext : DbContext
 
     public virtual DbSet<NotificationChannel> NotificationChannels { get; set; }
 
+    public virtual DbSet<NotificationChannelSchedule> NotificationChannelSchedules { get; set; }
+
     public virtual DbSet<NotificationEvent> NotificationEvents { get; set; }
 
     public virtual DbSet<NotificationSchedule> NotificationSchedules { get; set; }

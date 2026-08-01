@@ -13,7 +13,6 @@ internal class NotificationCatalogProvider : INotificationCatalogProvider
     private static readonly JsonSerializerOptions _jsonOptions;
 
     private readonly IOptions<NotificationEventOptions> _eventOptions;
-    private NotificationCatalog? _capabilities;
 
     public NotificationCatalogProvider(
         IOptions<NotificationEventOptions> eventOptions)
@@ -33,11 +32,7 @@ internal class NotificationCatalogProvider : INotificationCatalogProvider
         };
     }
 
-    public NotificationCatalog GetCatalog()
-    {
-        _capabilities ??= BuildCapabilities();
-        return _capabilities;
-    }
+    public NotificationCatalog GetCatalog() => BuildCapabilities();
 
     private NotificationCatalog BuildCapabilities()
     {
