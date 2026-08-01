@@ -1,23 +1,22 @@
 ﻿using EtherGizmos.Common.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Collections.Immutable;
 
 namespace EtherGizmos.Common.Models;
 
-public record NotificationEvent : IEntity
+public class NotificationEvent : IEntity
 {
-    public required string Id { get; init; }
+    public virtual string Id { get; set; } = null!;
 
-    public required string Name { get; init; }
+    public virtual string Name { get; set; } = null!;
 
-    public required bool IsAvailable { get; init; }
+    public virtual bool IsAvailable { get; set; }
 
-    public required DateTimeOffset LastSeenAt { get; init; }
+    public virtual DateTimeOffset LastSeenAt { get; set; }
 
-    public required IDictionary<string, object?> ConfigSchema { get; init; }
+    public virtual IDictionary<string, object?> ConfigSchema { get; set; } = new Dictionary<string, object?>();
 
-    public required ImmutableList<NotificationChannelSchedule> Supports { get; init; }
+    public virtual List<NotificationChannelSchedule> Supports { get; set; } = [];
 }
 
 public class NotificationEventConfiguration : IEntityTypeConfiguration<NotificationEvent>

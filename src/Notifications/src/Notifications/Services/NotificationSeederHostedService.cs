@@ -34,27 +34,18 @@ internal class NotificationSeederHostedService : IHostedService
         foreach (var channel in currentChannels)
         {
             var channelMeta = handleChannels.SingleOrDefault(e => e.Id == channel.Id);
-            var updated = channel;
             if (channelMeta is not null)
             {
                 handleChannels.Remove(channelMeta);
-                updated = channel with
-                {
-                    Name = channelMeta.Name,
-                    IsAvailable = true,
-                    LastSeenAt = channelMeta.LastSeenAt,
-                    ConfigSchema = channelMeta.ConfigSchema,
-                };
+                channel.Name = channelMeta.Name;
+                channel.IsAvailable = true;
+                channel.LastSeenAt = channelMeta.LastSeenAt;
+                channel.ConfigSchema = channelMeta.ConfigSchema;
             }
             else
             {
-                updated = channel with
-                {
-                    IsAvailable = false,
-                };
+                channel.IsAvailable = false;
             }
-
-            context.Entry(channel).CurrentValues.SetValues(updated);
         }
 
         foreach (var channel in handleChannels)
@@ -68,27 +59,18 @@ internal class NotificationSeederHostedService : IHostedService
         foreach (var schedule in currentSchedules)
         {
             var scheduleMeta = handleSchedules.SingleOrDefault(e => e.Id == schedule.Id);
-            var updated = schedule;
             if (scheduleMeta is not null)
             {
                 handleSchedules.Remove(scheduleMeta);
-                updated = schedule with
-                {
-                    Name = scheduleMeta.Name,
-                    IsAvailable = true,
-                    LastSeenAt = scheduleMeta.LastSeenAt,
-                    ConfigSchema = scheduleMeta.ConfigSchema,
-                };
+                schedule.Name = scheduleMeta.Name;
+                schedule.IsAvailable = true;
+                schedule.LastSeenAt = scheduleMeta.LastSeenAt;
+                schedule.ConfigSchema = scheduleMeta.ConfigSchema;
             }
             else
             {
-                updated = schedule with
-                {
-                    IsAvailable = false,
-                };
+                schedule.IsAvailable = false;
             }
-
-            context.Entry(schedule).CurrentValues.SetValues(updated);
         }
 
         foreach (var schedule in handleSchedules)
@@ -102,27 +84,18 @@ internal class NotificationSeederHostedService : IHostedService
         foreach (var @event in currentEvents)
         {
             var eventMeta = handleEvents.SingleOrDefault(e => e.Id == @event.Id);
-            var updated = @event;
             if (eventMeta is not null)
             {
                 handleEvents.Remove(eventMeta);
-                updated = @event with
-                {
-                    Name = eventMeta.Name,
-                    IsAvailable = true,
-                    LastSeenAt = eventMeta.LastSeenAt,
-                    ConfigSchema = eventMeta.ConfigSchema,
-                };
+                @event.Name = eventMeta.Name;
+                @event.IsAvailable = true;
+                @event.LastSeenAt = eventMeta.LastSeenAt;
+                @event.ConfigSchema = eventMeta.ConfigSchema;
             }
             else
             {
-                updated = @event with
-                {
-                    IsAvailable = false,
-                };
+                @event.IsAvailable = false;
             }
-
-            context.Entry(@event).CurrentValues.SetValues(updated);
         }
 
         foreach (var @event in handleEvents)

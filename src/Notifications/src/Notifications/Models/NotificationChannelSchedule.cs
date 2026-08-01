@@ -1,21 +1,22 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EtherGizmos.Common.Abstractions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace EtherGizmos.Common.Models;
 
-public record NotificationChannelSchedule
+public class NotificationChannelSchedule : IEntity
 {
-    public required string EventId { get; init; }
+    public virtual string EventId { get; set; } = null!;
 
-    public NotificationEvent? Event { get; init; }
+    public virtual NotificationEvent? Event { get; set; }
 
-    public required string ChannelId { get; init; }
+    public virtual string ChannelId { get; set; } = null!;
 
-    public NotificationChannel? Channel { get; init; }
+    public virtual NotificationChannel? Channel { get; set; }
 
-    public required string ScheduleId { get; init; }
+    public virtual string ScheduleId { get; set; } = null!;
 
-    public NotificationSchedule? Schedule { get; init; }
+    public virtual NotificationSchedule? Schedule { get; set; }
 }
 
 public class NotificationChannelScheduleConfiguration : IEntityTypeConfiguration<NotificationChannelSchedule>
