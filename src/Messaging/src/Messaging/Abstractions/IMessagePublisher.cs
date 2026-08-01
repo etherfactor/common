@@ -1,12 +1,10 @@
-using System.Threading.Channels;
-
 namespace EtherGizmos.Common.Abstractions;
 
-public interface IMessagePublisher : IDisposable
+public interface IMessagePublisher
 {
-    Task StartAsync(CancellationToken cancellationToken = default);
+    string LogicalName { get; }
 
-    Task StopAsync(CancellationToken cancellationToken = default);
-
-    ChannelWriter<SentMessage> Channel { get; }
+    Task SendAsync(
+        SentMessage message,
+        CancellationToken cancellationToken = default);
 }

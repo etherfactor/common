@@ -1,41 +1,34 @@
-﻿using EtherGizmos.Common.Abstractions;
+using EtherGizmos.Common.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 
 namespace EtherGizmos.Common.Services;
 
-internal class MessageBusRegistry : IMessageBusRegistry
+internal sealed class MessageBusRegistry : IMessageBusRegistry
 {
-    private readonly ILogger _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly ConcurrentDictionary<string, string> _buses = [];
-    private readonly ConcurrentDictionary<string, Lazy<Task<(IMessageListener Listener, CancellationTokenSource Cts)>>> _listeners = [];
-    private readonly ConcurrentDictionary<string, Lazy<Task<IMessagePublisher>>> _publishers = [];
+    private readonly ConcurrentDictionary<string, byte> _listeners = [];
+    private readonly ConcurrentDictionary<string, byte> _publishers = [];
 
-    private readonly TaskCompletionSource _onReadySource = new();
+    private readonly TaskCompletionSource _onReadySource = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
+
     public Task OnReady => _onReadySource.Task;
 
-    public MessageBusRegistry(
-        ILogger<MessageBusRegistry> logger,
-        IServiceProvider serviceProvider)
+    public MessageBusRegistry(IServiceProvider serviceProvider)
     {
-        _logger = logger;
         _serviceProvider = serviceProvider;
     }
 
     public void MarkReady()
-    {
-        _onReadySource.SetResult();
-    }
+        => _onReadySource.TrySetResult();
 
     public bool TryGetBusId(
         string logicalName,
         [NotNullWhen(true)] out string? busId)
-    {
-        return _buses.TryGetValue(logicalName, out busId);
-    }
+        => _buses.TryGetValue(logicalName, out busId);
 
     public bool TryGetBus(
         string busId,
@@ -43,91 +36,72 @@ internal class MessageBusRegistry : IMessageBusRegistry
     {
         var key = new BusKey(busId);
         bus = _serviceProvider.GetKeyedService<IMessageBus>(key);
-
         return bus is not null;
     }
 
-    public async Task<IMessageListener> RegisterListenerAsync(
-        string busId, string logicalName,
-        Lazy<Task<(IMessageListener Listener, CancellationTokenSource Cts)>> listener, CancellationToken cancellationToken = default)
+    public void RegisterListener(string busId, string logicalName)
     {
-        if (_buses.TryGetValue(logicalName, out var currentId) && currentId != busId)
-            throw new InvalidOperationException($"The logical name {logicalName} cannot be registered to bus {busId} as it " +
-                $"has already been registered to bus {currentId}");
+        RegisterBusMapping(busId, logicalName);
 
-        if (!_listeners.TryAdd(logicalName, listener))
-            throw new InvalidOperationException($"The listener {logicalName} has already been registered");
-
-        _buses.AddOrUpdate(logicalName, busId, (_, _) => busId);
-
-        var result = await listener.Value.ConfigureAwait(false);
-        return result.Listener;
-    }
-
-    public async Task<IMessagePublisher> RegisterPublisherAsync(
-        string busId, string logicalName,
-        Lazy<Task<IMessagePublisher>> publisher, CancellationToken cancellationToken = default)
-    {
-        if (_buses.TryGetValue(logicalName, out var currentId) && currentId != busId)
-            throw new InvalidOperationException($"The logical name {logicalName} cannot be registered to bus {busId} as it " +
-                $"has already been registered to bus {currentId}");
-
-        if (!_publishers.TryAdd(logicalName, publisher))
-            throw new InvalidOperationException($"The publisher {logicalName} has already been registered");
-
-        _buses.AddOrUpdate(logicalName, busId, (_, _) => busId);
-
-        var result = await publisher.Value.ConfigureAwait(false);
-        return result;
-    }
-
-    public async Task UnregisterListenerAsync(
-        string logicalName, CancellationToken cancellationToken = default)
-    {
-        if (_listeners.Remove(logicalName, out var lazy))
+        if (!_listeners.TryAdd(logicalName, 0))
         {
-            if (!_publishers.ContainsKey(logicalName))
-                _buses.TryRemove(logicalName, out _);
-
-            try
-            {
-                var (listener, cts) = await lazy.Value
-                    .WaitAsync(cancellationToken)
-                    .ConfigureAwait(false);
-
-                cts.Cancel();
-
-                await listener.StopAsync(cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to stop listener {LogicalName}", logicalName);
-            }
+            RemoveBusMappingIfUnused(logicalName);
+            throw new InvalidOperationException(
+                $"The listener '{logicalName}' is already registered.");
         }
     }
 
-    public async Task UnregisterPublisherAsync(
-        string logicalName, CancellationToken cancellationToken = default)
+    public void RegisterPublisher(string busId, string logicalName)
     {
-        if (_publishers.Remove(logicalName, out var lazy))
-        {
-            if (!_listeners.ContainsKey(logicalName))
-                _buses.TryRemove(logicalName, out _);
+        RegisterBusMapping(busId, logicalName);
 
-            try
+        if (!_publishers.TryAdd(logicalName, 0))
+        {
+            RemoveBusMappingIfUnused(logicalName);
+            throw new InvalidOperationException(
+                $"The publisher '{logicalName}' is already registered.");
+        }
+    }
+
+    public void UnregisterListener(string logicalName)
+    {
+        _listeners.TryRemove(logicalName, out _);
+        RemoveBusMappingIfUnused(logicalName);
+    }
+
+    public void UnregisterPublisher(string logicalName)
+    {
+        _publishers.TryRemove(logicalName, out _);
+        RemoveBusMappingIfUnused(logicalName);
+    }
+
+    private void RegisterBusMapping(string busId, string logicalName)
+    {
+        while (true)
+        {
+            if (_buses.TryGetValue(logicalName, out var currentBusId))
             {
-                var publisher = await lazy.Value.ConfigureAwait(false);
-                await publisher.StopAsync(cancellationToken).ConfigureAwait(false);
+                if (currentBusId != busId)
+                {
+                    throw new InvalidOperationException(
+                        $"The logical name '{logicalName}' cannot be registered to bus '{busId}' " +
+                        $"because it is already registered to bus '{currentBusId}'.");
+                }
+
+                return;
             }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to stop publisher {LogicalName}", logicalName);
-            }
+
+            if (_buses.TryAdd(logicalName, busId))
+                return;
+        }
+    }
+
+    private void RemoveBusMappingIfUnused(string logicalName)
+    {
+        if (!_listeners.ContainsKey(logicalName) &&
+            !_publishers.ContainsKey(logicalName))
+        {
+            _buses.TryRemove(logicalName, out _);
         }
     }
 }

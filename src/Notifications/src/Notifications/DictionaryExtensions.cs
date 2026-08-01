@@ -5,7 +5,7 @@ namespace System.Collections.Generic;
 
 public static class DictionaryExtensions
 {
-    extension (IDictionary<string, object?> @this)
+    extension(IDictionary<string, object?> @this)
     {
         public TData As<TData>()
             where TData : class
