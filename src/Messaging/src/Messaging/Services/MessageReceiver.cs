@@ -94,7 +94,11 @@ internal class MessageReceiver : IMessageReceiver
         var exceptions = new ConcurrentBag<Exception>();
 
         //We need to handle duplicate consumers in parallel
-        await Parallel.ForEachAsync(consumers, async (consumer, ct) =>
+        var parallelOptions = new ParallelOptions()
+        {
+            CancellationToken = cancellationToken,
+        };
+        await Parallel.ForEachAsync(consumers, parallelOptions, async (consumer, ct) =>
         {
             var useMessage = message with { ConsumerName = consumer.GetType().FullName };
 
@@ -140,6 +144,10 @@ internal class MessageReceiver : IMessageReceiver
                         () => m.InvokeAsync(useMessage, acc));
 
                 await pipeline().ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {

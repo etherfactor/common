@@ -91,10 +91,18 @@ internal class MessageBusRegistry : IMessageBusRegistry
 
             try
             {
-                var (listener, cts) = await lazy.Value.ConfigureAwait(false);
+                var (listener, cts) = await lazy.Value
+                    .WaitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
                 cts.Cancel();
-                cts.Dispose();
-                await listener.StopAsync(cancellationToken).ConfigureAwait(false);
+
+                await listener.StopAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {

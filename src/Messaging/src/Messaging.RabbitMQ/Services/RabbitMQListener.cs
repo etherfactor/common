@@ -209,6 +209,7 @@ internal class RabbitMQListener : IMessageListener, IDisposable
         if (_rmqConsumer is not null)
         {
             _rmqConsumer.ReceivedAsync -= RmqConsumer_ReceivedAsync;
+            _rmqConsumer = null;
         }
 
         // Complete our outgoing channel so downstream pumps exit
@@ -216,21 +217,45 @@ internal class RabbitMQListener : IMessageListener, IDisposable
 
         if (_rmqChannel is not null)
         {
-            try { await _rmqChannel.DisposeAsync().ConfigureAwait(false); }
-            catch (Exception ex) { _logger.LogWarning(ex, "Error disposing RabbitMQ channel."); }
+            try
+            {
+                await _rmqChannel.DisposeAsync()
+                    .AsTask()
+                    .WaitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error disposing RabbitMQ channel.");
+            }
+
             _rmqChannel = null;
         }
 
         if (_rmqConnection is not null)
         {
-            try { await _rmqConnection.DisposeAsync().ConfigureAwait(false); }
-            catch (Exception ex) { _logger.LogWarning(ex, "Error disposing RabbitMQ connection."); }
+            try
+            {
+                await _rmqConnection.DisposeAsync()
+                    .AsTask()
+                    .WaitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error disposing RabbitMQ connection.");
+            }
+
             _rmqConnection = null;
         }
-
-        // Drain completion (safe even if already completed)
-        try { await _channel.Reader.Completion.ConfigureAwait(false); }
-        catch { /* ignore */ }
 
         _logger.LogInformation("RabbitMQListener stopped for {QueueOrTopic}.", _queue ?? $"{_topic}:{_subscription}");
     }

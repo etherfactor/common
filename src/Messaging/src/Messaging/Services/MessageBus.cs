@@ -19,8 +19,8 @@ internal class MessageBus : IMessageBus
     private readonly ConcurrentDictionary<string, Lazy<Task<(IMessageListener Listener, CancellationTokenSource Cts)>>> _listeners = [];
     private readonly ConcurrentDictionary<string, Lazy<Task<IMessagePublisher>>> _publishers = [];
 
+    private readonly CancellationTokenSource _lifetimeCts = new();
     private ActionBlock<ReceivedMessage>? _pump;
-    private CancellationTokenSource? _pumpCts;
 
     public MessageBus(
         [ServiceKey] object serviceKey,
@@ -160,14 +160,14 @@ internal class MessageBus : IMessageBus
         CancellationToken cancellationToken = default)
     {
         var parallelism = 8;
-        _pumpCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         _pump = new ActionBlock<ReceivedMessage>(
             async message =>
             {
                 try
                 {
-                    await _receiver.ReceiveAsync(message, _pumpCts.Token).ConfigureAwait(false);
+                    await _receiver.ReceiveAsync(message, _lifetimeCts.Token)
+                        .ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -187,7 +187,7 @@ internal class MessageBus : IMessageBus
             {
                 MaxDegreeOfParallelism = parallelism,
                 BoundedCapacity = parallelism,
-                CancellationToken = _pumpCts.Token,
+                CancellationToken = _lifetimeCts.Token,
             });
 
         _logger.LogInformation("MessageBus pump started with parallelism {Parallelism}.", parallelism);
@@ -197,6 +197,7 @@ internal class MessageBus : IMessageBus
     public async Task StopAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Stopping MessageBus...");
+        _lifetimeCts.Cancel();
 
         // 1) Cancel listener pumps first so they stop pushing into the bus
         foreach (var key in _listeners.Keys.ToList())
@@ -205,7 +206,10 @@ internal class MessageBus : IMessageBus
             {
                 try
                 {
-                    var tuple = await lazy.Value.ConfigureAwait(false);
+                    var tuple = await lazy.Value
+                        .WaitAsync(cancellationToken)
+                        .ConfigureAwait(false);
+
                     tuple.Cts.Cancel();
                 }
                 catch (Exception ex)
@@ -216,25 +220,39 @@ internal class MessageBus : IMessageBus
         }
 
         // 2) Stop the main pump
-        _pumpCts?.Cancel();
         _pump?.Complete();
-        if (_pump is not null)
+
+        try
         {
-            try { await _pump.Completion.ConfigureAwait(false); }
-            catch (Exception ex) { _logger.LogWarning(ex, "Pump completion observed fault."); }
+            if (_pump is not null)
+            {
+                await _pump.Completion
+                    .WaitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
-        _pump = null;
-        _pumpCts?.Dispose();
-        _pumpCts = null;
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _lifetimeCts?.Cancel();
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Pump completion observed fault.");
+        }
+        finally
+        {
+            _pump = null;
 
-        // 3) Stop publishers, then listeners
-        foreach (var logicalName in _publishers.Keys.ToList())
-            await UnregisterPublisherAsync(logicalName, cancellationToken).ConfigureAwait(false);
+            // 3) Stop publishers, then listeners
+            foreach (var logicalName in _publishers.Keys.ToList())
+                await UnregisterPublisherAsync(logicalName, cancellationToken).ConfigureAwait(false);
 
-        foreach (var logicalName in _listeners.Keys.ToList())
-            await UnregisterListenerAsync(logicalName, cancellationToken).ConfigureAwait(false);
+            foreach (var logicalName in _listeners.Keys.ToList())
+                await UnregisterListenerAsync(logicalName, cancellationToken).ConfigureAwait(false);
 
-        _logger.LogInformation("MessageBus stopped.");
+            _logger.LogInformation("MessageBus stopped.");
+        }
     }
 
     public async Task UnregisterListenerAsync(string logicalName, CancellationToken cancellationToken = default)

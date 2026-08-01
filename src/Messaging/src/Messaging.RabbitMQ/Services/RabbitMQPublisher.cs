@@ -110,23 +110,67 @@ internal class RabbitMQPublisher : IMessagePublisher, IDisposable
 
         if (_publishTask is not null)
         {
-            try { await _publishTask.ConfigureAwait(false); }
-            catch (OperationCanceledException) when (_publishCts?.IsCancellationRequested == true) { }
-            catch (Exception ex) { _logger.LogWarning(ex, "Publish loop ended with error."); }
+            try
+            {
+                await _publishTask
+                    .WaitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (OperationCanceledException) when (_publishCts?.IsCancellationRequested == true)
+            {
+                //Expected shutdown
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Publish loop ended with error.");
+            }
         }
 
         _channel.Writer.TryComplete();
-        try { await _channel.Reader.Completion.ConfigureAwait(false); } catch { /* ignore */ }
 
         if (_rmqChannel is not null)
         {
-            try { await _rmqChannel.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogWarning(ex, "Error disposing publisher channel."); }
+            try
+            {
+                await _rmqChannel.DisposeAsync()
+                    .AsTask()
+                    .WaitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error disposing publisher channel.");
+            }
+
             _rmqChannel = null;
         }
 
         if (_rmqConnection is not null)
         {
-            try { await _rmqConnection.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogWarning(ex, "Error disposing publisher connection."); }
+            try
+            {
+                await _rmqConnection.DisposeAsync()
+                    .AsTask()
+                    .WaitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error disposing publisher connection.");
+            }
+
             _rmqConnection = null;
         }
 
