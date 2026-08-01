@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace EtherGizmos.Common.Services;
 
-public class MessagePumpHostedService : IHostedService
+public sealed class MessagePumpHostedService : IHostedService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IMessageBusRegistry _busRegistry;
@@ -25,22 +25,23 @@ public class MessagePumpHostedService : IHostedService
         _options = options;
     }
 
-    public async Task StartAsync(
-        CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         foreach (var busId in _busOptions.Value.Buses)
         {
             var key = new BusKey(busId);
             var bus = _serviceProvider.GetRequiredKeyedService<IMessageBus>(key);
-
             var options = _options.Get(busId);
 
-            await bus.StartAsync(cancellationToken);
+            await bus.StartAsync(cancellationToken).ConfigureAwait(false);
 
             foreach (var listener in options.Listeners)
             {
                 if (options.Serverless)
-                    throw new InvalidOperationException("Cannot have listeners configured in a serverless environment.");
+                {
+                    throw new InvalidOperationException(
+                        "Cannot configure listeners in a serverless environment.");
+                }
 
                 var logicalName = listener.Key;
                 var config = listener.Value;
@@ -48,12 +49,17 @@ public class MessagePumpHostedService : IHostedService
                 if (config.IsTopic)
                 {
                     await bus.RegisterListenerForTopicAsync(
-                        logicalName, topic: config.Name, subscription: config.Subscription!, cancellationToken: cancellationToken);
+                        logicalName,
+                        topic: config.Name,
+                        subscription: config.Subscription!,
+                        cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
                     await bus.RegisterListenerForQueueAsync(
-                        logicalName, queue: config.Name, cancellationToken: cancellationToken);
+                        logicalName,
+                        queue: config.Name,
+                        cancellationToken).ConfigureAwait(false);
                 }
             }
 
@@ -65,12 +71,16 @@ public class MessagePumpHostedService : IHostedService
                 if (config.IsTopic)
                 {
                     await bus.RegisterPublisherForTopicAsync(
-                        logicalName, topic: config.Name, cancellationToken: cancellationToken);
+                        logicalName,
+                        topic: config.Name,
+                        cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
                     await bus.RegisterPublisherForQueueAsync(
-                        logicalName, queue: config.Name, cancellationToken: cancellationToken);
+                        logicalName,
+                        queue: config.Name,
+                        cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -78,14 +88,14 @@ public class MessagePumpHostedService : IHostedService
         _busRegistry.MarkReady();
     }
 
-    public async Task StopAsync(
-        CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
-        foreach (var busId in _busOptions.Value.Buses)
+        // Stop in reverse order so later-started buses are torn down first.
+        foreach (var busId in _busOptions.Value.Buses.Reverse())
         {
             var key = new BusKey(busId);
             var bus = _serviceProvider.GetRequiredKeyedService<IMessageBus>(key);
-            await bus.StopAsync(cancellationToken);
+            await bus.StopAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 }

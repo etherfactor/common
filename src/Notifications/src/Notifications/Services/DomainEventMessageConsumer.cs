@@ -166,7 +166,7 @@ internal class DomainEventMessageConsumer : IMessageConsumer<DomainEventMessage>
                     PayloadType = message.PayloadType,
                     Payload = message.Payload,
                     Status = NotificationStatusType.Pending,
-                    Headers = ActivityContextPropagator.Pack(Activity.Current).ToDictionary(), 
+                    Headers = ActivityContextPropagator.Pack(Activity.Current).ToDictionary(),
                     AttemptCount = 0,
                 };
 

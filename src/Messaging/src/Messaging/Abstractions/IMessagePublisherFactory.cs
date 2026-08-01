@@ -2,7 +2,11 @@ namespace EtherGizmos.Common.Abstractions;
 
 public interface IMessagePublisherFactory
 {
-    IMessagePublisher CreatePublisherForQueue(string logicalName, string queue);
+    IMessagePublisherTransport CreatePublisherForQueue(
+        string logicalName,
+        string queue);
 
-    IMessagePublisher CreatePublisherForTopic(string logicalName, string topic);
+    IMessagePublisherTransport CreatePublisherForTopic(
+        string logicalName,
+        string topic);
 }

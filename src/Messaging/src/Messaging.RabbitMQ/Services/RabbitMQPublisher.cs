@@ -1,29 +1,24 @@
 using EtherGizmos.Common.Abstractions;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using System.Diagnostics;
 using System.Text;
-using System.Threading.Channels;
 
 namespace EtherGizmos.Common.Services;
 
-internal class RabbitMQPublisher : IMessagePublisher, IDisposable
+internal sealed class RabbitMQPublisher : IMessagePublisherTransport, IAsyncDisposable
 {
     private readonly ILogger _logger;
-    private readonly ConnectionFactory _rmqConnectionFactory;
+    private readonly ConnectionFactory _connectionFactory;
     private readonly string? _queue;
     private readonly string? _topic;
 
-    private readonly Channel<SentMessage> _channel = System.Threading.Channels.Channel.CreateUnbounded<SentMessage>();
+    private readonly SemaphoreSlim _stopGate = new(1, 1);
 
-    private IConnection? _rmqConnection;
-    private IChannel? _rmqChannel;
-    private CancellationTokenSource? _publishCts;
-    private Task? _publishTask;
-
-    private bool _disposed;
-
-    public ChannelWriter<SentMessage> Channel => _channel;
+    private IConnection? _connection;
+    private IChannel? _channel;
+    private bool _stopped;
 
     public RabbitMQPublisher(
         ILogger<RabbitMQPublisher> logger,
@@ -31,7 +26,7 @@ internal class RabbitMQPublisher : IMessagePublisher, IDisposable
         string queue)
     {
         _logger = logger;
-        _rmqConnectionFactory = connectionFactory;
+        _connectionFactory = connectionFactory;
         _queue = queue;
     }
 
@@ -42,180 +37,241 @@ internal class RabbitMQPublisher : IMessagePublisher, IDisposable
         string subscription)
     {
         _logger = logger;
-        _rmqConnectionFactory = connectionFactory;
+        _connectionFactory = connectionFactory;
         _topic = topic;
     }
 
-    public async Task StartAsync(
+    public async Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _connection = await _connectionFactory
+                .CreateConnectionAsync(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+
+            _connection.CallbackExceptionAsync += OnConnectionCallbackExceptionAsync;
+            _connection.ConnectionShutdownAsync += OnConnectionShutdownAsync;
+
+            _channel = await _connection
+                .CreateChannelAsync(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+
+            _channel.CallbackExceptionAsync += OnChannelCallbackExceptionAsync;
+            _channel.ChannelShutdownAsync += OnChannelShutdownAsync;
+            _channel.BasicReturnAsync += OnBasicReturnAsync;
+
+            if (_queue is not null)
+            {
+                await _channel.QueueDeclareAsync(
+                    queue: _queue,
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                await _channel.ExchangeDeclareAsync(
+                    exchange: _topic!,
+                    type: ExchangeType.Fanout,
+                    durable: true,
+                    autoDelete: false,
+                    arguments: null,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+
+            _logger.LogInformation(
+                "RabbitMQ publisher started for {QueueOrTopic}.",
+                DisplayName);
+        }
+        catch
+        {
+            await StopAsync(CancellationToken.None).ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    public async Task PublishAsync(
+        SentMessage message,
         CancellationToken cancellationToken = default)
     {
-        _rmqConnection = await _rmqConnectionFactory.CreateConnectionAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-        _rmqConnection.CallbackExceptionAsync += (_, e) =>
+        var channel = _channel
+            ?? throw new InvalidOperationException(
+                $"RabbitMQ publisher '{DisplayName}' is not started.");
+
+        using var activity = ActivitySources.Messaging.StartActivityFromCarrier(
+            $"Publish {message.Type} to {message.LogicalDestinationName}",
+            ActivityKind.Producer,
+            message.Headers);
+
+        activity?.SetTag("messaging.operation.name", "publish");
+        activity?.SetTag("messaging.system", "rabbitmq");
+        activity?.SetTag("messaging.destination.name", message.LogicalDestinationName);
+        activity?.SetTag("messaging.message.type", message.Type);
+
+        message = message.AddActivityHeaders(activity);
+
+        var properties = new BasicProperties
         {
-            _logger.LogError(e.Exception, "Publisher connection callback exception.");
-            return Task.CompletedTask;
-        };
-        _rmqConnection.ConnectionShutdownAsync += (_, e) =>
-        {
-            _logger.LogWarning("Publisher connection shutdown: {ReplyText} ({ReplyCode})", e.ReplyText, (int)e.ReplyCode);
-            return Task.CompletedTask;
+            MessageId = message.MessageId,
+            Headers = message.AllHeaders.ToDictionary(
+                pair => pair.Key,
+                pair => (object?)pair.Value),
         };
 
-        _rmqChannel = await _rmqConnection.CreateChannelAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-        _rmqChannel.CallbackExceptionAsync += (_, e) =>
-        {
-            _logger.LogError(e.Exception, "Publisher channel callback exception."); return
-            Task.CompletedTask;
-        };
-        _rmqChannel.ChannelShutdownAsync += (_, e) =>
-        {
-            _logger.LogWarning("Publisher channel shutdown: {ReplyText} ({ReplyCode})", e.ReplyText, (int)e.ReplyCode);
-            return Task.CompletedTask;
-        };
+        var body = Encoding.UTF8.GetBytes(message.Body);
 
-        if (_queue is not null)
+        if (_topic is not null)
         {
-            await _rmqChannel.QueueDeclareAsync(_queue, durable: true, exclusive: false, autoDelete: false, arguments: null, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await channel.BasicPublishAsync(
+                exchange: _topic,
+                routingKey: string.Empty,
+                mandatory: true,
+                basicProperties: properties,
+                body: body,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
         }
         else
         {
-            await _rmqChannel.ExchangeDeclareAsync(_topic!, ExchangeType.Fanout, durable: true, autoDelete: false, arguments: null, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await channel.BasicPublishAsync(
+                exchange: string.Empty,
+                routingKey: _queue!,
+                mandatory: true,
+                basicProperties: properties,
+                body: body,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
         }
-
-        // Handle unroutable messages when 'mandatory: true'
-        _rmqChannel.BasicReturnAsync += (_, ea) =>
-        {
-            try
-            {
-                var msg = Encoding.UTF8.GetString(ea.Body.Span);
-                _logger.LogError("RabbitMQ BasicReturn: replyCode={ReplyCode}, replyText={ReplyText}, exchange={Exchange}, routingKey={RoutingKey}, bodyLength={Length}",
-                    (int)ea.ReplyCode, ea.ReplyText, ea.Exchange, ea.RoutingKey, ea.Body.Length);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error handling BasicReturn.");
-            }
-            return Task.CompletedTask;
-        };
-
-        _publishCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        _publishTask = ExecuteLoopAsync(_publishCts.Token);
-        _logger.LogInformation("RabbitMQPublisher started for {QueueOrTopic}.", _queue ?? _topic!);
     }
 
-    public async Task StopAsync(
-        CancellationToken cancellationToken = default)
+    public async Task StopAsync(CancellationToken cancellationToken = default)
     {
-        _publishCts?.Cancel();
-
-        if (_publishTask is not null)
+        await _stopGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            try { await _publishTask.ConfigureAwait(false); }
-            catch (OperationCanceledException) when (_publishCts?.IsCancellationRequested == true) { }
-            catch (Exception ex) { _logger.LogWarning(ex, "Publish loop ended with error."); }
-        }
+            if (_stopped)
+                return;
 
-        _channel.Writer.TryComplete();
-        try { await _channel.Reader.Completion.ConfigureAwait(false); } catch { /* ignore */ }
-
-        if (_rmqChannel is not null)
-        {
-            try { await _rmqChannel.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogWarning(ex, "Error disposing publisher channel."); }
-            _rmqChannel = null;
-        }
-
-        if (_rmqConnection is not null)
-        {
-            try { await _rmqConnection.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { _logger.LogWarning(ex, "Error disposing publisher connection."); }
-            _rmqConnection = null;
-        }
-
-        _publishCts?.Dispose();
-        _publishCts = null;
-
-        _logger.LogInformation("RabbitMQPublisher stopped for {QueueOrTopic}.", _queue ?? _topic!);
-    }
-
-    private async Task ExecuteLoopAsync(
-        CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("RabbitMQ publish loop starting for {QueueOrTopic}.", _queue ?? _topic!);
-
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            if (_rmqChannel is null)
+            if (_channel is not null)
             {
-                await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-                continue;
-            }
+                _channel.CallbackExceptionAsync -= OnChannelCallbackExceptionAsync;
+                _channel.ChannelShutdownAsync -= OnChannelShutdownAsync;
+                _channel.BasicReturnAsync -= OnBasicReturnAsync;
 
-            try
-            {
-                await foreach (var sentMessage in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
+                try
                 {
-                    //Capture separate variable
-                    var message = sentMessage;
-
-                    using var activity = ActivitySources.Messaging.StartActivityFromCarrier(
-                        $"Publish {message.Type} to {message.LogicalDestinationName}",
-                        ActivityKind.Producer,
-                        message.Headers);
-
-                    activity?.SetTag("messaging.operation.name", "publish");
-                    activity?.SetTag("messaging.system", "rabbitmq");
-                    activity?.SetTag("messaging.destination.name", message.LogicalDestinationName);
-                    activity?.SetTag("messaging.message.type", message.Type);
-
-                    message = message.AddActivityHeaders(activity);
-
-                    var properties = new BasicProperties()
-                    {
-                        MessageId = message.MessageId,
-                        Headers = message.AllHeaders.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value),
-                    };
-
-                    var bytes = Encoding.UTF8.GetBytes(message.Body);
-                    if (_topic is not null)
-                    {
-                        await _rmqChannel.BasicPublishAsync(
-                            exchange: _topic, routingKey: string.Empty, mandatory: true, body: bytes,
-                            basicProperties: properties, cancellationToken: cancellationToken).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        await _rmqChannel.BasicPublishAsync(
-                            exchange: string.Empty, routingKey: _queue!, mandatory: true, body: bytes,
-                            basicProperties: properties, cancellationToken: cancellationToken).ConfigureAwait(false);
-                    }
+                    await _channel.DisposeAsync()
+                        .AsTask()
+                        .WaitAsync(cancellationToken)
+                        .ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                    when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error disposing RabbitMQ publisher channel.");
+                }
+
+                _channel = null;
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
-            catch (Exception ex)
+
+            if (_connection is not null)
             {
-                _logger.LogError(ex, "Error during RabbitMQ publish loop");
-                await Task.Delay(2000, cancellationToken).ConfigureAwait(false);
+                _connection.CallbackExceptionAsync -= OnConnectionCallbackExceptionAsync;
+                _connection.ConnectionShutdownAsync -= OnConnectionShutdownAsync;
+
+                try
+                {
+                    await _connection.DisposeAsync()
+                        .AsTask()
+                        .WaitAsync(cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                    when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error disposing RabbitMQ publisher connection.");
+                }
+
+                _connection = null;
             }
+
+            _stopped = true;
+
+            _logger.LogInformation(
+                "RabbitMQ publisher stopped for {QueueOrTopic}.",
+                DisplayName);
         }
-
-        _logger.LogInformation("RabbitMQ publish loop exiting for {QueueOrTopic}.", _queue ?? _topic!);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposed)
+        finally
         {
-            if (disposing)
-            {
-                try { StopAsync().GetAwaiter().GetResult(); } catch { /* ignore */ }
-            }
-            _disposed = true;
+            _stopGate.Release();
         }
     }
 
-    public void Dispose()
+    private Task OnConnectionCallbackExceptionAsync(
+        object sender,
+        CallbackExceptionEventArgs args)
     {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        _logger.LogError(args.Exception, "RabbitMQ publisher connection callback exception.");
+        return Task.CompletedTask;
+    }
+
+    private Task OnConnectionShutdownAsync(
+        object sender,
+        ShutdownEventArgs args)
+    {
+        _logger.LogWarning(
+            "RabbitMQ publisher connection shutdown: {ReplyText} ({ReplyCode}).",
+            args.ReplyText,
+            (int)args.ReplyCode);
+        return Task.CompletedTask;
+    }
+
+    private Task OnChannelCallbackExceptionAsync(
+        object sender,
+        CallbackExceptionEventArgs args)
+    {
+        _logger.LogError(args.Exception, "RabbitMQ publisher channel callback exception.");
+        return Task.CompletedTask;
+    }
+
+    private Task OnChannelShutdownAsync(
+        object sender,
+        ShutdownEventArgs args)
+    {
+        _logger.LogWarning(
+            "RabbitMQ publisher channel shutdown: {ReplyText} ({ReplyCode}).",
+            args.ReplyText,
+            (int)args.ReplyCode);
+        return Task.CompletedTask;
+    }
+
+    private Task OnBasicReturnAsync(
+        object sender,
+        BasicReturnEventArgs args)
+    {
+        _logger.LogError(
+            "RabbitMQ returned an unroutable message: replyCode={ReplyCode}, replyText={ReplyText}, exchange={Exchange}, routingKey={RoutingKey}, bodyLength={Length}.",
+            (int)args.ReplyCode,
+            args.ReplyText,
+            args.Exchange,
+            args.RoutingKey,
+            args.Body.Length);
+        return Task.CompletedTask;
+    }
+
+    private string DisplayName => _queue ?? _topic!;
+
+    public async ValueTask DisposeAsync()
+    {
+        await StopAsync(CancellationToken.None).ConfigureAwait(false);
+        _stopGate.Dispose();
     }
 }

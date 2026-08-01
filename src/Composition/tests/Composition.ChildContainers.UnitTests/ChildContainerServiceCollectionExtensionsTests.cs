@@ -545,7 +545,7 @@ internal class ChildContainerServiceCollectionExtensionsTests
 
         var testA_1 = provider.GetRequiredKeyedService<TestA>(key);
         var testA_2 = provider.GetRequiredKeyedService<TestA>(key);
-        
+
         //Assert
         using (Assert.EnterMultipleScope())
         {

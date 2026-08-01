@@ -5,7 +5,9 @@ using RabbitMQ.Client;
 
 namespace EtherGizmos.Common.Services;
 
-internal class RabbitMQTransport : IMessageListenerFactory, IMessagePublisherFactory
+internal sealed class RabbitMQTransport :
+    IMessageListenerFactory,
+    IMessagePublisherFactory
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ConnectionFactory _connectionFactory;
@@ -18,27 +20,58 @@ internal class RabbitMQTransport : IMessageListenerFactory, IMessagePublisherFac
         _connectionFactory = connectionFactory;
     }
 
-    public IMessageListener CreateListenerForQueue(string logicalName, string queue)
+    public IMessageListenerTransport CreateListenerForQueue(
+        string logicalName,
+        string queue)
     {
-        var logger = _serviceProvider.GetRequiredService<ILogger<RabbitMQListener>>();
-        return new RabbitMQListener(logger, _connectionFactory, queue);
+        var logger = _serviceProvider
+            .GetRequiredService<ILogger<RabbitMQListener>>();
+
+        return new RabbitMQListener(
+            logger,
+            _connectionFactory,
+            queue);
     }
 
-    public IMessageListener CreateListenerForTopic(string logicalName, string topic, string subscription)
+    public IMessageListenerTransport CreateListenerForTopic(
+        string logicalName,
+        string topic,
+        string subscription)
     {
-        var logger = _serviceProvider.GetRequiredService<ILogger<RabbitMQListener>>();
-        return new RabbitMQListener(logger, _connectionFactory, topic, subscription);
+        var logger = _serviceProvider
+            .GetRequiredService<ILogger<RabbitMQListener>>();
+
+        return new RabbitMQListener(
+            logger,
+            _connectionFactory,
+            topic,
+            subscription);
     }
 
-    public IMessagePublisher CreatePublisherForQueue(string logicalName, string queue)
+    public IMessagePublisherTransport CreatePublisherForQueue(
+        string logicalName,
+        string queue)
     {
-        var logger = _serviceProvider.GetRequiredService<ILogger<RabbitMQPublisher>>();
-        return new RabbitMQPublisher(logger, _connectionFactory, queue);
+        var logger = _serviceProvider
+            .GetRequiredService<ILogger<RabbitMQPublisher>>();
+
+        return new RabbitMQPublisher(
+            logger,
+            _connectionFactory,
+            queue);
     }
 
-    public IMessagePublisher CreatePublisherForTopic(string logicalName, string topic)
+    public IMessagePublisherTransport CreatePublisherForTopic(
+        string logicalName,
+        string topic)
     {
-        var logger = _serviceProvider.GetRequiredService<ILogger<RabbitMQPublisher>>();
-        return new RabbitMQPublisher(logger, _connectionFactory, topic, "");
+        var logger = _serviceProvider
+            .GetRequiredService<ILogger<RabbitMQPublisher>>();
+
+        return new RabbitMQPublisher(
+            logger,
+            _connectionFactory,
+            topic,
+            subscription: string.Empty);
     }
 }

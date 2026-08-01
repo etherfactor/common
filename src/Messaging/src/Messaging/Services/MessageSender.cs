@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace EtherGizmos.Common.Services;
 
-internal class MessageSender : IMessageSender, ITransportMessageSender
+internal sealed class MessageSender : IMessageSender, ITransportMessageSender
 {
     private readonly IMessageBusRegistry _registry;
 
@@ -15,7 +15,6 @@ internal class MessageSender : IMessageSender, ITransportMessageSender
         IMessageBusRegistry registry)
     {
         _registry = registry;
-
         Services = services;
     }
 
@@ -24,25 +23,28 @@ internal class MessageSender : IMessageSender, ITransportMessageSender
         CancellationToken cancellationToken = default)
     {
         message = message.AddActivityHeaders(Activity.Current);
-
         var logicalName = message.LogicalDestinationName;
 
-        await _registry.OnReady;
+        await _registry.OnReady
+            .WaitAsync(cancellationToken)
+            .ConfigureAwait(false);
 
         if (!_registry.TryGetBusId(logicalName, out var busId))
             ThrowForPublisher(logicalName);
 
-        if (!_registry.TryGetBus(busId, out var bus))
+        if (!_registry.TryGetBus(busId!, out var bus))
             ThrowForPublisher(logicalName);
 
-        if (!bus.TryGetPublisher(logicalName, out var publisher))
+        if (!bus!.TryGetPublisher(logicalName, out var publisher))
             ThrowForPublisher(logicalName);
 
-        await publisher.Channel.WriteAsync(message, cancellationToken);
+        await publisher!
+            .SendAsync(message, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     [DoesNotReturn]
-    private void ThrowForPublisher(
-        string logicalName)
-        => throw new InvalidOperationException($"No publisher registered for {logicalName}");
+    private static void ThrowForPublisher(string logicalName)
+        => throw new InvalidOperationException(
+            $"No publisher is registered for '{logicalName}'.");
 }

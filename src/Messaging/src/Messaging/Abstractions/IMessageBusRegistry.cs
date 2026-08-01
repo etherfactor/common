@@ -1,7 +1,4 @@
-﻿
-using System.Diagnostics.CodeAnalysis;
-
-namespace EtherGizmos.Common.Abstractions;
+﻿namespace EtherGizmos.Common.Abstractions;
 
 public interface IMessageBusRegistry
 {
@@ -9,31 +6,25 @@ public interface IMessageBusRegistry
 
     void MarkReady();
 
-    Task<IMessageListener> RegisterListenerAsync(
-        string busId,
+    bool TryGetBusId(
         string logicalName,
-        Lazy<Task<(IMessageListener Listener, CancellationTokenSource Cts)>> listener,
-        CancellationToken cancellationToken = default);
-
-    Task<IMessagePublisher> RegisterPublisherAsync(
-        string busId,
-        string logicalName,
-        Lazy<Task<IMessagePublisher>> publisher,
-        CancellationToken cancellationToken = default);
+        out string? busId);
 
     bool TryGetBus(
         string busId,
-        [NotNullWhen(true)] out IMessageBus? bus);
+        out IMessageBus? bus);
 
-    bool TryGetBusId(
-        string logicalName,
-        [NotNullWhen(true)] out string? busId);
+    void RegisterListener(
+        string busId,
+        string logicalName);
 
-    Task UnregisterListenerAsync(
-        string logicalName,
-        CancellationToken cancellationToken = default);
+    void RegisterPublisher(
+        string busId,
+        string logicalName);
 
-    Task UnregisterPublisherAsync(
-        string logicalName,
-        CancellationToken cancellationToken = default);
+    void UnregisterListener(
+        string logicalName);
+
+    void UnregisterPublisher(
+        string logicalName);
 }
