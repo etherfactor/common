@@ -16,7 +16,7 @@ internal class SmtpEmailSenderTests
             Subject = "Hello",
         };
 
-        var mime = SmtpEmailSender.BuildMimeMessage(message);
+        var mime = SmtpEmailSender.BuildMimeMessage(new(), message);
 
         Assert.That(mime.From, Has.Count.EqualTo(1));
         var from = (MailboxAddress)mime.From[0];
@@ -51,7 +51,7 @@ internal class SmtpEmailSenderTests
             Subject = "Hello",
         };
 
-        var mime = SmtpEmailSender.BuildMimeMessage(message);
+        var mime = SmtpEmailSender.BuildMimeMessage(new(), message);
 
         using (Assert.EnterMultipleScope())
         {
@@ -72,7 +72,7 @@ internal class SmtpEmailSenderTests
             HtmlBody = "<b>html</b>",
         };
 
-        var mime = SmtpEmailSender.BuildMimeMessage(message);
+        var mime = SmtpEmailSender.BuildMimeMessage(new(), message);
 
         Assert.That(mime.Body, Is.TypeOf<TextPart>());
         var body = (TextPart)mime.Body;
@@ -92,7 +92,7 @@ internal class SmtpEmailSenderTests
             TextBody = "plain",
         };
 
-        var mime = SmtpEmailSender.BuildMimeMessage(message);
+        var mime = SmtpEmailSender.BuildMimeMessage(new(), message);
 
         var body = (TextPart)mime.Body!;
         using (Assert.EnterMultipleScope())
@@ -110,7 +110,7 @@ internal class SmtpEmailSenderTests
             Subject = "Hello",
         };
 
-        var mime = SmtpEmailSender.BuildMimeMessage(message);
+        var mime = SmtpEmailSender.BuildMimeMessage(new(), message);
 
         var body = (TextPart)mime.Body!;
         using (Assert.EnterMultipleScope())
