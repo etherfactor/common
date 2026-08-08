@@ -7,6 +7,14 @@ namespace EtherGizmos.Common.Services;
 
 internal class SmtpEmailSenderTests
 {
+    private readonly SmtpEmailOptions _options = new()
+    {
+        From = new()
+        {
+            Address = "test@domain.com",
+        },
+    };
+
     [Test]
     public void BuildMimeMessage_WhenNotEmpty_ShouldSetFrom()
     {
@@ -16,7 +24,7 @@ internal class SmtpEmailSenderTests
             Subject = "Hello",
         };
 
-        var mime = SmtpEmailSender.BuildMimeMessage(new(), message);
+        var mime = SmtpEmailSender.BuildMimeMessage(_options, message);
 
         Assert.That(mime.From, Has.Count.EqualTo(1));
         var from = (MailboxAddress)mime.From[0];
@@ -28,7 +36,7 @@ internal class SmtpEmailSenderTests
     }
 
     [Test]
-    public void BuildMimeMessage_WhenEmptyAddress_ShouldOmit()
+    public void BuildMimeMessage_WhenEmptyAddress_ShouldUseDefault()
     {
         var message = new EmailMessage
         {
@@ -51,11 +59,11 @@ internal class SmtpEmailSenderTests
             Subject = "Hello",
         };
 
-        var mime = SmtpEmailSender.BuildMimeMessage(new(), message);
+        var mime = SmtpEmailSender.BuildMimeMessage(_options, message);
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(mime.From, Is.Empty);
+            Assert.That(mime.From, Has.Count.EqualTo(1));
             Assert.That(mime.To, Has.Count.EqualTo(1));
             Assert.That(mime.Cc, Has.Count.EqualTo(1));
             Assert.That(mime.Bcc, Has.Count.EqualTo(1));
@@ -72,7 +80,7 @@ internal class SmtpEmailSenderTests
             HtmlBody = "<b>html</b>",
         };
 
-        var mime = SmtpEmailSender.BuildMimeMessage(new(), message);
+        var mime = SmtpEmailSender.BuildMimeMessage(_options, message);
 
         Assert.That(mime.Body, Is.TypeOf<TextPart>());
         var body = (TextPart)mime.Body;
@@ -92,7 +100,7 @@ internal class SmtpEmailSenderTests
             TextBody = "plain",
         };
 
-        var mime = SmtpEmailSender.BuildMimeMessage(new(), message);
+        var mime = SmtpEmailSender.BuildMimeMessage(_options, message);
 
         var body = (TextPart)mime.Body!;
         using (Assert.EnterMultipleScope())
@@ -110,7 +118,7 @@ internal class SmtpEmailSenderTests
             Subject = "Hello",
         };
 
-        var mime = SmtpEmailSender.BuildMimeMessage(new(), message);
+        var mime = SmtpEmailSender.BuildMimeMessage(_options, message);
 
         var body = (TextPart)mime.Body!;
         using (Assert.EnterMultipleScope())
@@ -128,6 +136,7 @@ internal class SmtpEmailSenderTests
             Host = "localhost",
             Port = 25,
             UseSsl = false,
+            From = _options.From,
         };
 
         var client = new Mock<ISmtpClientAdapter>();
@@ -158,6 +167,7 @@ internal class SmtpEmailSenderTests
             UseSsl = true,
             Username = "user",
             Password = "pass",
+            From = _options.From,
         };
 
         var client = new Mock<ISmtpClientAdapter>();
@@ -181,6 +191,7 @@ internal class SmtpEmailSenderTests
             UseSsl = true,
             Username = "user",
             Password = null,
+            From = _options.From,
         };
 
         var client = new Mock<ISmtpClientAdapter>();
