@@ -29,17 +29,21 @@ internal class SmtpEmailSender : IEmailSender
             await client.AuthenticateAsync(_options.Username, _options.Password, cancellationToken);
         }
 
-        var mime = BuildMimeMessage(message);
+        var mime = BuildMimeMessage(_options, message);
         await client.SendAsync(mime, cancellationToken);
     }
 
-    internal static MimeMessage BuildMimeMessage(EmailMessage message)
+    internal static MimeMessage BuildMimeMessage(SmtpEmailOptions options, EmailMessage message)
     {
         var mime = new MimeMessage();
 
         if (message.From != EmailAddress.Empty)
         {
             mime.From.Add(new MailboxAddress(message.From.Name, message.From.Address));
+        }
+        else
+        {
+            mime.From.Add(new MailboxAddress(options.From.Name, options.From.Address));
         }
 
         foreach (var address in message.To.Where(e => e != EmailAddress.Empty))

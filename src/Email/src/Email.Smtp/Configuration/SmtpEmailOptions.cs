@@ -14,4 +14,7 @@ public class SmtpEmailOptions : EmailConnectionOptions
     public string? Username { get; set; }
 
     public string? Password { get; set; }
+
+    [Required]
+    public SmtpEmailFromOptions From { get; set; } = new();
 }
