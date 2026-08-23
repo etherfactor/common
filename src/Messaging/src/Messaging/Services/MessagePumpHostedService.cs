@@ -93,9 +93,15 @@ public sealed class MessagePumpHostedService : IHostedService
         // Stop in reverse order so later-started buses are torn down first.
         foreach (var busId in _busOptions.Value.Buses.Reverse())
         {
-            var key = new BusKey(busId);
-            var bus = _serviceProvider.GetRequiredKeyedService<IMessageBus>(key);
-            await bus.StopAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                var key = new BusKey(busId);
+                var bus = _serviceProvider.GetRequiredKeyedService<IMessageBus>(key);
+                await bus.StopAsync(cancellationToken).ConfigureAwait(false);
+            }
+            //It's possible the service provider disposes (and stops) buses before this service can do so. This should
+            //prevent any errors, should that occur
+            catch (ObjectDisposedException) { }
         }
     }
 }
